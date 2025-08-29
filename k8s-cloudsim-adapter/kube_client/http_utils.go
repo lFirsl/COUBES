@@ -15,7 +15,6 @@ func MakeCreatePodHandler(kc *KubeClient) http.HandlerFunc {
 			return
 		}
 
-		// Call your real function
 		err := kc.CreateFakePod(podName)
 		if err != nil {
 			http.Error(w, "Failed to create pod: "+err.Error(), http.StatusInternalServerError)

@@ -14,12 +14,6 @@ import (
 func (c *Communicator) SendFakePodFromCs(csPod CsPod) error {
 	cpuStr := fmt.Sprintf("%d", csPod.Pes)
 
-	// RAM: use fileSize or utilizationRam as an estimate (very context dependent)
-	// Temporary hard-coding.
-	//ramMiB := fmt.Sprintf("%d", 0)
-
-	//fmt.Println("cpuStr:", cpuStr)
-
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("cspod-%d", csPod.ID),

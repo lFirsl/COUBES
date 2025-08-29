@@ -64,7 +64,7 @@ func (kc *KubeClient) DeletePodAndWaitForRescheduling(cloudletID int) ([]*corev1
 		return nil, fmt.Errorf("failed to delete pod: %w", err)
 	}
 
-	// Check if all pods are already scheduled (no need to wait)
+	// Check if all pods are already scheduled (if so, we can skip waiting)
 	allScheduled := true
 	for _, pod := range prevPods {
 		if pod.Spec.NodeName == "" {

@@ -9,7 +9,9 @@ import (
 	"time"
 )
 
-// Duplicate your CsNode and CsPod structs locally if not accessible via import
+// Note - this test is old and may no longer function as intended.
+// todo: Update Tests
+
 type CsNode struct {
 	ID       int    `json:"id"`            // Unique identifier for the node (CloudSim VM/Container ID)
 	Name     string `json:"name"`          // Name of the node (e.g., "vm-0", "container-1")

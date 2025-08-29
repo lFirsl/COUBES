@@ -17,7 +17,7 @@ type Communicator struct {
 	extenderURL string
 	mu          sync.RWMutex
 	pods        map[int]*CsPod
-	kubeClient  *kube_client.KubeClient // <--- ADD THIS
+	kubeClient  *kube_client.KubeClient
 }
 
 func NewCommunicator(url string, kc *kube_client.KubeClient) *Communicator {
