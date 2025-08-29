@@ -13,7 +13,6 @@ package org.example.testSuite;
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.power.PowerHost;
-import org.cloudbus.cloudsim.power.PowerVm;
 import org.cloudbus.cloudsim.power.models.PowerModel;
 import org.cloudbus.cloudsim.power.models.PowerModelLinear;
 import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
@@ -38,7 +37,7 @@ import java.util.List;
  * and create simulation entities (a DatacenterBroker in this example)
  * dynamically.
  */
-public class Undercrowding_Example_Power_V2 {
+public class Undercrowding_Test {
 	public static Live_Kubernetes_Broker_Ex broker;
 
 	/** The cloudlet list. */

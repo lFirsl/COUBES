@@ -34,7 +34,7 @@ import java.util.List;
  * and create simulation entities (a DatacenterBroker in this example)
  * dynamically.
  */
-public class Power_vs_Efficiency_Test {
+public class Performance_vs_Efficiency_Test {
 	public static Live_Kubernetes_Broker_Ex broker;
 
 	/** The cloudlet list. */
