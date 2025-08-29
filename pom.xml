@@ -27,7 +27,7 @@
         <dependency>
             <groupId>org.cloudbus.cloudsim</groupId>
             <artifactId>cloudsim</artifactId>
-            <version>7.0.0-alpha</version>
+            <version>7.0.1</version>
         </dependency>
 
         <!-- Optional: Commons Math (used internally in CloudSim) -->

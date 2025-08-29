@@ -58,7 +58,7 @@ public class Power_vs_Efficiency_Test {
 		Vm[] vm = new Vm[2];
 
         vm[0] = new PowerVmCustom(0, userId, mips, 4, ram, bw, size,0, vmm, new CloudletSchedulerTimeShared(),200,0);
-        vm[1] = new PowerVmCustom(1, userId, mips*0.75, 2, ram, bw, size,0, vmm, new CloudletSchedulerTimeShared(),200,1);
+        vm[1] = new PowerVmCustom(1, userId, 200, 2, ram, bw, size,0, vmm, new CloudletSchedulerTimeShared(),200,1);
         list.add(vm[0]);
         list.add(vm[1]);
 
@@ -149,14 +149,6 @@ public class Power_vs_Efficiency_Test {
 			printCloudletList(newList1);
 			metrics.printSummary(lastClock);
 
-//			Helper.printResults(
-//					datacenter0,
-//					vmlistTemp,
-//					lastClock,
-//					"Pause_Example_Single_Broker_Power",
-//					Constants.OUTPUT_CSV,
-//					"C:\\Users\\flori\\Desktop");
-
 
 
 			broker.sendResetRequestToControlPlane();
@@ -194,8 +186,8 @@ public class Power_vs_Efficiency_Test {
 		//Another list, for a dual-core machine
 		List<Pe> peList2 = new ArrayList<>();
 
-		peList2.add(new Pe(0, new PeProvisionerSimple((double) mips /2)));
-		peList2.add(new Pe(1, new PeProvisionerSimple((double) mips /2)));
+		peList2.add(new Pe(0, new PeProvisionerSimple(200)));
+		peList2.add(new Pe(1, new PeProvisionerSimple(200)));
 
 		//4. Create Hosts with its id and list of PEs and add them to the list of machines
 		int hostId=0;
@@ -203,11 +195,11 @@ public class Power_vs_Efficiency_Test {
 		long storage = 1000000; //host storage
 		int bw = 10000;
 
-		PowerModel powerModelLow = new PowerModelLinear(125,0.1);  // 250 watts max
+		PowerModel powerModelLow = new PowerModelLinear(150,0.3);  // 250 watts max
 		PowerModel powerModelHigh = new PowerModelLinear(500,0.1);  // 250 watts max
 		hostList.add(
 				new PowerHost(
-						hostId++,
+						0,
 						new RamProvisionerSimple(ram),
 						new BwProvisionerSimple(bw),
 						storage,
@@ -219,7 +211,7 @@ public class Power_vs_Efficiency_Test {
 
 		hostList.add(
 				new PowerHost(
-						hostId,
+						1,
 						new RamProvisionerSimple(ram),
 						new BwProvisionerSimple(bw),
 						storage,
@@ -251,7 +243,7 @@ public class Power_vs_Efficiency_Test {
 		PowerDatacenterCustom datacenter = null;
 		try {
 			//datacenter = new Datacenter(name, characteristics, new VmAllocationPolicySimple(hostList), storageList, 2000);
-			datacenter = new PowerDatacenterCustom(name, characteristics, new VmAllocationPolicySimple(hostList), storageList, 20,false);
+			datacenter = new PowerDatacenterCustom(name, characteristics, new VmAllocationPolicySimple(hostList), storageList, 1,false);
 			datacenter.setDisableMigrations(true);
 		} catch (Exception e) {
 			e.printStackTrace();

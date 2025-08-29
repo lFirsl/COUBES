@@ -36,7 +36,6 @@ public class PowerVmCustom extends PowerVm {
     }
 
 
-    // Vm.java (or PowerVm.java if you prefer)
     @Override
     public double getCurrentRequestedTotalMips() {
         if (isBeingInstantiated()) return getMips() * getNumberOfPes();
@@ -45,12 +44,12 @@ public class PowerVmCustom extends PowerVm {
         final double perPeMips = getMips();
         double demand = 0.0;
 
+        //Check utilization of each Cloudlet
         for (Cloudlet cl : getCloudletScheduler().getCloudletExecList()) {
-            // UtilizationModelFull -> 1.0; others may be <1
             demand += cl.getUtilizationOfCpu(time) * cl.getNumberOfPes() * perPeMips;
         }
 
-        // If you use nested guests, include them too:
+        // Check for nested guests
         for (GuestEntity guest : getGuestList()) {
             demand += guest.getCurrentRequestedTotalMips();
         }
@@ -75,11 +74,11 @@ public class PowerVmCustom extends PowerVm {
         final double frac = Math.max(0.0, Math.min(1.0, peDemand - full));
 
         List<Double> req = new ArrayList<>(getNumberOfPes());
-        for (int i = 0; i < full; i++) req.add(perPeMips);           // full PEs
-        if (full < getNumberOfPes() && frac > 0) req.add(frac * perPeMips); // one fractional PE
-        while (req.size() < getNumberOfPes()) req.add(0.0);          // pad with zeros
+        for (int i = 0; i < full; i++) req.add(perPeMips);
+        if (full < getNumberOfPes() && frac > 0) req.add(frac * perPeMips);
+        while (req.size() < getNumberOfPes()) req.add(0.0); // pad with zeros
 
-        // Optionally merge nested guests’ per-PE requests (if applicable)
+        // Merge nested guests’ per-PE requests (if applicable)
         for (GuestEntity guest : getGuestList()) {
             req.addAll(guest.getCurrentRequestedMips());
         }

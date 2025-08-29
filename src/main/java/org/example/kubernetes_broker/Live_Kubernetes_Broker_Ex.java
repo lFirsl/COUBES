@@ -29,7 +29,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     HashMap<Integer,Cloudlet> cloudletsSubmittedToMiddle;
     HashMap<Integer,Cloudlet> cloudletsReadyForCloudsim;
 
-    //Variables for throughput rolling average metrics
+    //Variables for throughput rolling average metrics (Prototype, not yet validated)
     // --- Throughput metrics (pods/sec) ---
     private long tpTotalPods = 0L;
     private long tpTotalNanos = 0L;
@@ -37,7 +37,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
 
     // EWMA (exponentially-weighted moving average) of instantaneous batch throughput
     private double tpEwma = 0.0;
-    private final double TP_ALPHA = 0.3;     // tune: 0.1 (smoother) .. 0.5 (more reactive)
+    private final double TP_ALPHA = 0.3;     // Can be tuned: 0.1 (smoother) .. 0.5 (more reactive)
 
     // Sliding window over the last N batches
     private final int TP_WINDOW = 10;
@@ -164,9 +164,6 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     @Override
     protected void submitCloudlets() {
         Log.println("Submitting all cloudlets to Control Plane in a single batch...");
-//        Log.println("Syncing all nodes again first to make sure...");
-//        sendAllActiveNodesToControlPlane();
-//        Log.printlnConcat("Done syncing nodes. Continuing to the cloudlets batch...");
 
         // 1. Prepare payload
         String requestBody = serializeCloudletsForSubmission(getCloudletList());

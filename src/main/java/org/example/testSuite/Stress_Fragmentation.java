@@ -21,6 +21,7 @@ import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 import org.example.kubernetes_broker.Live_Kubernetes_Broker_Ex;
 import org.example.kubernetes_broker.PowerDatacenterCustom;
+import org.example.kubernetes_broker.PowerVmCustom;
 import org.example.metrics.SimulationMetrics;
 
 import java.text.DecimalFormat;
@@ -59,7 +60,7 @@ public class Stress_Fragmentation {
 		Vm[] vm = new Vm[vms];
 
 		for(int i=0;i<vms;i++){
-			vm[i] = new PowerVm(idShift + i, userId, mips, pesNumber, ram, bw, size,0, vmm, new CloudletSchedulerTimeShared(),500);
+			vm[i] = new PowerVmCustom(idShift + i, userId, mips, pesNumber, ram, bw, size,0, vmm, new CloudletSchedulerTimeShared(),500,-1);
 			list.add(vm[i]);
 		}
 
@@ -190,7 +191,7 @@ public class Stress_Fragmentation {
 		//    a Machine.
 		List<Pe> peList1 = new ArrayList<>();
 
-		int mips = 1000;
+		int mips = 250;
 
 		// 3. Create PEs and add these into the list.
 		//for a quad-core machine, a list of 4 PEs is required:
@@ -245,7 +246,7 @@ public class Stress_Fragmentation {
 		PowerDatacenterCustom datacenter = null;
 		try {
 			//datacenter = new Datacenter(name, characteristics, new VmAllocationPolicySimple(hostList), storageList, 2000);
-			datacenter = new PowerDatacenterCustom(name, characteristics, new VmAllocationPolicySimple(hostList), storageList, 100, true);
+			datacenter = new PowerDatacenterCustom(name, characteristics, new VmAllocationPolicySimple(hostList), storageList, 1, true);
 			datacenter.setDisableMigrations(true);
 		} catch (Exception e) {
 			e.printStackTrace();

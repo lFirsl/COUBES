@@ -25,6 +25,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
 
+
+/*
+NOTE: This is the OLD version of the Broker, before we decided to extend DatacenterBrokerEx instead.
+      Therefore, this version is now OUTDATED - it has been left here to prevent older test examples which made use of it
+      from breaking.
+ */
 public class Live_Kubernetes_Broker extends DatacenterBroker {
 
     private static final String CONTROL_PLANE_URL = "http://localhost:8080";
@@ -34,7 +40,6 @@ public class Live_Kubernetes_Broker extends DatacenterBroker {
     private final Map<Integer, Cloudlet> pendingCloudlets = new HashMap<>();
 
     private final Map<Integer, Cloudlet> pendingCloudletsForScheduling;
-    // Removed simulationTerminationInitiated flag as it's no longer needed for explicit termination calls.
 
     public Live_Kubernetes_Broker(String name) throws Exception {
         super(name);
@@ -57,8 +62,6 @@ public class Live_Kubernetes_Broker extends DatacenterBroker {
 
     @Override
     public void processEvent(SimEvent ev) {
-        // No need for a termination check here anymore, as we rely on natural shutdown.
-        // All events will be processed until CloudSim's queue is empty.
 
         switch (ev.getTag()) {
             case CloudActionTags.RESOURCE_CHARACTERISTICS_REQUEST -> processResourceCharacteristicsRequest(ev);
@@ -73,7 +76,6 @@ public class Live_Kubernetes_Broker extends DatacenterBroker {
             case CloudActionTags.END_OF_SIMULATION ->
                     Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": Received END_OF_SIMULATION event. Broker will now proceed with final cleanup.");
 
-            // CloudSim's core shutdown mechanism will handle calling shutdownEntity().
             case null, default -> processOtherEvent(ev);
         }
     }
@@ -130,7 +132,6 @@ public class Live_Kubernetes_Broker extends DatacenterBroker {
                     } else {
                         Log.printlnConcat(CloudSim.clock(), ": ", getName(),
                                 ": none of the required VMs/Containers could be created. CloudSim will terminate naturally when no more events remain.");
-                        // No explicit terminateSimulation() here.
                     }
                 }
             }
