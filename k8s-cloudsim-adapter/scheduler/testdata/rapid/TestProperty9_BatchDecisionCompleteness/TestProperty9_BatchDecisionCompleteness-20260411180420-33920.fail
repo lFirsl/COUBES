@@ -1,0 +1,19 @@
+# 2026/04/11 18:04:20.335927 [TestProperty9_BatchDecisionCompleteness] [rapid] draw numPods: 2
+# 2026/04/11 18:04:20.335927 [TestProperty9_BatchDecisionCompleteness] [rapid] draw podID_0: 1
+# 2026/04/11 18:04:20.335927 [TestProperty9_BatchDecisionCompleteness] [rapid] draw podID_1: 1
+# 2026/04/11 18:04:20.335927 [TestProperty9_BatchDecisionCompleteness] [rapid] draw decision_0: false
+# 2026/04/11 18:04:20.335927 [TestProperty9_BatchDecisionCompleteness] [rapid] draw decision_1: false
+# 2026/04/11 18:04:20.335927 [TestProperty9_BatchDecisionCompleteness] Pod ID 1 appears 2 times, expected 1
+# 
+v0.4.8#736373516487360976
+0x0
+0x0
+0x1
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
