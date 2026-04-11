@@ -1,0 +1,31 @@
+# 2026/04/11 17:58:35.204250 [TestProperty1_NodeStoreRoundTrip] [rapid] draw nodeCount: 2
+# 2026/04/11 17:58:35.204250 [TestProperty1_NodeStoreRoundTrip] [rapid] draw nodeName-0: 0
+# 2026/04/11 17:58:35.204250 [TestProperty1_NodeStoreRoundTrip] [rapid] draw cpu-0: 1
+# 2026/04/11 17:58:35.204250 [TestProperty1_NodeStoreRoundTrip] [rapid] draw mem-0: 1
+# 2026/04/11 17:58:35.204250 [TestProperty1_NodeStoreRoundTrip] [rapid] draw nodeName-1: 0
+# 2026/04/11 17:58:35.204250 [TestProperty1_NodeStoreRoundTrip] [rapid] draw cpu-1: 1
+# 2026/04/11 17:58:35.204250 [TestProperty1_NodeStoreRoundTrip] [rapid] draw mem-1: 1
+# 2026/04/11 17:58:35.204250 [TestProperty1_NodeStoreRoundTrip] expected 2 nodes, got 1
+# 
+v0.4.8#18314359077565085869
+0x0
+0x0
+0x1
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0

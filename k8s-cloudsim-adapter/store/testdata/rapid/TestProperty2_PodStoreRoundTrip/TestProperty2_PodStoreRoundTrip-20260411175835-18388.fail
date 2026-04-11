@@ -1,0 +1,15 @@
+# 2026/04/11 17:58:35.302526 [TestProperty2_PodStoreRoundTrip] [rapid] draw podCount: 2
+# 2026/04/11 17:58:35.302526 [TestProperty2_PodStoreRoundTrip] [rapid] draw podName-0: 0
+# 2026/04/11 17:58:35.302526 [TestProperty2_PodStoreRoundTrip] [rapid] draw podName-1: 0
+# 2026/04/11 17:58:35.302526 [TestProperty2_PodStoreRoundTrip] expected 2 pods, got 1
+# 
+v0.4.8#4839388972011946793
+0x0
+0x0
+0x1
+0x0
+0x0
+0x0
+0x0
+0x0
+0x0
