@@ -10,117 +10,38 @@ import (
 	"strings"
 )
 
-// CreateFakePod creates a KWOK-compatible fake pod with predefined spec
-func (c *Communicator) SendFakePodFromCs(csPod CsPod) error {
-	cpuStr := fmt.Sprintf("%d", csPod.Pes)
-
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("cspod-%d", csPod.ID),
-			Namespace: "default",
-			Labels: map[string]string{
-				"app": csPod.Name,
-			},
-			Annotations: map[string]string{
-				"cloudsim.io/id": fmt.Sprintf("%d", csPod.ID),
-			},
-		},
-		Spec: corev1.PodSpec{
-			SchedulerName: c.kubeClient.SchedulerName(),
-			Affinity: &corev1.Affinity{
-				NodeAffinity: &corev1.NodeAffinity{
-					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-						NodeSelectorTerms: []corev1.NodeSelectorTerm{
-							{
-								MatchExpressions: []corev1.NodeSelectorRequirement{
-									{
-										Key:      "type",
-										Operator: corev1.NodeSelectorOpIn,
-										Values:   []string{"kwok"},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			Tolerations: []corev1.Toleration{
-				{
-					Key:      "kwok.x-k8s.io/node",
-					Operator: corev1.TolerationOpExists,
-					Effect:   corev1.TaintEffectNoSchedule,
-				},
-			},
-			Containers: []corev1.Container{
-				{
-					Name:  "fake-container",
-					Image: "fake-image",
-					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU: resource.MustParse(cpuStr),
-						},
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU: resource.MustParse(cpuStr),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	err := c.kubeClient.SendPod(pod)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *Communicator) SendFakePodsFromCs(csPods []CsPod) error {
-	for _, csPod := range csPods {
-		if err := c.SendFakePodFromCs(csPod); err != nil {
-			return fmt.Errorf("failed to create pod %s: %w", csPod.Name, err)
-		}
-	}
-	return nil
-}
-
-func (c *Communicator) SendFakeNodeFromCs(csNode CsNode) error {
+// BuildNode constructs a v1.Node from a CsNode without KWOK-specific fields.
+// The node is ready for scheduling by a real kube-scheduler.
+func BuildNode(csNode CsNode, schedulerName string) *corev1.Node {
 	cpuStr := fmt.Sprintf("%d", csNode.Pes)
 	ramStr := fmt.Sprintf("%dMi", csNode.RAMAval)
 
-	node := &corev1.Node{
+	return &corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("csnode-%d", csNode.ID),
 			Labels: map[string]string{
-				"beta.kubernetes.io/arch":       "amd64",
-				"beta.kubernetes.io/os":         "linux",
-				"kubernetes.io/arch":            "amd64",
-				"kubernetes.io/hostname":        csNode.Name,
-				"kubernetes.io/os":              "linux",
-				"kubernetes.io/role":            "agent",
-				"node-role.kubernetes.io/agent": "",
-				"type":                          "kwok",
+				"kubernetes.io/hostname": csNode.Name,
+				"kubernetes.io/arch":     "amd64",
+				"kubernetes.io/os":       "linux",
 			},
 			Annotations: map[string]string{
-				"kwok.x-k8s.io/node":           "fake",
-				"node.alpha.kubernetes.io/ttl": "0",
-				"cloudsim.io/id":               fmt.Sprintf("%d", csNode.ID),
-				"cloudsim.io/type":             csNode.Type,
-				"cloudsim.io/bw":               fmt.Sprintf("%d", csNode.BW),
-				"cloudsim.io/size":             fmt.Sprintf("%d", csNode.Size),
+				"cloudsim.io/id":   fmt.Sprintf("%d", csNode.ID),
+				"cloudsim.io/type": csNode.Type,
+				"cloudsim.io/bw":   fmt.Sprintf("%d", csNode.BW),
+				"cloudsim.io/size": fmt.Sprintf("%d", csNode.Size),
 			},
 		},
 		Spec: corev1.NodeSpec{
-			Taints: []corev1.Taint{
-				{
-					Key:    "kwok.x-k8s.io/node",
-					Value:  "fake",
-					Effect: corev1.TaintEffectNoSchedule,
-				},
-			},
+			// No KWOK taints
 		},
 		Status: corev1.NodeStatus{
 			Phase: corev1.NodeRunning,
+			Conditions: []corev1.NodeCondition{
+				{
+					Type:   corev1.NodeReady,
+					Status: corev1.ConditionTrue,
+				},
+			},
 			Allocatable: corev1.ResourceList{
 				corev1.ResourceCPU:    resource.MustParse(cpuStr),
 				corev1.ResourceMemory: resource.MustParse(ramStr),
@@ -131,31 +52,43 @@ func (c *Communicator) SendFakeNodeFromCs(csNode CsNode) error {
 				corev1.ResourceMemory: resource.MustParse(ramStr),
 				corev1.ResourcePods:   resource.MustParse("110"),
 			},
-			NodeInfo: corev1.NodeSystemInfo{
-				Architecture:     "amd64",
-				OperatingSystem:  "linux",
-				KubeletVersion:   "fake",
-				KubeProxyVersion: "fake",
+		},
+	}
+}
+
+// BuildPod constructs a v1.Pod from a CsPod without KWOK-specific fields.
+// The pod is ready for scheduling by a real kube-scheduler.
+func BuildPod(csPod CsPod, schedulerName string) *corev1.Pod {
+	cpuStr := fmt.Sprintf("%d", csPod.Pes)
+
+	return &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("cspod-%d", csPod.ID),
+			Namespace: "default",
+			Annotations: map[string]string{
+				"cloudsim.io/id": fmt.Sprintf("%d", csPod.ID),
+			},
+		},
+		Spec: corev1.PodSpec{
+			SchedulerName: schedulerName,
+			// No KWOK tolerations or NodeAffinity
+			Containers: []corev1.Container{
+				{
+					Name:  "fake-container",
+					Image: "fake-image",
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU: resource.MustParse(cpuStr),
+						},
+					},
+				},
 			},
 		},
 	}
-
-	err := c.kubeClient.SendNode(node)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
-func (c *Communicator) SendFakeNodesFromCs(csNodes []CsNode) error {
-	for _, csNode := range csNodes {
-		if err := c.SendFakeNodeFromCs(csNode); err != nil {
-			return fmt.Errorf("failed to create node %s: %w", csNode.Name, err)
-		}
-	}
-	return nil
-}
-
+// ConvertToCsPod converts a Kubernetes v1.Pod back to a CsPod.
+// Used for reading pod state from the InMemoryStore.
 func ConvertToCsPod(k8sPod *corev1.Pod) CsPod {
 	id := 0
 	nodeID := -1
@@ -190,13 +123,14 @@ func ConvertToCsPod(k8sPod *corev1.Pod) CsPod {
 	return CsPod{
 		ID:            id,
 		Name:          k8sPod.Name,
-		Status:        status, //string(k8sPod.Status.Phase)
+		Status:        status,
 		NodeName:      k8sPod.Spec.NodeName,
 		NodeID:        nodeID,
 		SchedulerName: k8sPod.Spec.SchedulerName,
 	}
 }
 
+// ConvertToCsPods converts a slice of Kubernetes v1.Pod to CsPod slice.
 func ConvertToCsPods(k8sPods []*corev1.Pod) []CsPod {
 	var csPods []CsPod
 	for _, pod := range k8sPods {
@@ -205,6 +139,8 @@ func ConvertToCsPods(k8sPods []*corev1.Pod) []CsPod {
 	return csPods
 }
 
+// ConvertToCsNode converts a Kubernetes v1.Node back to a CsNode.
+// Used for reading node state from the InMemoryStore.
 func ConvertToCsNode(k8sNode *corev1.Node) CsNode {
 	id := 0
 	mips := 0
@@ -265,6 +201,7 @@ func ConvertToCsNode(k8sNode *corev1.Node) CsNode {
 	}
 }
 
+// ConvertToCsNodes converts a slice of Kubernetes v1.Node to CsNode slice.
 func ConvertToCsNodes(k8sNodes []*corev1.Node) []CsNode {
 	var csNodes []CsNode
 	for _, node := range k8sNodes {

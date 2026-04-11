@@ -1,34 +1,41 @@
 package communicator
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"k8s-cloudsim-adapter/kube_client"
+	"k8s-cloudsim-adapter/scheduler"
+	"k8s-cloudsim-adapter/store"
 	"k8s-cloudsim-adapter/utils"
 	corev1 "k8s.io/api/core/v1"
 	"log"
 	"net/http"
 	"strconv"
 	"sync"
-	"time"
 )
 
+// Communicator handles simulation-facing HTTP endpoints.
+// It is wired to InMemoryStore and SchedulingRound instead of KubeClient.
 type Communicator struct {
-	extenderURL string
-	mu          sync.RWMutex
-	pods        map[int]*CsPod
-	kubeClient  *kube_client.KubeClient
+	store         *store.InMemoryStore
+	round         *scheduler.SchedulingRound
+	schedulerName string
+	mu            sync.RWMutex
+	pods          map[int]*CsPod // Local tracking for pod status endpoint
 }
 
-func NewCommunicator(url string, kc *kube_client.KubeClient) *Communicator {
+// NewCommunicator creates a new Communicator with the given store, scheduling round, and scheduler name.
+func NewCommunicator(store *store.InMemoryStore, round *scheduler.SchedulingRound, schedulerName string) *Communicator {
 	return &Communicator{
-		extenderURL: url,
-		pods:        make(map[int]*CsPod),
-		kubeClient:  kc,
+		store:         store,
+		round:         round,
+		schedulerName: schedulerName,
+		pods:          make(map[int]*CsPod),
 	}
 }
 
-// HandleNodes processes node sync requests from CloudSim
+// HandleNodes processes node sync requests from CloudSim.
+// Decodes []CsNode and applies node diff against store (add missing, remove stale).
 func (c *Communicator) HandleNodes(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Starting HandleNodes()")
 	if r.Method != http.MethodPost {
@@ -42,80 +49,167 @@ func (c *Communicator) HandleNodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Step 1: Get current nodes from K8s cluster
-	k8sNodes, err := c.kubeClient.GetNodes()
-	if err != nil {
-		http.Error(w, "Error fetching current cluster nodes: "+err.Error(), http.StatusInternalServerError)
+	// Apply node diff
+	if err := c.applyNodeDiff(incomingNodes); err != nil {
+		http.Error(w, "Failed to apply node diff: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	currentMap := make(map[int]*corev1.Node)
-	for _, kNode := range k8sNodes {
-		if id, err := extractNodeID(kNode.Name); err == nil {
-			currentMap[id] = kNode
-		}
-	}
-
-	// Step 2: Build incoming map
-	incomingMap := map[int]CsNode{}
-	for _, node := range incomingNodes {
-		incomingMap[node.ID] = node
-	}
-
-	// Step 3: Determine deletions (nodes in cluster but missing from CloudSim)
-	var toDelete []*corev1.Node
-	for id, node := range currentMap {
-		if _, exists := incomingMap[id]; !exists {
-			toDelete = append(toDelete, node)
-		}
-	}
-
-	// Step 4: Determine additions (nodes in CloudSim but missing from cluster)
-	var toAdd []CsNode
-	for id, newNode := range incomingMap {
-		if _, exists := currentMap[id]; !exists {
-			toAdd = append(toAdd, newNode)
-		}
-	}
-
-	log.Printf("DEBUG: Nodes to add (%d) and delete (%d)", len(toAdd), len(toDelete))
-
-	// Step 5: Delete nodes
-	if len(toDelete) > 0 {
-		if err := c.kubeClient.DeleteNodes(toDelete); err != nil {
-			http.Error(w, "Failed to delete outdated nodes: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	// Step 6: Add nodes
-	if len(toAdd) > 0 {
-		if err := c.SendFakeNodesFromCs(toAdd); err != nil {
-			http.Error(w, "Failed to create new nodes: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	// Step 7: Wait for readiness
-	const maxAttempts = 20
-	const delay = time.Second
-	for i := 0; i < maxAttempts; i++ {
-		ok, err := c.kubeClient.AreAllNodesReady()
-		if err != nil {
-			http.Error(w, "Error checking node readiness: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if ok {
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, "Synced %d nodes (added: %d, deleted: %d)\n", len(incomingMap), len(toAdd), len(toDelete))
-			return
-		}
-		time.Sleep(delay)
-	}
-
-	http.Error(w, "Timeout waiting for all nodes to become ready", http.StatusRequestTimeout)
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Synced %d nodes\n", len(incomingNodes))
 }
 
+// HandleSchedule processes POST /schedule requests.
+// Decodes SimulationSnapshot, applies node diff, deletes completed pods, schedules pending pods.
+func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Starting HandleSchedule()")
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var snapshot SimulationSnapshot
+	if err := json.NewDecoder(r.Body).Decode(&snapshot); err != nil {
+		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Step 1: Apply node diff
+	if err := c.applyNodeDiff(snapshot.Nodes); err != nil {
+		http.Error(w, "Failed to apply node diff: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Step 2: Delete completed pods from store
+	for _, podID := range snapshot.CompletedPodIDs {
+		podName := fmt.Sprintf("cspod-%d", podID)
+		c.store.DeletePod(podName)
+		
+		// Also remove from local tracking
+		c.mu.Lock()
+		delete(c.pods, podID)
+		c.mu.Unlock()
+	}
+
+	// Step 3: If no pending pods, return empty BatchDecision immediately
+	if len(snapshot.Pods) == 0 {
+		decision := BatchDecision{
+			Scheduled:     []PodAssignment{},
+			Unschedulable: []PodFailure{},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(decision)
+		return
+	}
+
+	// Step 4: Create pods in store and begin scheduling round
+	for _, csPod := range snapshot.Pods {
+		pod := BuildPod(csPod, c.schedulerName)
+		c.store.CreatePod(pod)
+		
+		// Track in local memory for status endpoint
+		c.mu.Lock()
+		podCopy := csPod
+		if podCopy.Status == "" {
+			podCopy.Status = "Pending"
+		}
+		c.pods[csPod.ID] = &podCopy
+		c.mu.Unlock()
+	}
+
+	// Step 5: Begin scheduling round
+	if err := c.round.Begin(len(snapshot.Pods)); err != nil {
+		http.Error(w, err.Error(), http.StatusConflict) // HTTP 409 if round already active
+		return
+	}
+
+	// Step 6: Wait for BatchDecision
+	ctx := context.Background()
+	decision, err := c.round.Wait(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusRequestTimeout) // HTTP 408 on timeout
+		return
+	}
+
+	// Step 7: Return BatchDecision
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(decision)
+}
+
+// HandleSchedulePods processes POST /schedule-pods requests.
+// Decodes []CsPod, creates pods in store, begins scheduling round, returns BatchDecision.
+func (c *Communicator) HandleSchedulePods(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Starting HandleSchedulePods()")
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var csPods []CsPod
+	if err := json.NewDecoder(r.Body).Decode(&csPods); err != nil {
+		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Step 1: Create pods in store
+	for _, csPod := range csPods {
+		pod := BuildPod(csPod, c.schedulerName)
+		c.store.CreatePod(pod)
+		
+		// Track in local memory for status endpoint
+		c.mu.Lock()
+		podCopy := csPod
+		if podCopy.Status == "" {
+			podCopy.Status = "Pending"
+		}
+		c.pods[csPod.ID] = &podCopy
+		c.mu.Unlock()
+	}
+
+	// Step 2: Begin scheduling round
+	if err := c.round.Begin(len(csPods)); err != nil {
+		http.Error(w, err.Error(), http.StatusConflict) // HTTP 409 if round already active
+		return
+	}
+
+	// Step 3: Wait for BatchDecision
+	ctx := context.Background()
+	decision, err := c.round.Wait(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusRequestTimeout) // HTTP 408 on timeout
+		return
+	}
+
+	// Step 4: Return BatchDecision
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(decision)
+}
+
+// HandleReset processes DELETE /reset requests.
+// Calls round.Reset() then store.Reset().
+func (c *Communicator) HandleReset(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Only DELETE allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Reset scheduling round first
+	c.round.Reset()
+	
+	// Reset store
+	c.store.Reset()
+	
+	// Clear local pod tracking
+	c.mu.Lock()
+	c.pods = make(map[int]*CsPod)
+	c.mu.Unlock()
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Reset complete\n")
+}
+
+// HandlePodStatus processes GET /pods/{id}/status requests.
+// Looks up pod in store by CloudSim ID and returns CsPod JSON or HTTP 404.
 func (c *Communicator) HandlePodStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Only GET method is allowed", http.StatusMethodNotAllowed)
@@ -136,134 +230,50 @@ func (c *Communicator) HandlePodStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.mu.RLock()
-	defer c.mu.RUnlock()
 	pod, exists := c.pods[podID]
+	c.mu.RUnlock()
+	
 	if !exists {
 		http.Error(w, "CsPod not found", http.StatusNotFound)
 		return
 	}
+	
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(pod)
 }
 
-func (c *Communicator) HandleBatchPods(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Starting HandleBatchPods()")
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Step 1: Decode input
-	var newPods []CsPod
-	if err := json.NewDecoder(r.Body).Decode(&newPods); err != nil {
-		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Step 2: Track them in communicator memory
-	c.mu.Lock()
-	for i := range newPods {
-		if newPods[i].Status == "" {
-			newPods[i].Status = "Pending"
+// applyNodeDiff applies a node diff against the InMemoryStore.
+// Adds missing nodes and removes stale nodes to match the incoming list exactly.
+func (c *Communicator) applyNodeDiff(incomingNodes []CsNode) error {
+	// Step 1: Get current nodes from store
+	currentNodes := c.store.GetNodes()
+	currentMap := make(map[int]*corev1.Node)
+	for _, node := range currentNodes {
+		if id, err := extractNodeID(node.Name); err == nil {
+			currentMap[id] = node
 		}
-		podCopy := newPods[i]
-		c.pods[podCopy.ID] = &podCopy
 	}
-	c.mu.Unlock()
 
-	// Step 3: Send to Kubernetes
-	if err := c.SendFakePodsFromCs(newPods); err != nil {
-		http.Error(w, "Failed to send pods to Kubernetes: "+err.Error(), http.StatusInternalServerError)
-		return
+	// Step 2: Build incoming map
+	incomingMap := make(map[int]CsNode)
+	for _, node := range incomingNodes {
+		incomingMap[node.ID] = node
 	}
-	log.Printf("Sent %d fake pods to Kubernetes", len(newPods))
 
-	// Step 4: Wait until they are all scheduled
-	const maxAttempts = 30
-	const delay = time.Second
-	scheduled := false
-
-	for i := 0; i < maxAttempts; i++ {
-		ok, err := c.kubeClient.AreAllPodsScheduled("")
-		if err != nil {
-			http.Error(w, "Error checking pod scheduling: "+err.Error(), http.StatusInternalServerError)
-			return
+	// Step 3: Determine deletions (nodes in store but missing from incoming)
+	for id, node := range currentMap {
+		if _, exists := incomingMap[id]; !exists {
+			c.store.DeleteNode(node.Name)
 		}
-		if ok {
-			scheduled = true
-			break
+	}
+
+	// Step 4: Determine additions (nodes in incoming but missing from store)
+	for id, csNode := range incomingMap {
+		if _, exists := currentMap[id]; !exists {
+			node := BuildNode(csNode, c.schedulerName)
+			c.store.CreateNode(node)
 		}
-		time.Sleep(delay)
 	}
 
-	if !scheduled {
-		http.Error(w, "Timeout: Not all pods were scheduled in time", http.StatusRequestTimeout)
-		return
-	}
-
-	// Step 5: Fetch from Kubernetes
-	k8sPods, err := c.kubeClient.GetPods("default")
-	if err != nil {
-		http.Error(w, "Failed to fetch pods from Kubernetes: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Step 6: Convert to []CsPod
-	csPods := ConvertToCsPods(k8sPods)
-
-	log.Printf("Pods scheduling success - returning response")
-	for _, pod := range csPods {
-		log.Println("Pod", pod.ID, "assigned to node", pod.NodeID)
-	}
-
-	// Step 7: Return result
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(csPods); err != nil {
-		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	log.Println("Response sent successfully with", len(csPods), "pods")
-
-}
-
-func (c *Communicator) HandleDeleteCloudletAndWait(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Accept array of pods for consistency (even if only one)
-	var csPods []CsPod
-	if err := json.NewDecoder(r.Body).Decode(&csPods); err != nil {
-		http.Error(w, "Invalid JSON payload: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if len(csPods) == 0 {
-		http.Error(w, "No cloudlet provided", http.StatusBadRequest)
-		return
-	}
-
-	// Take first pod
-	csPod := csPods[0]
-
-	newPods, err := c.kubeClient.DeletePodAndWaitForRescheduling(csPod.ID)
-	if err != nil {
-		http.Error(w, "Error during deletion and rescheduling: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	csPodsResult := ConvertToCsPods(newPods)
-	if len(csPodsResult) != 0 {
-		log.Printf("Assigning Pod %d to Node %d...", csPodsResult[0].ID, csPodsResult[0].NodeID)
-	} else {
-		log.Printf("No new pods to assign...")
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(csPodsResult); err != nil {
-		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	return nil
 }

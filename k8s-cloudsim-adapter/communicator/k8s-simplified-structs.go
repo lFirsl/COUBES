@@ -1,5 +1,7 @@
 package communicator
 
+import "time"
+
 // CsNode represents a simulated Kubernetes CsNode (which maps to a CloudSim VM or Container).
 type CsNode struct {
 	ID       int    `json:"id"`            // Unique identifier for the node (CloudSim VM/Container ID)
@@ -31,27 +33,32 @@ type CsPod struct {
 	SchedulerName string `json:"schedulerName,omitempty"`
 }
 
-// --- Simplified Kubernetes Extender API Structs ---
-// These structs mimic the actual Kubernetes Extender API payloads,
-// used for communication between the control plane and the mock scheduler extender.
+// --- Batch Protocol Structs ---
 
-// ExtenderArgs is the payload sent to the extender's filter/prioritize endpoints.
-type ExtenderArgs struct {
-	Pod   *CsPod   `json:"pod"`   // The pod to be scheduled
-	Nodes []CsNode `json:"nodes"` // The list of available nodes for scheduling
+// SimulationSnapshot represents the complete state of nodes and pending pods sent by the Broker
+// to the Adapter at the start of each SchedulingRound.
+type SimulationSnapshot struct {
+	Nodes           []CsNode `json:"nodes"`           // All active VMs as CsNode objects
+	Pods            []CsPod  `json:"pods"`            // All pending cloudlets as CsPod objects
+	CompletedPodIDs []int    `json:"completedPodIds"` // Cloudlet IDs that have completed since the last round
 }
 
-// ExtenderFilterResult is the payload received from the extender's filter endpoint.
-type ExtenderFilterResult struct {
-	Nodes *[]CsNode `json:"nodes,omitempty"` // Filtered list of nodes that are viable for the pod
-	// Additional fields like FailedNodes, Error could be added for more detailed responses
+// BatchDecision represents the complete set of pod-to-node assignments (and failures) returned by
+// the Adapter to the Broker at the end of a SchedulingRound.
+type BatchDecision struct {
+	Scheduled     []PodAssignment `json:"scheduled"`     // Successfully scheduled pods
+	Unschedulable []PodFailure    `json:"unschedulable"` // Pods that could not be scheduled
 }
 
-// HostPriority is an item in HostPriorityList, indicating a node's score.
-type HostPriority struct {
-	Host  string `json:"host"`  // The name of the host (node)
-	Score int64  `json:"score"` // The scheduling score for this host
+// PodAssignment represents a single pod-to-node assignment with binding timestamp.
+type PodAssignment struct {
+	PodID            int       `json:"podId"`            // CloudSim cloudlet ID
+	NodeID           int       `json:"nodeId"`           // CloudSim VM ID
+	BindingTimestamp time.Time `json:"bindingTimestamp"` // Wall-clock time when binding was recorded
 }
 
-// HostPriorityList is the payload received from the extender's prioritize endpoint.
-type HostPriorityList []HostPriority
+// PodFailure represents a pod that could not be scheduled.
+type PodFailure struct {
+	PodID  int    `json:"podId"` // CloudSim cloudlet ID
+	Reason string `json:"reason"` // Failure reason from scheduler
+}
