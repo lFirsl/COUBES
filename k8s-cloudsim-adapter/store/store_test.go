@@ -474,6 +474,77 @@ func TestProperty5_ResetProducesEmptyStore(t *testing.T) {
 	})
 }
 
+// Feature: coubes-next-phase, Property 6: Reset empties store
+// **Validates: Requirements 3.4**
+// For any adapter state (arbitrary nodes and pods registered), calling Reset() must result
+// in an empty InMemoryStore (zero nodes, zero pods) regardless of prior state.
+func TestProperty6_ResetEmptiesStore(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		store := NewInMemoryStore()
+		defer store.cancel()
+
+		// Generate arbitrary nodes
+		nodeCount := rapid.IntRange(0, 30).Draw(t, "nodeCount")
+		for i := 0; i < nodeCount; i++ {
+			nodeName := fmt.Sprintf("csnode-%d", rapid.IntRange(0, 100000).Draw(t, fmt.Sprintf("nodeID-%d", i)))
+			node := &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: nodeName,
+				},
+				Status: corev1.NodeStatus{
+					Capacity: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%dm", rapid.IntRange(100, 64000).Draw(t, fmt.Sprintf("cpu-%d", i)))),
+						corev1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dMi", rapid.IntRange(128, 262144).Draw(t, fmt.Sprintf("mem-%d", i)))),
+					},
+				},
+			}
+			store.CreateNode(node)
+		}
+
+		// Generate arbitrary pods
+		podCount := rapid.IntRange(0, 50).Draw(t, "podCount")
+		for i := 0; i < podCount; i++ {
+			podName := fmt.Sprintf("cspod-%d", rapid.IntRange(0, 100000).Draw(t, fmt.Sprintf("podID-%d", i)))
+			pod := &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      podName,
+					Namespace: "default",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "container",
+							Image: "busybox",
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%dm", rapid.IntRange(10, 4000).Draw(t, fmt.Sprintf("podCPU-%d", i)))),
+									corev1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dMi", rapid.IntRange(16, 8192).Draw(t, fmt.Sprintf("podMem-%d", i)))),
+								},
+							},
+						},
+					},
+				},
+			}
+			store.CreatePod(pod)
+		}
+
+		// Call Reset
+		store.Reset()
+
+		// Assert GetNodes() returns empty slice
+		nodes := store.GetNodes()
+		if len(nodes) != 0 {
+			t.Fatalf("after Reset(), GetNodes() returned %d nodes, expected 0", len(nodes))
+		}
+
+		// Assert GetPods() returns empty slice
+		pods := store.GetPods()
+		if len(pods) != 0 {
+			t.Fatalf("after Reset(), GetPods() returned %d pods, expected 0", len(pods))
+		}
+	})
+}
+
 // Test BroadcastServer basic functionality
 func TestBroadcastServer_BasicFunctionality(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())

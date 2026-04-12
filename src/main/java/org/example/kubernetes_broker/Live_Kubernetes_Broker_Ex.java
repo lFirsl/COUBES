@@ -9,6 +9,7 @@ import org.cloudbus.cloudsim.EX.DatacenterBrokerEX;
 import org.cloudbus.cloudsim.container.core.Container;
 import org.cloudbus.cloudsim.core.*;
 import org.cloudbus.cloudsim.lists.VmList;
+import org.example.metrics.PerformanceMetrics;
 
 import java.io.IOException;
 import java.net.URI;
@@ -28,6 +29,12 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     //Maps
     HashMap<Integer,Cloudlet> cloudletsSubmittedToMiddle;
     HashMap<Integer,Cloudlet> cloudletsReadyForCloudsim;
+    
+    // Completed cloudlet IDs to send in next snapshot
+    private final List<Integer> completedSinceLastRound = new ArrayList<>();
+    
+    // Optional PerformanceMetrics integration
+    private PerformanceMetrics performanceMetrics;
 
     //Variables for throughput rolling average metrics (Prototype, not yet validated)
     // --- Throughput metrics (pods/sec) ---
@@ -50,6 +57,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         this.httpClient = HttpClient.newHttpClient();
         this.cloudletsSubmittedToMiddle = new HashMap<Integer,Cloudlet>();
         this.cloudletsReadyForCloudsim = new HashMap<Integer,Cloudlet>();
+        this.performanceMetrics = null;
     }
 
     public Live_Kubernetes_Broker_Ex(String name, double lifeLength) throws Exception {
@@ -57,6 +65,15 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         this.httpClient = HttpClient.newHttpClient();
         this.cloudletsSubmittedToMiddle = new HashMap<Integer,Cloudlet>();
         this.cloudletsReadyForCloudsim = new HashMap<Integer,Cloudlet>();
+        this.performanceMetrics = null;
+    }
+    
+    /**
+     * Sets the optional PerformanceMetrics instance for tracking scheduling latency and throughput.
+     * @param perf the PerformanceMetrics instance, or null to disable performance tracking
+     */
+    public void setPerformanceMetrics(PerformanceMetrics perf) {
+        this.performanceMetrics = perf;
     }
 
     @Override
@@ -165,23 +182,173 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     protected void submitCloudlets() {
         Log.println("Submitting all cloudlets to Control Plane in a single batch...");
 
-        // 1. Prepare payload
-        String requestBody = serializeCloudletsForSubmission(getCloudletList());
-        if (requestBody == null){
-            Log.printlnConcat(CloudSim.clock(),": Request body is null?");
-            return;
+        // 1. Record submission timestamps for performance metrics
+        for (Cloudlet cloudlet : getCloudletList()) {
+            if (performanceMetrics != null) {
+                performanceMetrics.recordSubmission(cloudlet.getCloudletId());
+            }
         }
+
+        // 2. Build SimulationSnapshot
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode snapshot = mapper.createObjectNode();
+        
+        // Add nodes
+        ArrayNode nodesArray = mapper.createArrayNode();
+        for (GuestEntity guest : getGuestsCreatedList()) {
+            ObjectNode nodeJson = mapper.createObjectNode();
+            nodeJson.put("id", guest.getId());
+            nodeJson.put("mipsAvailable", (int) guest.getMips());
+            nodeJson.put("ramAvailable", guest.getRam());
+            nodeJson.put("pes", guest.getNumberOfPes());
+            nodeJson.put("bw", guest.getBw());
+            nodeJson.put("size", guest.getSize());
+            nodeJson.put("type", guest instanceof Vm ? "vm" : "container");
+            String name = guest instanceof Vm ? "vm-" + guest.getId()
+                    : guest instanceof Container ? "container-" + guest.getId()
+                    : "guest-" + guest.getId();
+            nodeJson.put("name", name);
+            nodesArray.add(nodeJson);
+        }
+        snapshot.set("nodes", nodesArray);
+        
+        // Add pending pods
+        ArrayNode podsArray = mapper.createArrayNode();
+        for (Cloudlet cloudlet : getCloudletList()) {
+            ObjectNode podJson = mapper.createObjectNode();
+            podJson.put("id", cloudlet.getCloudletId());
+            podJson.put("name", "cloudlet-" + cloudlet.getCloudletId());
+            podJson.put("length", cloudlet.getCloudletLength());
+            podJson.put("pes", cloudlet.getNumberOfPes());
+            podJson.put("fileSize", cloudlet.getCloudletFileSize());
+            podJson.put("outputSize", cloudlet.getCloudletOutputSize());
+            podJson.put("utilizationCpu", cloudlet.getUtilizationModelCpu().getUtilization(0));
+            podJson.put("utilizationRam", cloudlet.getUtilizationModelRam().getUtilization(0));
+            podJson.put("utilizationBw", cloudlet.getUtilizationModelBw().getUtilization(0));
+            podsArray.add(podJson);
+            cloudletsSubmittedToMiddle.put(cloudlet.getCloudletId(), cloudlet);
+        }
+        snapshot.set("pods", podsArray);
+        
+        // Add completed pod IDs
+        ArrayNode completedArray = mapper.createArrayNode();
+        for (Integer completedId : completedSinceLastRound) {
+            completedArray.add(completedId);
+        }
+        snapshot.set("completedPodIds", completedArray);
+        completedSinceLastRound.clear();
+        
         getCloudletList().clear();
 
-        // 2. Submit to control plane
-        ArrayNode scheduledPods = submitCloudletBatchToMiddleware(requestBody);
-        if (scheduledPods == null){
-            Log.printlnConcat(CloudSim.clock(),": No pods to schedule. Skipping pod response process");
+        // 3. Submit to control plane via POST /schedule
+        BatchDecisionResponse batchDecision = submitSimulationSnapshot(snapshot);
+        if (batchDecision == null) {
+            Log.printlnConcat(CloudSim.clock(), ": No batch decision received. Skipping pod response process");
             return;
         }
 
-        // 3. Process scheduling result
-        processScheduledPodsResponse(scheduledPods);
+        // 4. Process scheduling result
+        processBatchDecision(batchDecision);
+    }
+
+    private BatchDecisionResponse submitSimulationSnapshot(ObjectNode snapshot) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.findAndRegisterModules(); // Register JSR310 module for Instant deserialization
+            String requestBody = mapper.writeValueAsString(snapshot);
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(CONTROL_PLANE_URL + "/schedule"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
+
+            // Determine how many pods we're sending in this batch
+            final int podsInBatch = snapshot.get("pods").size();
+
+            final long t0 = System.nanoTime();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            final long t1 = System.nanoTime();
+
+            // Record throughput metrics (even on non-200)
+            tpRecord(podsInBatch, t1 - t0);
+
+            if (response.statusCode() == 200) {
+                Log.printlnConcat(getName(), ": Batch scheduled. "
+                        , "inst=", String.format("%.2f", (podsInBatch / ((t1 - t0) / 1e9)))
+                        , " pods/s; ewma=", String.format("%.2f", tpEwma())
+                        , "; window(", TP_WINDOW, ")=", String.format("%.2f", tpWindowAvg())
+                        , "; overall=", String.format("%.2f", tpOverall())
+                        , " [batches=", tpBatchCount(), "]"
+                );
+                
+                BatchDecisionResponse batchDecision = mapper.readValue(response.body(), BatchDecisionResponse.class);
+                
+                // Record batch decision for performance metrics
+                if (performanceMetrics != null) {
+                    performanceMetrics.recordBatchDecision(batchDecision);
+                }
+                
+                return batchDecision;
+            } else if (response.statusCode() == 408) {
+                Log.printlnConcat(getName(), ": Scheduling timeout (HTTP 408). Marking all pending cloudlets as failed.");
+                // Mark all pending cloudlets as failed
+                for (Cloudlet cloudlet : cloudletsSubmittedToMiddle.values()) {
+                    cloudlet.setCloudletStatus(Cloudlet.CloudletStatus.FAILED);
+                    getCloudletReceivedList().add(cloudlet);
+                }
+                cloudletsSubmittedToMiddle.clear();
+                return null;
+            } else {
+                Log.printlnConcat(getName(), ": Failed to schedule batch. HTTP ", response.statusCode(), ": ", response.body());
+                throw new RuntimeException("Adapter returned HTTP " + response.statusCode() + ": " + response.body());
+            }
+        } catch (Exception e) {
+            Log.printlnConcat(getName(), ": Error scheduling cloudlets: ", e.getMessage());
+            throw new RuntimeException("Error scheduling cloudlets", e);
+        }
+    }
+
+    private void processBatchDecision(BatchDecisionResponse batchDecision) {
+        Log.printlnConcat(getName(), ": Processing batch decision");
+        
+        // Process scheduled pods
+        if (batchDecision.getScheduled() != null) {
+            for (BatchDecisionResponse.PodAssignment assignment : batchDecision.getScheduled()) {
+                int cloudletId = assignment.getPodId();
+                int nodeId = assignment.getNodeId();
+                
+                Cloudlet cloudlet = cloudletsSubmittedToMiddle.getOrDefault(cloudletId, null);
+                if (cloudlet == null) {
+                    Log.printlnConcat(getName(), ": Pod ", cloudletId, " not found in pending cloudlets for scheduling. It was supposed to be on node ", nodeId);
+                    continue;
+                }
+                
+                Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": Pod ", cloudletId, " scheduled on node ", nodeId);
+                submitCloudletToVmInCloudSim(cloudlet, nodeId);
+                cloudletsSubmittedToMiddle.remove(cloudletId);
+                cloudletsReadyForCloudsim.put(cloudletId, cloudlet);
+            }
+        }
+        
+        // Process unschedulable pods
+        if (batchDecision.getUnschedulable() != null) {
+            for (BatchDecisionResponse.PodFailure failure : batchDecision.getUnschedulable()) {
+                int cloudletId = failure.getPodId();
+                String reason = failure.getReason();
+                
+                Cloudlet cloudlet = cloudletsSubmittedToMiddle.getOrDefault(cloudletId, null);
+                if (cloudlet != null) {
+                    Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": Pod ", cloudletId, " is unschedulable: ", reason);
+                    cloudlet.setCloudletStatus(Cloudlet.CloudletStatus.FAILED);
+                    cloudletsSubmittedToMiddle.remove(cloudletId);
+                    getCloudletReceivedList().add(cloudlet);
+                }
+            }
+        }
+
+        Log.println("Finished scheduling batch. Submitting to CloudSim.");
+        cloudSimAllocation();
     }
 
     private String serializeCloudletsForSubmission(List<Cloudlet> cloudletList){
@@ -358,11 +525,11 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
 
     @Override
     protected void processCloudletReturn(SimEvent ev) {
-//        sendAllActiveNodesToControlPlane();
         Cloudlet cloudlet = (Cloudlet) ev.getData();
         Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": ", cloudlet.getClass().getSimpleName()," #", cloudlet.getCloudletId(), " return received");
 
-        updateMiddleware(cloudlet);
+        // Add completed cloudlet ID to list for next snapshot
+        completedSinceLastRound.add(cloudlet.getCloudletId());
 
         if (getLifeLength() <= 0 && cloudletsSubmittedToMiddle.isEmpty() && cloudletsReadyForCloudsim.isEmpty()) {
             // Will kill the broker if there are no more cloudlets.
@@ -370,58 +537,6 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         } else {
             getCloudletReceivedList().add(cloudlet);
             cloudletsSubmitted--;
-        }
-
-
-    }
-
-    private void updateMiddleware(Cloudlet cloudlet) {
-        Log.printlnConcat("Deleting cloudlet ", cloudlet.getCloudletId(), " from the control panel.");
-
-
-        String jsonPayload = serializeSingleCloudletForSubmission(cloudlet,true);
-        ArrayNode newCloudlets = deleteCloudletAndWait(jsonPayload);
-
-        if (newCloudlets == null || newCloudlets.isEmpty()) {
-            Log.println("No new cloudlets to submit.");
-        }
-        else {
-            Cloudlet newcloudlet = cloudletsSubmittedToMiddle.get(newCloudlets.get(0).get("id").asInt());
-            Log.printlnConcat("New cloudlet to submit: ", newcloudlet.getCloudletId(), ". Proceeding...");
-            processScheduledPodsResponse(newCloudlets);
-        }
-
-    }
-    public ArrayNode deleteCloudletAndWait(String jsonPayload) {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(CONTROL_PLANE_URL + "/pods/update-state"))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                Log.println("Cloudlet deletion and wait successful. Response: " + response.body());
-
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode rootNode = mapper.readTree(response.body());
-
-                if (rootNode.isArray()) {
-                    return (ArrayNode) rootNode;
-                } else {
-                    Log.println("Expected an array in response, got: " + rootNode);
-                    return null;
-                }
-            } else {
-                Log.println("Failed to delete cloudlet. Status: " + response.statusCode() + " Body: " + response.body());
-                return null;
-            }
-        } catch (IOException | InterruptedException e) {
-            Log.println("Error during cloudlet deletion request: " + e.getMessage());
-            Thread.currentThread().interrupt();
-            return null;
         }
     }
 
@@ -450,11 +565,11 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
             if (response.statusCode() == 200) {
                 Log.println("Sent reset request to Control Plane.");
             } else {
-                Log.println("Failed to reset Control Plane. Status: " + response.statusCode()
+                Log.println("WARNING: Failed to reset Control Plane. Status: " + response.statusCode()
                         + ", Body: " + response.body());
             }
         } catch (IOException | InterruptedException e) {
-            Log.println("Error sending reset request to Control Plane: " + e.getMessage());
+            Log.println("WARNING: Error sending reset request to Control Plane: " + e.getMessage());
             Thread.currentThread().interrupt();
         }
     }

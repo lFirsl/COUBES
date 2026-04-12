@@ -22,16 +22,26 @@ type Communicator struct {
 	schedulerName string
 	mu            sync.RWMutex
 	pods          map[int]*CsPod // Local tracking for pod status endpoint
+	testMode      bool
+	testSched     *scheduler.TestModeScheduler // nil in normal mode
 }
 
 // NewCommunicator creates a new Communicator with the given store, scheduling round, and scheduler name.
-func NewCommunicator(store *store.InMemoryStore, round *scheduler.SchedulingRound, schedulerName string) *Communicator {
-	return &Communicator{
+// When testMode is true, testSched is initialised and round is ignored (can be nil).
+func NewCommunicator(store *store.InMemoryStore, round *scheduler.SchedulingRound, schedulerName string, testMode bool) *Communicator {
+	comm := &Communicator{
 		store:         store,
 		round:         round,
 		schedulerName: schedulerName,
 		pods:          make(map[int]*CsPod),
+		testMode:      testMode,
 	}
+	
+	if testMode {
+		comm.testSched = &scheduler.TestModeScheduler{}
+	}
+	
+	return comm
 }
 
 // HandleNodes processes node sync requests from CloudSim.
@@ -117,27 +127,57 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 		c.mu.Unlock()
 	}
 
-	// Step 5: Begin scheduling round
-	if err := c.round.Begin(len(snapshot.Pods)); err != nil {
-		http.Error(w, err.Error(), http.StatusConflict) // HTTP 409 if round already active
-		return
+	// Step 5: Branch on test mode
+	var decision scheduler.BatchDecision
+	
+	if c.testMode {
+		// Test mode: call TestModeScheduler synchronously
+		csNodes := c.store.GetNodes()
+		nodes := make([]scheduler.SchedulerNode, len(csNodes))
+		for i, node := range csNodes {
+			nodeID, err := extractNodeID(node.Name)
+			if err != nil {
+				nodeID = -1 // fallback for invalid node names
+			}
+			nodes[i] = scheduler.SchedulerNode{
+				ID:   nodeID,
+				Name: node.Name,
+			}
+		}
+		
+		pods := make([]scheduler.SchedulerPod, len(snapshot.Pods))
+		for i, csPod := range snapshot.Pods {
+			pods[i] = scheduler.SchedulerPod{
+				ID:   csPod.ID,
+				Name: csPod.Name,
+			}
+		}
+		
+		decision = c.testSched.Schedule(pods, nodes)
+	} else {
+		// Normal mode: use SchedulingRound
+		if err := c.round.Begin(len(snapshot.Pods)); err != nil {
+			http.Error(w, err.Error(), http.StatusConflict) // HTTP 409 if round already active
+			return
+		}
+
+		ctx := context.Background()
+		var err error
+		decision, err = c.round.Wait(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusRequestTimeout) // HTTP 408 on timeout
+			return
+		}
 	}
 
-	// Step 6: Wait for BatchDecision
-	ctx := context.Background()
-	decision, err := c.round.Wait(ctx)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusRequestTimeout) // HTTP 408 on timeout
-		return
-	}
-
-	// Step 7: Return BatchDecision
+	// Step 6: Return BatchDecision
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(decision)
 }
 
 // HandleSchedulePods processes POST /schedule-pods requests.
 // Decodes []CsPod, creates pods in store, begins scheduling round, returns BatchDecision.
+// In test mode, calls TestModeScheduler synchronously; in normal mode, uses SchedulingRound.
 func (c *Communicator) HandleSchedulePods(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Starting HandleSchedulePods()")
 	if r.Method != http.MethodPost {
@@ -166,21 +206,135 @@ func (c *Communicator) HandleSchedulePods(w http.ResponseWriter, r *http.Request
 		c.mu.Unlock()
 	}
 
-	// Step 2: Begin scheduling round
-	if err := c.round.Begin(len(csPods)); err != nil {
-		http.Error(w, err.Error(), http.StatusConflict) // HTTP 409 if round already active
+	// Step 2: Branch on test mode
+	var decision scheduler.BatchDecision
+	
+	if c.testMode {
+		// Test mode: call TestModeScheduler synchronously
+		csNodes := c.store.GetNodes()
+		nodes := make([]scheduler.SchedulerNode, len(csNodes))
+		for i, node := range csNodes {
+			nodeID, err := extractNodeID(node.Name)
+			if err != nil {
+				nodeID = -1 // fallback for invalid node names
+			}
+			nodes[i] = scheduler.SchedulerNode{
+				ID:   nodeID,
+				Name: node.Name,
+			}
+		}
+		
+		pods := make([]scheduler.SchedulerPod, len(csPods))
+		for i, csPod := range csPods {
+			pods[i] = scheduler.SchedulerPod{
+				ID:   csPod.ID,
+				Name: csPod.Name,
+			}
+		}
+		
+		decision = c.testSched.Schedule(pods, nodes)
+	} else {
+		// Normal mode: use SchedulingRound
+		if err := c.round.Begin(len(csPods)); err != nil {
+			http.Error(w, err.Error(), http.StatusConflict) // HTTP 409 if round already active
+			return
+		}
+
+		ctx := context.Background()
+		var err error
+		decision, err = c.round.Wait(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusRequestTimeout) // HTTP 408 on timeout
+			return
+		}
+	}
+
+	// Step 3: Return BatchDecision
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(decision)
+}
+
+// HandleUpdateState processes POST /pods/update-state requests.
+// Decodes request body containing the completed pod ID, deletes the pod from store and local tracking.
+// In test mode: collects pending pods (pods with no nodeName), calls TestModeScheduler.Schedule, returns BatchDecision.
+// In normal mode: returns HTTP 200 with empty BatchDecision (no external scheduler interaction needed).
+// Returns HTTP 404 if pod ID not found.
+func (c *Communicator) HandleUpdateState(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Starting HandleUpdateState()")
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Step 3: Wait for BatchDecision
-	ctx := context.Background()
-	decision, err := c.round.Wait(ctx)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusRequestTimeout) // HTTP 408 on timeout
+	// Decode request body containing completed pod ID
+	var req struct {
+		PodID int `json:"podId"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Step 4: Return BatchDecision
+	// Check if pod exists
+	c.mu.RLock()
+	_, exists := c.pods[req.PodID]
+	c.mu.RUnlock()
+	
+	if !exists {
+		http.Error(w, "Pod not found", http.StatusNotFound)
+		return
+	}
+
+	// Delete the pod from store and local tracking
+	podName := fmt.Sprintf("cspod-%d", req.PodID)
+	c.store.DeletePod(podName)
+	
+	c.mu.Lock()
+	delete(c.pods, req.PodID)
+	c.mu.Unlock()
+
+	// Branch on test mode
+	var decision scheduler.BatchDecision
+	
+	if c.testMode {
+		// Test mode: collect pending pods and reschedule
+		c.mu.RLock()
+		var pendingPods []scheduler.SchedulerPod
+		for id, pod := range c.pods {
+			if pod.NodeName == "" {
+				pendingPods = append(pendingPods, scheduler.SchedulerPod{
+					ID:   id,
+					Name: pod.Name,
+				})
+			}
+		}
+		c.mu.RUnlock()
+		
+		// Get nodes from store
+		csNodes := c.store.GetNodes()
+		nodes := make([]scheduler.SchedulerNode, len(csNodes))
+		for i, node := range csNodes {
+			nodeID, err := extractNodeID(node.Name)
+			if err != nil {
+				nodeID = -1 // fallback for invalid node names
+			}
+			nodes[i] = scheduler.SchedulerNode{
+				ID:   nodeID,
+				Name: node.Name,
+			}
+		}
+		
+		// Schedule pending pods
+		decision = c.testSched.Schedule(pendingPods, nodes)
+	} else {
+		// Normal mode: return empty BatchDecision
+		decision = scheduler.BatchDecision{
+			Scheduled:     []scheduler.PodAssignment{},
+			Unschedulable: []scheduler.PodFailure{},
+		}
+	}
+
+	// Return BatchDecision
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(decision)
 }
@@ -193,12 +347,18 @@ func (c *Communicator) HandleReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Reset scheduling round first
-	c.round.Reset()
-	
-	// Reset store
+	// Reset scheduling round (only in normal mode)
+	if !c.testMode && c.round != nil {
+		c.round.Reset()
+	}
+
+	// Emit DELETED events for all pods and nodes before resetting,
+	// so the kube-scheduler's internal cache is properly cleared.
+	c.store.DeleteAll()
+
+	// Reset store (recreates channels/broadcasters)
 	c.store.Reset()
-	
+
 	// Clear local pod tracking
 	c.mu.Lock()
 	c.pods = make(map[int]*CsPod)

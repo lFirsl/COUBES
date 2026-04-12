@@ -214,6 +214,36 @@ func (s *InMemoryStore) GetResourceVersion() int64 {
 	return s.resourceVersion
 }
 
+// DeleteAll emits DELETED watch events for every pod and node currently in the store,
+// then removes them. This allows the kube-scheduler's internal cache to drain cleanly
+// before a Reset() recreates the broadcast channels.
+func (s *InMemoryStore) DeleteAll() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for name, pod := range s.pods {
+		deletedPod := pod.DeepCopy()
+		s.resourceVersion++
+		deletedPod.ResourceVersion = fmt.Sprintf("%d", s.resourceVersion)
+		delete(s.pods, name)
+		s.podEventCh <- metav1.WatchEvent{
+			Type:   "DELETED",
+			Object: runtime.RawExtension{Object: deletedPod},
+		}
+	}
+
+	for name, node := range s.nodes {
+		deletedNode := node.DeepCopy()
+		s.resourceVersion++
+		deletedNode.ResourceVersion = fmt.Sprintf("%d", s.resourceVersion)
+		delete(s.nodes, name)
+		s.nodeEventCh <- metav1.WatchEvent{
+			Type:   "DELETED",
+			Object: runtime.RawExtension{Object: deletedNode},
+		}
+	}
+}
+
 // Reset atomically clears all state, resets resourceVersion to 0,
 // and recreates broadcast channels.
 func (s *InMemoryStore) Reset() {

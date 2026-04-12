@@ -5,6 +5,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,8 +18,13 @@ func BuildNode(csNode CsNode, schedulerName string) *corev1.Node {
 	ramStr := fmt.Sprintf("%dMi", csNode.RAMAval)
 
 	return &corev1.Node{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Node",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("csnode-%d", csNode.ID),
+			UID:  types.UID(fmt.Sprintf("csnode-%d-uid", csNode.ID)),
 			Labels: map[string]string{
 				"kubernetes.io/hostname": csNode.Name,
 				"kubernetes.io/arch":     "amd64",
@@ -62,9 +68,14 @@ func BuildPod(csPod CsPod, schedulerName string) *corev1.Pod {
 	cpuStr := fmt.Sprintf("%d", csPod.Pes)
 
 	return &corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("cspod-%d", csPod.ID),
 			Namespace: "default",
+			UID:       types.UID(fmt.Sprintf("cspod-%d-uid", csPod.ID)),
 			Annotations: map[string]string{
 				"cloudsim.io/id": fmt.Sprintf("%d", csPod.ID),
 			},

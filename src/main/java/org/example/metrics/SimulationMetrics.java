@@ -17,11 +17,16 @@ public class SimulationMetrics {
     private Instant wallEnd;
     private PowerDatacenterCustom powerDatacenter;
     private List<Vm> vms;
+    private PerformanceMetrics performanceMetrics;
 
-    public SimulationMetrics(PowerDatacenterCustom pData,List<Vm> vms) {
+    public SimulationMetrics(PowerDatacenterCustom pData, List<Vm> vms) {
+        this(pData, vms, null);
+    }
 
+    public SimulationMetrics(PowerDatacenterCustom pData, List<Vm> vms, PerformanceMetrics perf) {
         powerDatacenter = pData;
         this.vms = vms;
+        this.performanceMetrics = perf;
     }
 
     public void startWallClock() {
@@ -68,6 +73,12 @@ public class SimulationMetrics {
         }
         else System.out.println("ERROR: No PowerVM information provided!");
 
+        // Include PerformanceMetrics if provided
+        if (performanceMetrics != null) {
+            System.out.printf("Average Scheduling Latency: %.2f ms%n", performanceMetrics.getAverageLatencyMs());
+            System.out.printf("P99 Scheduling Latency: %.2f ms%n", performanceMetrics.getP99LatencyMs());
+            System.out.printf("Pod Throughput: %.2f pods/sec%n", performanceMetrics.getThroughputPodsPerSec());
+        }
 
         System.out.println("--------------------------------");
     }

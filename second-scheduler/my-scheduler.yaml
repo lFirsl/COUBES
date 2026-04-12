@@ -2,23 +2,62 @@ apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 clientConnection:
   kubeconfig: /etc/kube-scheduler/kubeconfig.yaml
+
+# Leader election is disabled because this scheduler runs as a single instance
+# without high-availability requirements in the COUBES simulation environment.
 leaderElection:
   leaderElect: false
+
+# This configuration defines two scheduling profiles with different resource allocation strategies.
+# Pods select a profile by setting spec.schedulerName in their manifest.
 profiles:
+  # Profile 1: default-scheduler (spreading strategy)
+  # Uses LeastAllocated scoring to distribute pods evenly across nodes, minimizing resource
+  # concentration. This strategy optimizes for availability and fault tolerance by avoiding
+  # overloading individual nodes.
+  - schedulerName: default-scheduler
+    plugins:
+      score:
+        enabled:
+          - name: NodeResourcesFit
+        disabled:
+          - name: "*"  # Disable all other score plugins for deterministic benchmarking
+    pluginConfig:
+      - name: NodeResourcesFit
+        args:
+          scoringStrategy:
+            type: LeastAllocated  # Prefer nodes with more available resources
+            resources:
+              - name: cpu
+                weight: 1  # Equal weight for CPU and memory
+              - name: memory
+                weight: 1
+
+  # Profile 2: my-scheduler (bin-packing strategy)
+  # Uses MostAllocated scoring to pack pods tightly onto fewer nodes, maximizing resource
+  # utilization. This strategy optimizes for energy efficiency by allowing unused nodes to
+  # remain idle or be powered down.
   - schedulerName: my-scheduler
     plugins:
       score:
         enabled:
           - name: NodeResourcesFit
         disabled:
-          - name: "*"
+          - name: "*"  # Disable all other score plugins for deterministic benchmarking
     pluginConfig:
       - name: NodeResourcesFit
         args:
           scoringStrategy:
-            type: MostAllocated
+            type: MostAllocated  # Prefer nodes with less available resources (more utilized)
             resources:
               - name: cpu
-                weight: 1
+                weight: 1  # Equal weight for CPU and memory
               - name: memory
                 weight: 1
+
+# To add a new scheduling profile:
+# 1. Add a new entry to the profiles list above
+# 2. Set a unique schedulerName (e.g., "custom-scheduler")
+# 3. Configure the desired scoring strategy (LeastAllocated, MostAllocated, or RequestedToCapacityRatio)
+# 4. Adjust resource weights if needed (higher weight = more influence on scheduling decisions)
+# 5. In your pod manifests, set spec.schedulerName to match your new profile name

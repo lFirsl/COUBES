@@ -3,15 +3,16 @@ services:
   my-scheduler:
     image: registry.k8s.io/kube-scheduler:v1.33.0
     container_name: my-scheduler
-    network_mode: "host"
+    # Note: network_mode: host doesn't work on Windows/WSL2. Instead, we use host.docker.internal
+    # in kubeconfig.yaml to reach the adapter running on the Windows host at localhost:8080
     volumes:
       - ./my-scheduler.yaml:/etc/kube-scheduler/my-scheduler.yaml
       - ./kubeconfig.yaml:/etc/kube-scheduler/kubeconfig.yaml
-      - ./admin.crt:/etc/kube-scheduler/admin.crt
-      - ./admin.key:/etc/kube-scheduler/admin.key
-      - ./ca.crt:/etc/kube-scheduler/ca.crt
+    # Uncomment the following line to override the scheduler configuration without rebuilding the image:
+    # - ./scheduler-config.yaml:/etc/kube-scheduler/my-scheduler.yaml
     command:
       - kube-scheduler
       - --config=/etc/kube-scheduler/my-scheduler.yaml
       - --secure-port=10260
-      - --v=8
+      # Default verbosity level (--v=2). Increase to --v=4 or --v=5 for more detailed debugging logs.
+      - --v=2

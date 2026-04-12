@@ -152,7 +152,7 @@ public class Fragmentation_Test {
 			metrics.stopWallClock();
 
 			if(newList1.size() != 20){
-				Log.printConcat("We only got ", newList1.size(), " whereas we were supposed to get 20!");
+				Log.printConcat("We got ", newList1.size(), "cloudlets whereas we were supposed to get 20!");
 			}
 			printCloudletList(newList1);
 			metrics.printSummary(lastClock,broker.tpOverall());

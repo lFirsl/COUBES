@@ -212,12 +212,53 @@ func (h *FakeAPIHandler) HandleBinding(w http.ResponseWriter, r *http.Request, r
 	}
 	defer r.Body.Close()
 
-	// Decode the binding (JSON for now, protobuf support to be added later)
+	// Decode the binding - support both JSON and protobuf
 	var binding corev1.Binding
-	if err := json.Unmarshal(body, &binding); err != nil {
-		log.Printf("error decoding JSON binding: %v", err)
-		http.Error(w, fmt.Sprintf("error decoding JSON binding: %v", err), http.StatusBadRequest)
-		return
+	contentType := r.Header.Get("Content-Type")
+	
+	if contentType == "application/vnd.kubernetes.protobuf" {
+		// Simple protobuf parsing: extract pod name and node name from the body
+		// The protobuf format contains the pod name and node name as strings
+		// We can extract them by looking for "csnode-" pattern
+		bodyStr := string(body)
+		
+		// Find node name (format: csnode-N)
+		nodeNameStart := -1
+		for i := 0; i < len(bodyStr)-7; i++ {
+			if bodyStr[i:i+7] == "csnode-" {
+				nodeNameStart = i
+				break
+			}
+		}
+		
+		if nodeNameStart == -1 {
+			log.Printf("could not find node name in protobuf binding")
+			http.Error(w, "could not parse protobuf binding", http.StatusBadRequest)
+			return
+		}
+		
+		// Extract node name (csnode-N where N is a number)
+		nodeNameEnd := nodeNameStart + 7
+		for nodeNameEnd < len(bodyStr) && bodyStr[nodeNameEnd] >= '0' && bodyStr[nodeNameEnd] <= '9' {
+			nodeNameEnd++
+		}
+		nodeName := bodyStr[nodeNameStart:nodeNameEnd]
+		
+		// Create a minimal binding object
+		binding = corev1.Binding{
+			Target: corev1.ObjectReference{
+				Name: nodeName,
+			},
+		}
+		
+		log.Printf("Parsed protobuf binding: pod=%s -> node=%s", podName, nodeName)
+	} else {
+		// Try JSON decoding
+		if err := json.Unmarshal(body, &binding); err != nil {
+			log.Printf("error decoding JSON binding: %v", err)
+			http.Error(w, fmt.Sprintf("error decoding JSON binding: %v", err), http.StatusBadRequest)
+			return
+		}
 	}
 
 	// Extract target node name
@@ -527,6 +568,72 @@ func (h *FakeAPIHandler) HandleListJobs(w http.ResponseWriter, r *http.Request) 
 	emptyList := map[string]interface{}{
 		"kind":       "JobList",
 		"apiVersion": "batch/v1",
+		"items":      []interface{}{},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(emptyList)
+}
+// HandleListReplicationControllers implements GET /api/v1/replicationcontrollers
+func (h *FakeAPIHandler) HandleListReplicationControllers(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("watch") == "true" {
+		idleWatchStream(w)
+		return
+	}
+
+	emptyList := map[string]interface{}{
+		"kind":       "ReplicationControllerList",
+		"apiVersion": "v1",
+		"items":      []interface{}{},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(emptyList)
+}
+
+// HandleListCSIStorageCapacities implements GET /apis/storage.k8s.io/v1/csistoragecapacities
+func (h *FakeAPIHandler) HandleListCSIStorageCapacities(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("watch") == "true" {
+		idleWatchStream(w)
+		return
+	}
+
+	emptyList := map[string]interface{}{
+		"kind":       "CSIStorageCapacityList",
+		"apiVersion": "storage.k8s.io/v1",
+		"items":      []interface{}{},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(emptyList)
+}
+
+// HandleListVolumeAttachments implements GET /apis/storage.k8s.io/v1/volumeattachments
+func (h *FakeAPIHandler) HandleListVolumeAttachments(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("watch") == "true" {
+		idleWatchStream(w)
+		return
+	}
+
+	emptyList := map[string]interface{}{
+		"kind":       "VolumeAttachmentList",
+		"apiVersion": "storage.k8s.io/v1",
+		"items":      []interface{}{},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(emptyList)
+}
+// HandleListPersistentVolumeClaims implements GET /api/v1/persistentvolumeclaims
+func (h *FakeAPIHandler) HandleListPersistentVolumeClaims(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("watch") == "true" {
+		idleWatchStream(w)
+		return
+	}
+
+	emptyList := map[string]interface{}{
+		"kind":       "PersistentVolumeClaimList",
+		"apiVersion": "v1",
 		"items":      []interface{}{},
 	}
 

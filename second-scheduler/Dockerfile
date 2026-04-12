@@ -1,7 +1,10 @@
 FROM registry.k8s.io/kube-scheduler:v1.33.0
-COPY my-scheduler.yaml /etc/kube-scheduler/my-scheduler.yaml
+
+# Copy scheduler configuration defining scheduling profiles (LeastAllocated vs MostAllocated)
+COPY my-scheduler.yaml /etc/kube-scheduler/scheduler-config.yaml
+
+# Copy kubeconfig pointing to the adapter's fake API server at localhost:8080
 COPY kubeconfig.yaml /etc/kube-scheduler/kubeconfig.yaml
-COPY admin.crt /etc/kube-scheduler/admin.crt
-COPY admin.key /etc/kube-scheduler/admin.key
-COPY ca.crt /etc/kube-scheduler/ca.crt
-CMD ["kube-scheduler", "--config=/etc/kube-scheduler/my-scheduler.yaml", "--secure-port=10260", "--v=3"]
+
+# Start kube-scheduler with the configuration file and secure port 10260
+CMD ["kube-scheduler", "--config=/etc/kube-scheduler/scheduler-config.yaml", "--secure-port=10260"]
