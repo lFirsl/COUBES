@@ -6,7 +6,9 @@ inclusion: always
 
 ## What This Project Is
 
-COUBES (Container Orchestration Universal Benchmark for Evaluating Schedulers) is a proof-of-concept research framework that bridges **CloudSim 7G** (a discrete-event cloud simulation framework) with a **live Kubernetes scheduler** running on a KWOK-emulated cluster. The goal is to benchmark real K8s schedulers using CloudSim's simulation infrastructure, collecting metrics like energy consumption, bin-packing efficiency, and time-to-completion.
+COUBES (Container Orchestration Universal Benchmark for Evaluating Schedulers) is a proof-of-concept research framework that bridges **CloudSim 7G** (a discrete-event cloud simulation framework) with a **live Kubernetes scheduler**. The goal is to benchmark real K8s schedulers using CloudSim's simulation infrastructure, collecting metrics like energy consumption, bin-packing efficiency, and time-to-completion.
+
+The adapter implements a fake Kubernetes API server that real kube-scheduler instances connect to, eliminating the need for KWOK or a full Kubernetes cluster. It also supports a standalone test mode with built-in round-robin scheduling for rapid development.
 
 This is an MSci research project (2024–2025). The codebase is intentionally experimental — prefer clarity and correctness over premature abstraction.
 
@@ -39,22 +41,23 @@ The `cloudsim-7.0/` sibling folder contains the **vanilla CloudSim 7.0.1 source*
 | Layer | Technology |
 |---|---|
 | Simulation | CloudSim 7G (Java 21, Maven) |
-| Adapter/Middleware | Go (gorilla/mux, client-go) |
-| K8s Cluster Emulation | KWOK (Kubernetes Without Kubelet) |
-| Scheduler | Standard `kube-scheduler` (default or custom via Docker) |
+| Adapter/Middleware | Go (gorilla/mux, fake Kubernetes API server) |
+| Scheduler | Standard `kube-scheduler` (connects directly to adapter) |
 | Build | `mvn clean install` (Java), `go run main.go` (Go) |
 
 ---
 
 ## Core Concept: The Scheduling Loop
 
-CloudSim VMs → adapter `/nodes` → KWOK fake nodes  
-CloudSim Cloudlets → adapter `/schedule-pods` → KWOK fake pods → K8s scheduler assigns pods to nodes → adapter returns node assignments → CloudSim binds cloudlets to VMs
+CloudSim VMs → adapter `/nodes` → in-memory nodes exposed via fake API  
+CloudSim Cloudlets → adapter `/schedule-pods` → in-memory pods exposed via fake API → K8s scheduler assigns pods to nodes via binding API → adapter returns node assignments → CloudSim binds cloudlets to VMs
 
 **Key invariant:** CloudSim IDs and Kubernetes names are kept in sync via naming conventions:
 - CloudSim VM `id=N` ↔ K8s node `csnode-N`
 - CloudSim Cloudlet `id=N` ↔ K8s pod `cspod-N`
 - The `cloudsim.io/id` annotation on K8s objects is the canonical ID mapping.
+
+**Architecture:** The adapter implements a fake Kubernetes API server that kube-scheduler connects to directly. No real Kubernetes cluster or KWOK is required. The adapter maintains an in-memory store of nodes and pods, exposing them through standard Kubernetes API endpoints.
 
 ---
 
@@ -92,13 +95,21 @@ Accumulates a time-weighted average of any scalar metric (e.g. consolidation rat
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `POST /nodes` | POST | Sync CloudSim VMs → KWOK nodes (diff-based: adds missing, removes stale) |
+| `POST /nodes` | POST | Sync CloudSim VMs → adapter nodes (diff-based: adds missing, removes stale) |
 | `POST /schedule-pods` | POST | Submit batch of cloudlets as pods; blocks until all scheduled; returns assignments |
 | `POST /pods/update-state` | POST | Delete a finished pod; watch for rescheduling of pending pods; return newly scheduled pods |
-| `DELETE /reset` | DELETE | Delete all pods and nodes from the cluster |
+| `DELETE /reset` | DELETE | Delete all pods and nodes from the adapter store |
 | `GET /pods/{id}/status` | GET | Get in-memory pod status by CloudSim ID |
 
 The adapter runs on `http://localhost:8080`. The Java broker hardcodes this URL as `CONTROL_PLANE_URL`.
+
+### Adapter Modes
+
+The adapter supports two operational modes:
+
+1. **Test Mode** (`--test-mode`): Standalone operation with built-in round-robin scheduler. No external dependencies (no KWOK, no kube-scheduler). Ideal for rapid testing and development.
+
+2. **Full Mode** (default): Implements a fake Kubernetes API server that a real kube-scheduler connects to. Supports protobuf bindings and all standard kube-scheduler features. Requires a running kube-scheduler instance (see `second-scheduler/`).
 
 ---
 
@@ -127,27 +138,46 @@ The adapter runs on `http://localhost:8080`. The Java broker hardcodes this URL 
 
 ## Running the Project
 
-Prerequisites: Java 21, Maven, Go, Docker Desktop, KWOK, CloudSim 7.0.1 installed locally.
+### Option 1: Test Mode (Standalone, No KWOK Required)
+
+Prerequisites: Java 21, Maven, Go, CloudSim 7.0.1 installed locally.
 
 ```bash
 # 1. Build CloudSim (once, from cloudsim-7.0/)
+cd cloudsim-7.0
 mvn clean install -DskipTests
 
-# 2. Start KWOK cluster
-kwokctl create cluster
-kubectl cluster-info --context kwok-kwok
+# 2. Start the Go adapter in test mode
+cd ../cloudsim-experimental/k8s-cloudsim-adapter
+go run main.go --test-mode
+# Adapter runs with built-in round-robin scheduler, no external dependencies
 
-# 3. (Optional) Start a second scheduler for bin-packing
-#    See second-scheduler/README.md
-docker-compose -f second-scheduler/docker-compose.yml up -d
+# 3. Run a test
+cd ..
+mvn exec:java -Dexec.mainClass="org.example.testSuite.Fragmentation_Test"
+```
 
-# 4. Start the Go adapter
-cd k8s-cloudsim-adapter
-go run main.go
-# Default: listens on :8080, connects to ~/.kube/config, uses "default-scheduler"
-# Use --scheduler=my-scheduler to target a different scheduler
+### Option 2: Full Mode (With Real kube-scheduler)
 
-# 5. Run a test
+Prerequisites: Java 21, Maven, Go, Docker Desktop, CloudSim 7.0.1 installed locally.
+
+```bash
+# 1. Build CloudSim (once, from cloudsim-7.0/)
+cd cloudsim-7.0
+mvn clean install -DskipTests
+
+# 2. Start the custom scheduler (supports both spreading and bin-packing)
+cd ../cloudsim-experimental/second-scheduler
+docker compose up -d
+# Scheduler runs with two profiles: default-scheduler (LeastAllocated) and my-scheduler (MostAllocated)
+
+# 3. Start the Go adapter
+cd ../k8s-cloudsim-adapter
+go run main.go --scheduler=default-scheduler
+# Or use --scheduler=my-scheduler for bin-packing strategy
+
+# 4. Run a test
+cd ..
 mvn exec:java -Dexec.mainClass="org.example.testSuite.Fragmentation_Test"
 ```
 
@@ -158,6 +188,8 @@ mvn exec:java -Dexec.mainClass="org.example.testSuite.Fragmentation_Test"
 - **Never modify `cloudsim-7.0/`** — it is the upstream reference.
 - **`k8s-in-the-loop/`** is a separate sub-project; do not touch it unless explicitly asked.
 - The adapter is stateless between simulations — always call `broker.sendResetRequestToControlPlane()` at the end of each simulation run.
-- KWOK nodes require the `type=kwok` label and `kwok.x-k8s.io/node=fake` taint; pods require the matching toleration. These are set automatically by the adapter's conversion utilities.
+- In full mode, the adapter implements a fake Kubernetes API server. The kube-scheduler connects directly to the adapter on port 8080 (no KWOK required).
+- In test mode, the adapter uses a built-in round-robin scheduler. Pods are assigned to nodes in lexicographic order: pod `i` → `sortedNodes[i % M]`.
 - Pod CPU resources are set from `CsPod.Pes` (integer cores); node CPU/RAM from `CsNode.Pes` and `CsNode.RAMAval` (MB).
+- The adapter supports protobuf bindings for real kube-scheduler integration. Binding requests are parsed to extract node assignments.
 - The `UtilizationModelSlice` class has a known bug: `Math.min(0, 1/PEs)` always returns 0. This is not yet fixed.

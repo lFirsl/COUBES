@@ -59,55 +59,100 @@ This rescheduling loop is what enables dynamic workloads: when a cloudlet finish
 
 ## Adapter Internals
 
+### Test Mode vs Full Mode
+
+The adapter operates in one of two modes:
+
+**Test Mode** (`--test-mode`):
+- Built-in round-robin scheduler (`TestModeScheduler`)
+- No external dependencies (no KWOK, no kube-scheduler)
+- Fake Kubernetes API routes are not registered
+- Scheduling is synchronous and deterministic
+- Pod `i` assigned to `sortedNodes[i % M]` (lexicographic node order)
+- Ideal for rapid testing and development
+
+**Full Mode** (default):
+- Implements a fake Kubernetes API server
+- Real kube-scheduler connects to adapter on port 8080
+- Supports protobuf bindings for pod-to-node assignments
+- Scheduling is asynchronous (waits for kube-scheduler decisions)
+- Supports multiple scheduler profiles (LeastAllocated, MostAllocated)
+
 ### Node Sync (`/nodes`)
-The adapter performs a **diff** between the current KWOK cluster state and the incoming CloudSim VM list:
-- Nodes in cluster but not in CloudSim → deleted
-- Nodes in CloudSim but not in cluster → created
-- After changes, polls `AreAllNodesReady()` with up to 20 retries (1s each)
+The adapter performs a **diff** between the current in-memory store and the incoming CloudSim VM list:
+- Nodes in store but not in CloudSim → deleted
+- Nodes in CloudSim but not in store → created
+- In full mode, nodes are exposed via the fake API server for kube-scheduler to query
 
 ### Pod Scheduling (`/schedule-pods`)
-1. Creates all pods in KWOK (with CPU resource requests from `CsPod.Pes`)
-2. Polls `AreAllPodsScheduled()` with up to 30 retries (1s each)
-3. A pod is considered "done" if it has a `nodeName` (scheduled) OR is marked `Unschedulable`
-4. Returns the full pod list with node assignments
+
+**Test Mode:**
+1. Creates pods in the in-memory store
+2. Calls `TestModeScheduler.Schedule(pods, nodes)` synchronously
+3. Returns assignments immediately (no polling)
+
+**Full Mode:**
+1. Creates all pods in the in-memory store (exposed via fake API)
+2. Kube-scheduler watches for unscheduled pods via the fake API
+3. Scheduler sends binding requests (protobuf format) to assign pods to nodes
+4. Adapter polls `AreAllPodsScheduled()` with up to 30 retries (1s each)
+5. A pod is considered "done" if it has a `nodeName` (scheduled) OR is marked `Unschedulable`
+6. Returns the full pod list with node assignments
 
 ### Pod Deletion + Rescheduling (`/pods/update-state`)
+
+**Test Mode:**
+1. Deletes the specified pod from the store
+2. Collects all pending pods (pods with no `nodeName`)
+3. If pending pods exist, calls `TestModeScheduler.Schedule()` and returns new assignments
+4. Returns empty `BatchDecision` if no pending pods
+
+**Full Mode:**
 1. Captures pre-deletion pod statuses
 2. Deletes the specified pod
 3. If all pods were already scheduled before deletion → returns empty (no rescheduling needed)
 4. Polls for status changes with up to 30 retries (250ms each)
-5. Returns pods whose status changed (i.e., newly scheduled)
+5. Returns pods whose status changed (i.e., newly scheduled by kube-scheduler)
 
 ---
 
-## KWOK Cluster Setup
+## KWOK Cluster Setup (Legacy - No Longer Required)
 
-KWOK (Kubernetes Without Kubelet) runs a full K8s control plane (etcd, kube-apiserver, kube-controller-manager, kube-scheduler) but replaces kubelets with a lightweight controller that simulates node/pod lifecycle.
+**Note:** KWOK is no longer required for COUBES. The adapter now implements a fake Kubernetes API server directly, eliminating the need for KWOK or a full Kubernetes cluster.
 
-Fake nodes require:
-- Label `type=kwok`
-- Annotation `kwok.x-k8s.io/node=fake`
-- Taint `kwok.x-k8s.io/node=fake:NoSchedule`
+For historical reference, KWOK (Kubernetes Without Kubelet) ran a full K8s control plane (etcd, kube-apiserver, kube-controller-manager, kube-scheduler) but replaced kubelets with a lightweight controller that simulated node/pod lifecycle.
 
-Fake pods require:
-- Toleration for `kwok.x-k8s.io/node=fake:NoSchedule`
-- NodeAffinity requiring `type=kwok`
-- `schedulerName` matching the target scheduler
-
-The KWOK controller handles pod lifecycle stages (pod-ready, pod-complete, pod-delete) via `Stage` CRDs defined in `kwok.yaml`.
+The current implementation provides the same functionality without the overhead of running a full cluster.
 
 ---
 
-## Second Scheduler (Bin-Packing)
+## Second Scheduler (Multi-Profile Configuration)
 
-The `second-scheduler/` folder provides a second instance of `kube-scheduler` configured with `MostAllocated` scoring (bin-packing) instead of the default `LeastAllocated` (spreading). This is used to compare scheduling strategies.
+The `second-scheduler/` folder provides a custom `kube-scheduler` instance with two scheduling profiles:
 
-To target it, pass `--scheduler=my-scheduler` to the Go adapter:
+1. **`default-scheduler`** — LeastAllocated (spreading): distributes pods evenly across nodes
+2. **`my-scheduler`** — MostAllocated (bin-packing): packs pods tightly onto fewer nodes
+
+Both profiles use equal CPU/memory weights and disable all score plugins except `NodeResourcesFit`.
+
+To target a specific profile, pass `--scheduler=<profile-name>` to the Go adapter:
 ```bash
+# Spreading strategy
+go run main.go --scheduler=default-scheduler
+
+# Bin-packing strategy
 go run main.go --scheduler=my-scheduler
 ```
 
-The scheduler runs on port 10260 and connects to the same KWOK cluster via the kubeconfig in `second-scheduler/`.
+The scheduler runs in a Docker container with `network_mode: host` to connect to the adapter on `localhost:8080`. It listens on port 10260 for metrics/health checks.
+
+### Configuration Details
+
+The scheduler uses a `KubeSchedulerConfiguration` with:
+- `leaderElection.leaderElect: false` (no leader election needed for single-instance)
+- Two profiles with different `NodeResourcesFit` scoring strategies
+- All other score plugins disabled for predictable, resource-focused scheduling
+- Connects to the adapter's fake API server (no real Kubernetes cluster required)
 
 ---
 
