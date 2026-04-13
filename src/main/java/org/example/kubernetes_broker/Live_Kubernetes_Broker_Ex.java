@@ -33,6 +33,8 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     // Completed cloudlet IDs to send in next snapshot
     private final List<Integer> completedSinceLastRound = new ArrayList<>();
     
+    // Guard: true when a RESCHEDULE_PENDING event is already queued, prevents duplicate events
+    private boolean reschedulePending = false;
     // Optional PerformanceMetrics integration
     private PerformanceMetrics performanceMetrics;
 
@@ -331,20 +333,12 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
             }
         }
         
-        // Process unschedulable pods
-        if (batchDecision.getUnschedulable() != null) {
-            for (BatchDecisionResponse.PodFailure failure : batchDecision.getUnschedulable()) {
-                int cloudletId = failure.getPodId();
-                String reason = failure.getReason();
-                
-                Cloudlet cloudlet = cloudletsSubmittedToMiddle.getOrDefault(cloudletId, null);
-                if (cloudlet != null) {
-                    Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": Pod ", cloudletId, " is unschedulable: ", reason);
-                    cloudlet.setCloudletStatus(Cloudlet.CloudletStatus.FAILED);
-                    cloudletsSubmittedToMiddle.remove(cloudletId);
-                    getCloudletReceivedList().add(cloudlet);
-                }
-            }
+        // Process unschedulable pods — keep them in cloudletsSubmittedToMiddle so they
+        // are resubmitted when nodes free up (via RESCHEDULE_PENDING event).
+        if (batchDecision.getUnschedulable() != null && !batchDecision.getUnschedulable().isEmpty()) {
+            Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": ",
+                    batchDecision.getUnschedulable().size(), " pods pending (no free nodes yet), will retry when nodes free up");
+            // Pods remain in cloudletsSubmittedToMiddle — rescheduling triggered by processCloudletReturn
         }
 
         Log.println("Finished scheduling batch. Submitting to CloudSim.");
@@ -446,12 +440,36 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         // Add completed cloudlet ID to list for next snapshot
         completedSinceLastRound.add(cloudlet.getCloudletId());
 
-        if (getLifeLength() <= 0 && cloudletsSubmittedToMiddle.isEmpty() && cloudletsReadyForCloudsim.isEmpty()) {
-            // Will kill the broker if there are no more cloudlets.
-            super.processCloudletReturn(ev);
+        getCloudletReceivedList().add(cloudlet);
+        cloudletsSubmitted--;
+
+        // If pods are still waiting to be scheduled, trigger a rescheduling round
+        // after 1 simulated second to batch any other completions in the same window.
+        if (!cloudletsSubmittedToMiddle.isEmpty() && !reschedulePending) {
+            reschedulePending = true;
+            send(getId(), 1.0, CloudActionTagsEx.RESCHEDULE_PENDING, null);
+        }
+
+        // Shut down only when all cloudlets are truly done (none pending in middleware)
+        if (getLifeLength() <= 0 && cloudletsSubmitted == 0
+                && cloudletsSubmittedToMiddle.isEmpty() && cloudletsReadyForCloudsim.isEmpty()
+                && getCloudletList().isEmpty()) {
+            clearDatacenters();
+            finishExecution();
+        }
+    }
+
+    @Override
+    protected void processOtherEvent(SimEvent ev) {
+        if (ev.getTag() == CloudActionTagsEx.RESCHEDULE_PENDING) {
+            reschedulePending = false;
+            if (!cloudletsSubmittedToMiddle.isEmpty()) {
+                Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": Rescheduling ",
+                        cloudletsSubmittedToMiddle.size(), " pending cloudlets after completions: ", completedSinceLastRound);
+                submitCloudlets();
+            }
         } else {
-            getCloudletReceivedList().add(cloudlet);
-            cloudletsSubmitted--;
+            super.processOtherEvent(ev);
         }
     }
 

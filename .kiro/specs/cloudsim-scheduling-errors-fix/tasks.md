@@ -1,0 +1,101 @@
+# Implementation Plan
+
+- [x] 1. Write bug condition exploration tests
+  - **Property 1: Bug Condition** - JSON Casting and Silent Failure Bugs
+  - **CRITICAL**: These tests MUST FAIL on unfixed code - failure confirms the bugs exist
+  - **DO NOT attempt to fix the tests or the code when they fail**
+  - **NOTE**: These tests encode the expected behavior - they will validate the fixes when they pass after implementation
+  - **GOAL**: Surface counterexamples that demonstrate both bugs exist
+  - **Scoped PBT Approach**: For deterministic bugs, scope properties to concrete failing cases to ensure reproducibility
+  - Test Bug 1: Send BatchDecisionResponse JSON `{"scheduled": [...], "unschedulable": [...]}` to broker and observe ClassCastException
+  - Test Bug 2: Submit cloudlets and simulate incomplete returns (e.g., 20 submitted, 0 received) and observe warning logged but no exception thrown
+  - The test assertions should match the Expected Behavior Properties from design (correct parsing, RuntimeException on mismatch)
+  - Run tests on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests FAIL (this is correct - it proves the bugs exist)
+  - Document counterexamples found:
+    - Bug 1: ClassCastException with message "ObjectNode cannot be cast to ArrayNode"
+    - Bug 2: Warning logged "We got 0 cloudlets whereas we were supposed to get 20!" but simulation reports "Success"
+  - Mark task complete when tests are written, run, and failures are documented
+  - _Requirements: 1.1, 1.2, 1.3_
+
+- [x] 2. Write preservation property tests (BEFORE implementing fix)
+  - **Property 2: Preservation** - Successful Scheduling Behavior
+  - **IMPORTANT**: Follow observation-first methodology
+  - Observe behavior on UNFIXED code for non-buggy inputs:
+    - When all cloudlets are scheduled successfully, system reports success and prints results
+    - When broker processes scheduled pods, it correctly maps pod IDs to node IDs
+    - When unschedulable pods exist, they are marked as FAILED and added to received list
+    - Throughput metrics (EWMA, sliding window, overall) are computed correctly
+  - Write property-based tests capturing observed behavior patterns from Preservation Requirements:
+    - Property: For all simulations where cloudletsReceived == cloudletsSubmitted, system reports success
+    - Property: For all valid BatchDecisionResponse objects with only "scheduled" array (no unschedulable), parsing succeeds
+    - Property: For all scheduled pod assignments, pod-to-node mapping is correct
+    - Property: For all simulations with complete cloudlet returns, metrics are calculated correctly
+  - Property-based testing generates many test cases for stronger guarantees
+  - Run tests on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: 3.1, 3.2, 3.3, 3.4_
+
+- [ ] 3. Fix JSON casting error and silent failure bugs
+
+  - [x] 3.1 Fix JSON casting error in Live_Kubernetes_Broker_Ex.java
+    - Locate `submitCloudletBatchToMiddleware` method (around line 421)
+    - Change from casting entire response to ArrayNode to parsing as ObjectNode
+    - Access the "scheduled" field to get the scheduled pods array
+    - Add logic to process the "unschedulable" array:
+      - Extract cloudlet ID from each unschedulable pod
+      - Mark cloudlet as FAILED
+      - Add to received list
+      - Remove from submitted map
+    - _Bug_Condition: isBugCondition1(input) where input.statusCode == 200 AND input.body contains JSON object with "scheduled" field AND code attempts to cast entire body to ArrayNode_
+    - _Expected_Behavior: System correctly parses BatchDecisionResponse as ObjectNode, accesses "scheduled" field, processes unschedulable pods, no ClassCastException thrown_
+    - _Preservation: Successful scheduling behavior, pod-to-node mapping, metrics calculation remain unchanged_
+    - _Requirements: 1.1, 2.1, 3.2, 3.3_
+
+  - [x] 3.2 Fix silent failure in Fragmentation_Test.java
+    - Locate cloudlet count validation (around line 153)
+    - Replace warning log with RuntimeException
+    - Include expected and actual counts in exception message
+    - Format: "Expected X cloudlets to complete but only received Y"
+    - _Bug_Condition: isBugCondition2(input) where input.cloudletsSubmitted > 0 AND input.cloudletsReceived < input.cloudletsSubmitted AND NOT exceptionThrown_
+    - _Expected_Behavior: System throws RuntimeException with clear error message when cloudlet counts don't match, immediately halting execution_
+    - _Preservation: Successful simulation reporting and metrics display remain unchanged when all cloudlets complete_
+    - _Requirements: 1.2, 1.3, 2.2, 2.3, 3.1_
+
+  - [x] 3.3 Apply same validation pattern to other test files
+    - Update Performance_Efficiency_Test.java with RuntimeException on cloudlet count mismatch
+    - Update Undercrowding_Test.java with RuntimeException on cloudlet count mismatch
+    - Ensure consistent error message format across all test files
+    - _Requirements: 2.2, 2.3_
+
+  - [ ] 3.4 Verify bug condition exploration tests now pass
+    - **Property 1: Expected Behavior** - Correct Parsing and Exception Throwing
+    - **IMPORTANT**: Re-run the SAME tests from task 1 - do NOT write new tests
+    - The tests from task 1 encode the expected behavior
+    - When these tests pass, it confirms the expected behavior is satisfied
+    - Run bug condition exploration tests from step 1
+    - **EXPECTED OUTCOME**: Tests PASS (confirms bugs are fixed)
+    - Verify Bug 1 fix: BatchDecisionResponse parsing works without ClassCastException
+    - Verify Bug 2 fix: RuntimeException is thrown when cloudlet counts don't match
+    - _Requirements: 2.1, 2.2, 2.3_
+
+  - [ ] 3.5 Verify preservation tests still pass
+    - **Property 2: Preservation** - Successful Scheduling Behavior Unchanged
+    - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
+    - Run preservation property tests from step 2
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - Confirm all preservation properties still hold:
+      - Successful scheduling reports success
+      - Pod-to-node mapping is correct
+      - Unschedulable pods are marked as FAILED
+      - Metrics are calculated correctly
+    - _Requirements: 3.1, 3.2, 3.3, 3.4_
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Run all property-based tests (bug condition + preservation)
+  - Verify no regressions in existing functionality
+  - Confirm both bugs are fixed:
+    - Bug 1: BatchDecisionResponse parsing works correctly
+    - Bug 2: RuntimeException thrown on incomplete cloudlet returns
+  - Ensure all tests pass, ask the user if questions arise
