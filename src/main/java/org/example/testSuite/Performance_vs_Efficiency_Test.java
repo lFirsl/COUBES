@@ -143,8 +143,8 @@ public class Performance_vs_Efficiency_Test {
 			CloudSim.stopSimulation();
 			metrics.stopWallClock();
 
-			if(newList1.size() != 15){
-				Log.printConcat("We only got ", newList1.size(), " whereas we were supposed to get 15!");
+			if(newList1.size() != 2){
+				throw new RuntimeException("Expected 2 cloudlets to complete but only received " + newList1.size());
 			}
 			printCloudletList(newList1);
 			metrics.printSummary(lastClock);

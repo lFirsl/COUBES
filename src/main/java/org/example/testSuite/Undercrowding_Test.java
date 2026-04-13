@@ -140,6 +140,9 @@ public class Undercrowding_Test {
 			CloudSim.stopSimulation();
 			metrics.stopWallClock();
 
+			if(newList1.size() != 10){
+				throw new RuntimeException("Expected 10 cloudlets to complete but only received " + newList1.size());
+			}
 			printCloudletList(newList1);
 			metrics.printSummary(lastClock,broker.tpOverall());
 
