@@ -1,6 +1,28 @@
 # COUBES Operational Runbook
 
-## Starting the Stack
+## run_test.sh — The Preferred Way to Run Tests
+
+The `run_test.sh` script handles infrastructure startup, hang detection, auto-recovery, and prerequisite checks.
+
+```bash
+# Test mode (no Docker required)
+./run_test.sh --test-mode org.example.testSuite.Fragmentation_Test
+
+# Full mode (with real kube-scheduler via Docker)
+./run_test.sh org.example.testSuite.Fragmentation_Test
+```
+
+The script:
+- Checks prerequisites (`mvn`, `go`, `curl`; `docker` only in full mode)
+- Kills any existing adapter, starts a fresh one with the correct flags
+- In full mode: ensures the Docker scheduler is running and has populated caches
+- Resets adapter state before each run
+- Detects hangs (no log output for 45s) and auto-recovers once (restart scheduler + retry)
+- Exits non-zero with diagnostic output on failure
+
+---
+
+## Starting the Stack Manually
 
 ### Correct way to start background processes
 
@@ -84,6 +106,21 @@ ip addr show eth0 | grep 'inet '  # get current IP
 
 ## Debugging the Scheduler / Adapter
 
+### Reading adapter logs (structured JSON)
+
+The adapter emits structured JSON log lines. Key fields: `action`, `roundId`, `podCount`, `durationMs`, `result`, `scheduled`, `unschedulable`.
+
+```bash
+# Pretty-print adapter logs
+cat /tmp/coubes-adapter.log | grep '^{' | jq .
+
+# Filter by round ID
+cat /tmp/coubes-adapter.log | grep '"roundId":"3"'
+
+# Find timeouts
+cat /tmp/coubes-adapter.log | grep '"result":"timeout"'
+```
+
 ### Scheduler has gone silent (most common failure)
 
 Symptom: adapter receives `HandleSchedule` calls but scheduling never completes; `docker logs my-scheduler --since 60s` returns nothing.
@@ -93,10 +130,12 @@ Cause: the kube-scheduler's watch connections to the adapter break when the adap
 Fix: restart the scheduler container, then reset the adapter:
 
 ```bash
-cd second-scheduler && docker compose restart
-sleep 8
+cd second-scheduler && docker compose down && docker compose up -d
+sleep 10
 curl -s -X DELETE http://localhost:8080/reset
 ```
+
+**Note:** Always use `docker compose down && up` instead of `restart` — `restart` can fail with bind mount errors if files were recreated (inode changed).
 
 ### HTTP 409 — scheduling round already in progress
 
@@ -109,7 +148,7 @@ curl -s -X DELETE http://localhost:8080/reset
 
 ### HTTP 408 — scheduling timeout
 
-Cause: adapter waited 60s for the kube-scheduler to bind pods but got no response. Usually means the scheduler is stuck (see "Scheduler has gone silent" above).
+Cause: adapter waited 60s for the kube-scheduler to bind pods but got no response. The adapter log will show exactly how many pods were scheduled vs pending before timeout.
 
 Fix: restart scheduler, reset adapter, rerun.
 
@@ -132,8 +171,8 @@ curl -s -X DELETE http://localhost:8080/reset
 ## Killing Stale Processes
 
 ```bash
-# Kill all adapter instances
-pkill -9 -f adapter-linux
+# Kill all adapter instances (use -x for exact match, NOT -f which can self-kill)
+pkill -9 -x adapter-linux
 
 # Kill a stuck Maven simulation
 pkill -9 -f "exec:java"
@@ -150,9 +189,9 @@ lsof -i :8080 | head -5
 If the adapter is restarted for any reason, the kube-scheduler must also be restarted. The scheduler's watch connections are tied to the adapter instance and do not recover automatically.
 
 ```bash
-pkill -9 -f adapter-linux
-cd second-scheduler && docker compose restart
-sleep 8
+pkill -9 -x adapter-linux
+cd second-scheduler && docker compose down && docker compose up -d
+sleep 10
 cd ../k8s-cloudsim-adapter && setsid ./adapter-linux --scheduler=default-scheduler </dev/null >/tmp/adapter.log 2>&1 &
 sleep 2 && curl -s -X DELETE http://localhost:8080/reset
 ```

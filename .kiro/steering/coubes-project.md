@@ -20,15 +20,18 @@ This is an MSci research project (2024–2025). The codebase is intentionally ex
 cloudsim-experimental/
 ├── src/main/java/org/example/
 │   ├── kubernetes_broker/     # Custom CloudSim broker + datacenter + VM classes
-│   ├── metrics/               # SimulationMetrics, TimeWeightedMetric
+│   ├── metrics/               # SimulationMetrics, TimeWeightedMetric, PerformanceMetrics
 │   ├── helper/                # Constants, Helper (host/VM factory, result printing)
 │   ├── examples/              # Runnable simulation examples
 │   └── testSuite/             # Benchmark test scenarios
 ├── k8s-cloudsim-adapter/      # Go HTTP adapter (the middleware)
 │   ├── communicator/          # Core bridge logic, struct definitions, conversions
-│   ├── kube_client/           # Kubernetes API client wrappers
+│   ├── fakeapi/               # Fake Kubernetes API server handlers
+│   ├── store/                 # In-memory node/pod store with watch broadcast
+│   ├── scheduler/             # SchedulingRound (full mode) + TestModeScheduler
 │   └── utils/
-├── second-scheduler/          # Docker/KWOK config for running a second K8s scheduler
+├── second-scheduler/          # Docker config for running kube-scheduler
+├── run_test.sh                # Test runner script with infra management + hang detection
 └── k8s-in-the-loop/           # Separate sub-project (do not modify unless instructed)
 ```
 
@@ -43,51 +46,49 @@ The `cloudsim-7.0/` sibling folder contains the **vanilla CloudSim 7.0.1 source*
 | Simulation | CloudSim 7G (Java 21, Maven) |
 | Adapter/Middleware | Go (gorilla/mux, fake Kubernetes API server) |
 | Scheduler | Standard `kube-scheduler` (connects directly to adapter) |
-| Build | `mvn clean install` (Java), `go run main.go` (Go) |
+| Build | `mvn clean install` (Java), `go build -o adapter-linux .` (Go) |
 
 ---
 
 ## Core Concept: The Scheduling Loop
 
 CloudSim VMs → adapter `/nodes` → in-memory nodes exposed via fake API  
-CloudSim Cloudlets → adapter `/schedule-pods` → in-memory pods exposed via fake API → K8s scheduler assigns pods to nodes via binding API → adapter returns node assignments → CloudSim binds cloudlets to VMs
+CloudSim Cloudlets → adapter `/schedule` → in-memory pods exposed via fake API → K8s scheduler assigns pods to nodes via binding API → adapter returns node assignments → CloudSim binds cloudlets to VMs
 
 **Key invariant:** CloudSim IDs and Kubernetes names are kept in sync via naming conventions:
 - CloudSim VM `id=N` ↔ K8s node `csnode-N`
 - CloudSim Cloudlet `id=N` ↔ K8s pod `cspod-N`
-- The `cloudsim.io/id` annotation on K8s objects is the canonical ID mapping.
-
-**Architecture:** The adapter implements a fake Kubernetes API server that kube-scheduler connects to directly. No real Kubernetes cluster or KWOK is required. The adapter maintains an in-memory store of nodes and pods, exposing them through standard Kubernetes API endpoints.
 
 ---
 
 ## Key Classes
 
 ### `Live_Kubernetes_Broker_Ex` (primary broker)
-Extends `DatacenterBrokerEX`. This is the main entry point for all simulations that use the live K8s scheduler.
+Extends `DatacenterBrokerEX`. Main entry point for all simulations using the live K8s scheduler.
 
-Lifecycle:
-1. `processVmCreateAck` → calls `sendAllActiveNodesToControlPlane()` → POST `/nodes`
-2. `submitCloudlets()` → serializes cloudlets → POST `/schedule-pods` → receives pod-to-node assignments → calls `cloudSimAllocation()`
-3. `processCloudletReturn()` → calls `updateMiddleware()` → POST `/pods/update-state` (deletes finished pod, watches for rescheduling of pending pods)
-
-`Live_Kubernetes_Broker` is the **old/deprecated** version — kept only for backward compatibility with older examples.
+Features:
+- Sends `X-Round-Id` header on all HTTP calls for cross-layer log correlation
+- Increments `roundCounter` before each `/schedule` call
+- Logs include `[round=N]` prefix for scheduling events
+- Supports optional `PerformanceMetrics` for per-pod scheduling latency tracking
+- Throughput metrics: EWMA, sliding window, overall average
 
 ### `PowerDatacenterCustom`
 Extends `PowerDatacenter`. Additions:
-- Tracks **consolidation ratio** (cloudlets/active VMs) as a time-weighted metric via `TimeWeightedMetric`.
-- Supports **deferred VM destruction** via `CloudActionTagsEx.VM_DELAYED_DESTROY` — VMs are only destroyed once their cloudlet scheduler is empty.
-- Supports `PowerVmCustom` with a `preferredHostId` for pinning VMs to specific hosts.
-- `disableDeallocation` flag: when `true`, VMs are never auto-destroyed (used in fragmentation tests).
+- **Log levels**: `LogLevel.QUIET` / `NORMAL` / `VERBOSE` — controls per-tick output verbosity. Set via `setLogLevel()`. QUIET suppresses consolidation, energy, and utilization output.
+- Tracks **consolidation ratio** (cloudlets/active VMs) as a time-weighted metric
+- Supports **deferred VM destruction** via `CloudActionTagsEx.VM_DELAYED_DESTROY`
+- `disableDeallocation` flag: when `true`, VMs are never auto-destroyed
 
-### `PowerVmCustom`
-Extends `PowerVm`. Adds `preferredHostId` for host-pinning and overrides `getCurrentRequestedTotalMips()` / `getCurrentRequestedMips()` to compute demand from active cloudlets rather than static allocation.
+### `PerformanceMetrics`
+Tracks per-pod scheduling latency (submission → binding timestamp). Thread-safe.
+- `recordSubmission(cloudletId)` — called in broker before sending to adapter
+- `recordBatchDecision(response)` — called when adapter returns binding timestamps
+- `getAverageLatencyMs()`, `getP99LatencyMs()`, `getThroughputPodsPerSec()`
+- Integrated into `SimulationMetrics.printSummary()` when provided
 
 ### `SimulationMetrics`
-Wraps a `PowerDatacenterCustom` and a VM list. Call `startWallClock()` before `CloudSim.startSimulation()` and `stopWallClock()` after. `printSummary(simTime)` prints: simulated time, wall-clock time, energy (Wh), host count, time-weighted consolidation average, VM count, and optionally throughput.
-
-### `TimeWeightedMetric`
-Accumulates a time-weighted average of any scalar metric (e.g. consolidation ratio). Call `add(time, value)` at each measurement point; call `average(untilTime)` at the end.
+Wraps a `PowerDatacenterCustom` and a VM list. Prints: simulated time, wall-clock time, energy (Wh), host count, consolidation average, VM count, throughput, and optionally scheduling latency metrics.
 
 ---
 
@@ -95,21 +96,23 @@ Accumulates a time-weighted average of any scalar metric (e.g. consolidation rat
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `POST /nodes` | POST | Sync CloudSim VMs → adapter nodes (diff-based: adds missing, removes stale) |
-| `POST /schedule-pods` | POST | Submit batch of cloudlets as pods; blocks until all scheduled; returns assignments |
-| `POST /pods/update-state` | POST | Delete a finished pod; watch for rescheduling of pending pods; return newly scheduled pods |
-| `DELETE /reset` | DELETE | Delete all pods and nodes from the adapter store |
+| `POST /nodes` | POST | Sync CloudSim VMs → adapter nodes (diff-based) |
+| `POST /schedule` | POST | Submit SimulationSnapshot (nodes + pods + completedIds); returns BatchDecision |
+| `POST /schedule-pods` | POST | Legacy: submit batch of pods only; returns BatchDecision |
+| `POST /pods/update-state` | POST | Delete a finished pod; return rescheduling decisions |
+| `DELETE /reset` | DELETE | Delete all pods and nodes, reset scheduling round |
 | `GET /pods/{id}/status` | GET | Get in-memory pod status by CloudSim ID |
 
-The adapter runs on `http://localhost:8080`. The Java broker hardcodes this URL as `CONTROL_PLANE_URL`.
+### Adapter Logging
+
+All handlers emit **structured JSON log lines** with fields: `ts`, `action`, `roundId`, `podCount`, `nodeCount`, `durationMs`, `result`, `scheduled`, `unschedulable`. The `roundId` is extracted from the `X-Round-Id` HTTP header sent by the Java broker.
+
+The `scheduler/scheduler.go` logs round lifecycle: start (expected decisions), each binding, each failure, round completion (with timing), and timeout diagnostics (scheduled/failed/pending counts).
 
 ### Adapter Modes
 
-The adapter supports two operational modes:
-
-1. **Test Mode** (`--test-mode`): Standalone operation with built-in round-robin scheduler. No external dependencies (no KWOK, no kube-scheduler). Ideal for rapid testing and development.
-
-2. **Full Mode** (default): Implements a fake Kubernetes API server that a real kube-scheduler connects to. Supports protobuf bindings and all standard kube-scheduler features. Requires a running kube-scheduler instance (see `second-scheduler/`).
+1. **Test Mode** (`--test-mode`): Built-in round-robin scheduler. No Docker/kube-scheduler needed.
+2. **Full Mode** (default): Fake Kubernetes API server. Real kube-scheduler connects on port 8080.
 
 ---
 
@@ -122,6 +125,7 @@ The adapter supports two operational modes:
 | Wall-clock time | `SimulationMetrics` | `Instant.now()` before/after simulation |
 | Simulated time | `CloudSim.startSimulation()` return value | CloudSim internal clock |
 | Scheduling throughput (pods/sec) | `Live_Kubernetes_Broker_Ex` | EWMA + sliding window + overall average |
+| Scheduling latency (ms) | `PerformanceMetrics` | Per-pod submission→binding timestamp delta |
 | SLA violations | `Helper.printResults()` | From VM/host state history |
 
 ---
@@ -130,56 +134,26 @@ The adapter supports two operational modes:
 
 | Test | What it measures |
 |---|---|
-| `Fragmentation_Test` | Bin-packing under mixed workloads; `disableDeallocation=true` so VMs persist |
-| `Performance_vs_Efficiency_Test` | Two hosts with different power models; measures energy vs throughput tradeoff |
-| `Undercrowding_Test` | Sparse workload; measures idle energy waste |
+| `Fragmentation_Test` | Bin-packing under mixed workloads; 2 waves, `disableDeallocation=true` |
+| `Performance_vs_Efficiency_Test` | Two hosts with different power models; energy vs throughput tradeoff |
+| `Undercrowding_Test` | Sparse workload; idle energy waste |
+| `Scheduler_Latency_Test` | Scheduling latency under increasing load (20 pods → 100 pods). Blocked by rescheduling bug. |
 
 ---
 
 ## Running the Project
 
-### Option 1: Test Mode (Standalone, No KWOK Required)
-
-Prerequisites: Java 21, Maven, Go, CloudSim 7.0.1 installed locally.
+### Preferred: run_test.sh
 
 ```bash
-# 1. Build CloudSim (once, from cloudsim-7.0/)
-cd cloudsim-7.0
-mvn clean install -DskipTests
+# Test mode (no Docker required)
+./run_test.sh --test-mode org.example.testSuite.Fragmentation_Test
 
-# 2. Start the Go adapter in test mode
-cd ../cloudsim-experimental/k8s-cloudsim-adapter
-go run main.go --test-mode
-# Adapter runs with built-in round-robin scheduler, no external dependencies
-
-# 3. Run a test
-cd ..
-mvn exec:java -Dexec.mainClass="org.example.testSuite.Fragmentation_Test"
+# Full mode (with real kube-scheduler via Docker)
+./run_test.sh org.example.testSuite.Fragmentation_Test
 ```
 
-### Option 2: Full Mode (With Real kube-scheduler)
-
-Prerequisites: Java 21, Maven, Go, Docker Desktop, CloudSim 7.0.1 installed locally.
-
-```bash
-# 1. Build CloudSim (once, from cloudsim-7.0/)
-cd cloudsim-7.0
-mvn clean install -DskipTests
-
-# 2. Start the custom scheduler (supports both spreading and bin-packing)
-cd ../cloudsim-experimental/second-scheduler
-docker compose up -d
-# Scheduler runs with two profiles: default-scheduler (LeastAllocated) and my-scheduler (MostAllocated)
-
-# 3. Start the Go adapter
-cd ../k8s-cloudsim-adapter
-go run main.go --scheduler=default-scheduler
-# Or use --scheduler=my-scheduler for bin-packing strategy
-
-# 4. Run a test
-cd ..
-mvn exec:java -Dexec.mainClass="org.example.testSuite.Fragmentation_Test"
-```
+See `operational-runbook.md` for manual startup and debugging procedures.
 
 ---
 
@@ -187,9 +161,7 @@ mvn exec:java -Dexec.mainClass="org.example.testSuite.Fragmentation_Test"
 
 - **Never modify `cloudsim-7.0/`** — it is the upstream reference.
 - **`k8s-in-the-loop/`** is a separate sub-project; do not touch it unless explicitly asked.
-- The adapter is stateless between simulations — always call `broker.sendResetRequestToControlPlane()` at the end of each simulation run.
-- In full mode, the adapter implements a fake Kubernetes API server. The kube-scheduler connects directly to the adapter on port 8080 (no KWOK required).
-- In test mode, the adapter uses a built-in round-robin scheduler. Pods are assigned to nodes in lexicographic order: pod `i` → `sortedNodes[i % M]`.
-- Pod CPU resources are set from `CsPod.Pes` (integer cores); node CPU/RAM from `CsNode.Pes` and `CsNode.RAMAval` (MB).
-- The adapter supports protobuf bindings for real kube-scheduler integration. Binding requests are parsed to extract node assignments.
-- The `UtilizationModelSlice` class has a known bug: `Math.min(0, 1/PEs)` always returns 0. This is not yet fixed.
+- Always call `broker.sendResetRequestToControlPlane()` at the end of each simulation run.
+- Use `pkill -x adapter-linux` (exact match), never `pkill -f adapter-linux` (matches shell processes).
+- Use `docker compose down && up` instead of `restart` to avoid bind mount inode issues.
+- The `UtilizationModelSlice` class has a known bug: `Math.min(0, 1/PEs)` always returns 0.

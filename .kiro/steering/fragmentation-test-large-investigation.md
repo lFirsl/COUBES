@@ -4,8 +4,9 @@
 A test with 10 VMs and 50 cloudlets (35 wave 1 + 15 wave 2) where pods that can't be
 immediately scheduled queue in the adapter and are rescheduled as VMs free up.
 
-## Current State (as of 2026-04-13)
+## Current State (as of 2026-04-18)
 The test runs but only 10 cloudlets complete. The rescheduling loop does not fire.
+The same bug also blocks `Scheduler_Latency_Test` (only 25/120 cloudlets complete).
 
 ---
 
@@ -53,55 +54,42 @@ The base `DatacenterBroker.submitCloudlets()` is being called somewhere before
 - The adapter returns 10 scheduled pods (matching the 10 in the list)
 - The other 25 cloudlets are never submitted to the adapter
 
+### Confirmed in Scheduler_Latency_Test (2026-04-18)
+The same bug manifests in `Scheduler_Latency_Test`:
+- 20 wave 1 cloudlets submitted, but only 18 appear in the adapter (IDs 0-17)
+- 100 wave 2 cloudlets submitted, but only 7 appear in the adapter (IDs 102-108)
+- Rescheduling fires at t=202 and t=217 but simulation terminates with only 25/120 completed
+- The base broker is consuming cloudlets before the override runs
+
 ### Suspected cause
 `DatacenterBroker.submitCloudlets()` (base class) is being called before the override.
 It submits cloudlets with a bound `guestId` directly to CloudSim and removes them from
 `getCloudletList()`. With 35 cloudlets and 10 VMs, it submits 25 (those with `guestId != -1`
 or round-robin assignment) and leaves 10.
 
-**Not yet confirmed**: need to check `DatacenterBroker.submitCloudlets()` source to see
-exactly which cloudlets it submits and removes, and trace the call path that invokes it.
-
 ### What to investigate next
 1. Read `DatacenterBroker.submitCloudlets()` — does it only submit cloudlets with a bound VM?
-   If so, 25 cloudlets might have `guestId` set from a previous run or from the base
-   `processVmCreateAck` path.
 2. Check if `DatacenterBroker.processVmCreateAck` is being called in addition to the override.
-   The override in `Live_Kubernetes_Broker_Ex` does NOT call `super.processVmCreateAck`.
-   But `DatacenterBrokerEX.processEvent` might be calling both.
 3. Add a stack trace print inside `DatacenterBroker.submitCloudlets()` to confirm it's being
    called and from where.
-4. Alternative: override `submitCloudlets()` to call `super.submitCloudlets()` first and log
-   what it does, then proceed with the adapter submission.
 
 ---
 
 ## Other Findings
 
 ### `VmAllocationPolicySimple` is first-fit, not one-per-host
-Confirmed by running `CloudSimExample7`: 5 VMs all land on `Host #0` (which has 4 PEs).
 Multiple VMs can share a host if it has capacity. The constraint is resource availability.
 
 ### Pe list sharing bug
 Each host must have its own `List<Pe>` instance. Sharing causes silent allocation failures.
-`Fragmentation_Test` reuses `peList1` across all 5 hosts — works by accident because
-`VmAllocationPolicySimple` packs all VMs onto the first host.
 
 ### Double-return bug (fixed)
 `Live_Kubernetes_Broker_Ex.processCloudletReturn` was calling `super.processCloudletReturn(ev)`
-in the `else` branch, which caused each cloudlet to be returned twice (once by the override,
-once by `DatacenterBrokerEX.processCloudletReturn`). Fixed by removing the `super` call.
+which caused each cloudlet to be returned twice. Fixed by removing the `super` call.
 
 ### Adapter test mode schedules ALL pods round-robin
 `TestModeScheduler.Schedule()` assigns all pods to nodes round-robin — it never returns
-unschedulable pods (unless there are no nodes). So the "unschedulable → pending queue"
-mechanism is not exercised in test mode. In full mode (real kube-scheduler), pods that
-can't be scheduled are returned as unschedulable.
-
-### Simulation ends at t=160 (wave 1 completion)
-Wave 2 cloudlets (submitted at t=50) are not completing. Either they're not being submitted
-to CloudSim, or the simulation terminates before they finish. The `cloudletsSubmitted`
-counter may be going to 0 at t=160 if wave 2 cloudlets were never counted.
+unschedulable pods. The "unschedulable → pending queue" mechanism is not exercised in test mode.
 
 ---
 
@@ -109,4 +97,3 @@ counter may be going to 0 at t=160 if wave 2 cloudlets were never counted.
 - `src/main/java/org/example/kubernetes_broker/CloudActionTagsEx.java`
 - `src/main/java/org/example/kubernetes_broker/Live_Kubernetes_Broker_Ex.java`
 - `src/main/java/org/example/testSuite/Fragmentation_Test_Large.java`
-- `.kiro/steering/cloudsim-7g-knowledge.md` (updated VmAllocationPolicySimple description)

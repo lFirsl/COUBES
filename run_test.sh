@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# run_test.sh <TestClass>
+# run_test.sh [--test-mode] <TestClass>
 # Runs a COUBES test, spinning up infrastructure if needed.
+# --test-mode: use built-in round-robin scheduler (no Docker/kube-scheduler required)
 # Auto-recovers once from a scheduler hang. Always exits non-zero on failure.
 
 set -euo pipefail
@@ -12,8 +13,33 @@ SCHEDULER_DIR="second-scheduler"
 ADAPTER_URL="http://localhost:8080"
 HANG_TIMEOUT=45   # seconds of no log output before declaring a hang
 RECOVERY_DONE=0
+TEST_MODE=0
+ADAPTER_FLAGS="--scheduler=default-scheduler"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
+
+# ── prerequisite checks ─────────────────────────────────────────────────────
+
+check_prereqs() {
+    local missing=0
+    for cmd in mvn curl; do
+        if ! "$cmd" --version >/dev/null 2>&1; then
+            echo "MISSING: $cmd is not available" >&2
+            missing=1
+        fi
+    done
+    if ! go version >/dev/null 2>&1; then
+        echo "MISSING: go is not available" >&2
+        missing=1
+    fi
+    if [[ $TEST_MODE -eq 0 ]]; then
+        if ! docker --version >/dev/null 2>&1; then
+            echo "MISSING: docker is not available (required in full mode; use --test-mode to skip)" >&2
+            missing=1
+        fi
+    fi
+    if [[ $missing -eq 1 ]]; then die "Install missing prerequisites before running."; fi
+}
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -38,7 +64,7 @@ wait_for_scheduler() {
 
 start_adapter() {
     echo "→ Starting adapter..."
-    setsid "$ADAPTER_BIN" --scheduler=default-scheduler </dev/null >"$ADAPTER_LOG" 2>&1 &
+    setsid "$ADAPTER_BIN" $ADAPTER_FLAGS </dev/null >"$ADAPTER_LOG" 2>&1 &
     local deadline=$((SECONDS + 10))
     while [[ $SECONDS -lt $deadline ]]; do
         sleep 1
@@ -65,18 +91,22 @@ restart_scheduler_and_reset() {
 
 ensure_infra() {
     # Always restart adapter under script control so we own the log file
-    pkill -9 -f adapter-linux 2>/dev/null || true
+    pgrep -x adapter-linux >/dev/null 2>&1 && pkill -9 -x adapter-linux || true
     sleep 1
     start_adapter
 
-    # Scheduler
-    if ! scheduler_running; then
-        start_scheduler
-    elif ! scheduler_ready; then
-        echo "→ Scheduler running but not ready — restarting..."
-        restart_scheduler_and_reset
+    # Scheduler (skip in test mode)
+    if [[ $TEST_MODE -eq 0 ]]; then
+        if ! scheduler_running; then
+            start_scheduler
+        elif ! scheduler_ready; then
+            echo "→ Scheduler running but not ready — restarting..."
+            restart_scheduler_and_reset
+        else
+            echo "→ Scheduler already ready."
+        fi
     else
-        echo "→ Scheduler already ready."
+        echo "→ Test mode: skipping scheduler."
     fi
 
     # Final reset to clear any stale state
@@ -134,9 +164,18 @@ run_sim() {
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
-[[ $# -lt 1 ]] && die "Usage: $0 <fully.qualified.TestClass>"
+[[ $# -lt 1 ]] && die "Usage: $0 [--test-mode] <fully.qualified.TestClass>"
+
+if [[ "$1" == "--test-mode" ]]; then
+    TEST_MODE=1
+    ADAPTER_FLAGS="--test-mode"
+    shift
+fi
+
+[[ $# -lt 1 ]] && die "Usage: $0 [--test-mode] <fully.qualified.TestClass>"
 TEST_CLASS="$1"
 
+check_prereqs
 ensure_infra
 
 # First attempt

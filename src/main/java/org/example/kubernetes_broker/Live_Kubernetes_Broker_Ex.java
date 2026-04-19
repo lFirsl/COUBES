@@ -25,6 +25,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     private static final String CONTROL_PLANE_URL = "http://localhost:8080";
     private final HttpClient httpClient;
     private int guestIndex = 0;
+    private int roundCounter = 0;
 
     //Maps
     HashMap<Integer,Cloudlet> cloudletsSubmittedToMiddle;
@@ -166,6 +167,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(CONTROL_PLANE_URL + "/nodes"))
                     .header("Content-Type", "application/json")
+                    .header("X-Round-Id", String.valueOf(roundCounter))
                     .POST(HttpRequest.BodyPublishers.ofString(payload))
                     .build();
 
@@ -182,7 +184,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
 
     @Override
     protected void submitCloudlets() {
-        Log.println("Submitting all cloudlets to Control Plane in a single batch...");
+        Log.println("Submitting all cloudlets to Control Plane [round=" + roundCounter + "]...");
 
         // 1. Record submission timestamps for performance metrics
         for (Cloudlet cloudlet : getCloudletList()) {
@@ -257,6 +259,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     }
 
     private BatchDecisionResponse submitSimulationSnapshot(ObjectNode snapshot) {
+            roundCounter++;
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.findAndRegisterModules(); // Register JSR310 module for Instant deserialization
@@ -266,6 +269,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
                     .uri(URI.create(CONTROL_PLANE_URL + "/schedule"))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .header("X-Round-Id", String.valueOf(roundCounter))
                     .build();
 
             // Determine how many pods we're sending in this batch
@@ -279,7 +283,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
             tpRecord(podsInBatch, t1 - t0);
 
             if (response.statusCode() == 200) {
-                Log.printlnConcat(getName(), ": Batch scheduled. "
+                Log.printlnConcat(getName(), ": [round=" + roundCounter + "] Batch scheduled. "
                         , "inst=", String.format("%.2f", (podsInBatch / ((t1 - t0) / 1e9)))
                         , " pods/s; ewma=", String.format("%.2f", tpEwma())
                         , "; window(", TP_WINDOW, ")=", String.format("%.2f", tpWindowAvg())
@@ -315,7 +319,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     }
 
     private void processBatchDecision(BatchDecisionResponse batchDecision) {
-        Log.printlnConcat(getName(), ": Processing batch decision");
+        Log.printlnConcat(getName(), ": [round=" + roundCounter + "] Processing batch decision");
         
         // Process scheduled pods
         if (batchDecision.getScheduled() != null) {
@@ -494,6 +498,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(CONTROL_PLANE_URL + "/reset"))
                 .DELETE()
+                .header("X-Round-Id", String.valueOf(roundCounter))
                 .build();
 
         try {

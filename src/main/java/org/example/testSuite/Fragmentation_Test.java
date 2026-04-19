@@ -110,6 +110,7 @@ public class Fragmentation_Test {
 			//Datacenters are the resource providers in CloudSim. We need at list one of them to run a CloudSim simulation
 			PowerDatacenterCustom datacenter0 = createDatacenter("Datacenter_0");
 
+			datacenter0.setLogLevel(PowerDatacenterCustom.LogLevel.QUIET);
 			//Third step: Create Broker
 			broker = new Live_Kubernetes_Broker_Ex("Broker_0",-1);
 			int brokerId = broker.getId();

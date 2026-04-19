@@ -13,24 +13,17 @@ import java.util.List;
 import java.util.Set;
 
 public class PowerDatacenterCustom extends PowerDatacenter {
-    /**
-     * Instantiates a new PowerDatacenter.
-     *
-     * @param name               the datacenter name
-     * @param characteristics    the datacenter characteristics
-     * @param vmAllocationPolicy the vm provisioner
-     * @param storageList        the storage list
-     * @param schedulingInterval the scheduling interval
-     * @throws Exception the exception
-     */
+
+    /** Controls per-tick log verbosity. Set via {@link #setLogLevel(LogLevel)}. */
+    public enum LogLevel { QUIET, NORMAL, VERBOSE }
+
+    private LogLevel logLevel = LogLevel.NORMAL;
 
     double totalUsedMips = 0;
     double totalCapacity = 0;
     Set<Integer> totalVmIdsEverAllocated;
     private final TimeWeightedMetric consolidationTW = new TimeWeightedMetric();
     boolean disableDeallocation;
-
-
 
     public PowerDatacenterCustom(String name, DatacenterCharacteristics characteristics, VmAllocationPolicy vmAllocationPolicy, List<Storage> storageList, double schedulingInterval) throws Exception {
         super(name, characteristics, vmAllocationPolicy, storageList, schedulingInterval);
@@ -44,6 +37,9 @@ public class PowerDatacenterCustom extends PowerDatacenter {
         this.disableDeallocation = disableDeallocation;
     }
 
+    public void setLogLevel(LogLevel level) { this.logLevel = level; }
+    public LogLevel getLogLevel() { return logLevel; }
+
     @Override
     protected void updateCloudletProcessing() {
         if (getCloudletSubmitted() == -1 || getCloudletSubmitted() == CloudSim.clock()) {
@@ -53,14 +49,14 @@ public class PowerDatacenterCustom extends PowerDatacenter {
         }
         double currentTime = CloudSim.clock();
 
-        //Bin efficiency prototype. Only addition to updateCloudletProcessing thus far!
-        //...could probably make this into it's own function and then just call "super.updateCloudletProcessing".
+        // Consolidation ratio
         int activeVMs = 0;
         int activeCloudlets = 0;
         for (HostEntity host : getVmAllocationPolicy().getHostList()) {
-            for(GuestEntity vm : host.getGuestList()){
-                int cloudletCount = vm.getCloudletScheduler().getCloudletExecList().size() + vm.getCloudletScheduler().getCloudletWaitingList().size();
-                if(cloudletCount > 0){
+            for (GuestEntity vm : host.getGuestList()) {
+                int cloudletCount = vm.getCloudletScheduler().getCloudletExecList().size()
+                        + vm.getCloudletScheduler().getCloudletWaitingList().size();
+                if (cloudletCount > 0) {
                     activeVMs++;
                     activeCloudlets += cloudletCount;
                 }
@@ -68,71 +64,49 @@ public class PowerDatacenterCustom extends PowerDatacenter {
         }
 
         double consolidationRatio = 0;
-        if(activeVMs != 0 &&  activeCloudlets != 0) {
+        if (activeVMs != 0 && activeCloudlets != 0) {
             consolidationRatio = (double) activeCloudlets / activeVMs;
-            Log.printlnConcat(
-                    CloudSim.clock() + ": We're getting a consolidationRatio of "
-                            + String.format("%.2f", consolidationRatio) + "."
-            );
+            if (logLevel == LogLevel.VERBOSE) {
+                Log.printlnConcat(String.format("%.2f", currentTime),
+                        ": consolidation=", String.format("%.2f", consolidationRatio),
+                        " (", activeCloudlets, " cloudlets / ", activeVMs, " VMs)");
+            }
             consolidationTW.add(CloudSim.clock(), consolidationRatio);
+        } else {
+            if (logLevel == LogLevel.VERBOSE) {
+                Log.printlnConcat(String.format("%.2f", currentTime), ": No active VMs for consolidation");
+            }
         }
-        else{
-            Log.printlnConcat(
-                    CloudSim.clock() + ": No active hosts to calculate consolidation with?"
-            );
-        }
 
-
-
-
-        // if some time passed since last processing
         if (currentTime > getLastProcessTime()) {
-            Log.print(currentTime + " ");
+            if (logLevel == LogLevel.VERBOSE) {
+                Log.print(currentTime + " ");
+            }
 
             double minTime = updateCloudetProcessingWithoutSchedulingFutureEventsForce();
 
             if (!isDisableMigrations()) {
-                List<VmAllocationPolicy.GuestMapping> migrationMap = getVmAllocationPolicy().optimizeAllocation(
-                        getVmList());
-
+                List<VmAllocationPolicy.GuestMapping> migrationMap = getVmAllocationPolicy().optimizeAllocation(getVmList());
                 if (migrationMap != null) {
                     for (VmAllocationPolicy.GuestMapping migrate : migrationMap) {
                         Vm vm = (Vm) migrate.vm();
                         PowerHost targetHost = (PowerHost) migrate.host();
                         PowerHost oldHost = (PowerHost) vm.getHost();
-
                         if (oldHost == null) {
-                            Log.formatLine(
-                                    "%.2f: Migration of VM #%d to Host #%d is started",
-                                    currentTime,
-                                    vm.getId(),
-                                    targetHost.getId());
+                            Log.formatLine("%.2f: Migration of VM #%d to Host #%d is started",
+                                    currentTime, vm.getId(), targetHost.getId());
                         } else {
-                            Log.formatLine(
-                                    "%.2f: Migration of VM #%d from Host #%d to Host #%d is started",
-                                    currentTime,
-                                    vm.getId(),
-                                    oldHost.getId(),
-                                    targetHost.getId());
+                            Log.formatLine("%.2f: Migration of VM #%d from Host #%d to Host #%d is started",
+                                    currentTime, vm.getId(), oldHost.getId(), targetHost.getId());
                         }
-
                         targetHost.addMigratingInGuest(vm);
                         incrementMigrationCount();
-
-                        /** VM migration delay = RAM / bandwidth **/
-                        // we use BW / 2 to model BW available for migration purposes, the other
-                        // half of BW is for VM communication
-                        // around 16 seconds for 1024 MB using 1 Gbit/s network
-                        send(
-                                getId(),
-                                vm.getRam() / ((double) targetHost.getBw() / (2 * 8000)),
-                                CloudActionTags.VM_MIGRATE,
-                                migrate);
+                        send(getId(), vm.getRam() / ((double) targetHost.getBw() / (2 * 8000)),
+                                CloudActionTags.VM_MIGRATE, migrate);
                     }
                 }
             }
 
-            // schedules an event to the next time
             if (minTime != Double.MAX_VALUE) {
                 CloudSim.cancelAll(getId(), new PredicateType(CloudActionTags.VM_DATACENTER_EVENT));
                 send(getId(), getSchedulingInterval(), CloudActionTags.VM_DATACENTER_EVENT);
@@ -142,7 +116,7 @@ public class PowerDatacenterCustom extends PowerDatacenter {
         }
     }
 
-    public double getConsolidationAverage(double time){
+    public double getConsolidationAverage(double time) {
         return consolidationTW.average(time);
     }
 
@@ -153,87 +127,72 @@ public class PowerDatacenterCustom extends PowerDatacenter {
         double timeDiff = currentTime - getLastProcessTime();
         double timeFrameDatacenterEnergy = 0.0;
 
-        Log.println("\n\n--------------------------------------------------------------\n\n");
-        Log.formatLine("New resource usage for the time frame starting at %.2f:", currentTime);
+        if (logLevel == LogLevel.VERBOSE) {
+            Log.println("\n\n--------------------------------------------------------------\n\n");
+            Log.formatLine("New resource usage for the time frame starting at %.2f:", currentTime);
+        }
 
-        for (PowerHost host : this.<PowerHost> getHostList()) {
-            Log.println();
+        for (PowerHost host : this.<PowerHost>getHostList()) {
+            if (logLevel == LogLevel.VERBOSE) Log.println();
+            double time = host.updateCloudletsProcessing(currentTime);
+            if (time < minTime) minTime = time;
 
-            double time = host.updateCloudletsProcessing(currentTime); // inform VMs to update processing
-            if (time < minTime) {
-                minTime = time;
+            if (logLevel == LogLevel.VERBOSE) {
+                Log.formatLine("%.2f: [Host #%d] utilization is %.2f%%",
+                        currentTime, host.getId(), host.getUtilizationOfCpu() * 100);
             }
-
-            Log.formatLine(
-                    "%.2f: [Host #%d] utilization is %.2f%%",
-                    currentTime,
-                    host.getId(),
-                    host.getUtilizationOfCpu() * 100);
         }
 
         if (timeDiff > 0) {
-            Log.formatLine(
-                    "\nEnergy consumption for the last time frame from %.2f to %.2f:",
-                    getLastProcessTime(),
-                    currentTime);
+            if (logLevel == LogLevel.VERBOSE) {
+                Log.formatLine("\nEnergy consumption for the last time frame from %.2f to %.2f:",
+                        getLastProcessTime(), currentTime);
+            }
 
-            for (PowerHost host : this.<PowerHost> getHostList()) {
+            for (PowerHost host : this.<PowerHost>getHostList()) {
                 double previousUtilizationOfCpu = host.getPreviousUtilizationOfCpu();
                 double utilizationOfCpu = host.getUtilizationOfCpu();
                 double timeFrameHostEnergy = host.getEnergyLinearInterpolation(
-                        previousUtilizationOfCpu,
-                        utilizationOfCpu,
-                        timeDiff);
+                        previousUtilizationOfCpu, utilizationOfCpu, timeDiff);
                 timeFrameDatacenterEnergy += timeFrameHostEnergy;
 
-                Log.println();
-                Log.formatLine(
-                        "%.2f: [Host #%d] utilization at %.2f was %.2f%%, now is %.2f%%",
-                        currentTime,
-                        host.getId(),
-                        getLastProcessTime(),
-                        previousUtilizationOfCpu * 100,
-                        utilizationOfCpu * 100);
-                Log.formatLine(
-                        "%.2f: [Host #%d] energy is %.2f W*sec",
-                        currentTime,
-                        host.getId(),
-                        timeFrameHostEnergy);
+                if (logLevel == LogLevel.VERBOSE) {
+                    Log.println();
+                    Log.formatLine("%.2f: [Host #%d] utilization at %.2f was %.2f%%, now is %.2f%%",
+                            currentTime, host.getId(), getLastProcessTime(),
+                            previousUtilizationOfCpu * 100, utilizationOfCpu * 100);
+                    Log.formatLine("%.2f: [Host #%d] energy is %.2f W*sec",
+                            currentTime, host.getId(), timeFrameHostEnergy);
+                }
             }
 
-            Log.formatLine(
-                    "\n%.2f: Data center's energy is %.2f W*sec\n",
-                    currentTime,
-                    timeFrameDatacenterEnergy);
+            if (logLevel == LogLevel.VERBOSE) {
+                Log.formatLine("\n%.2f: Data center's energy is %.2f W*sec\n",
+                        currentTime, timeFrameDatacenterEnergy);
+            }
         }
 
         setPower(getPower() + timeFrameDatacenterEnergy);
 
-//        /** Remove completed VMs **/
-        if(!disableDeallocation){
+        if (!disableDeallocation) {
             for (PowerHost host : this.<PowerHost>getHostList()) {
                 for (GuestEntity guest : new ArrayList<GuestEntity>(host.getGuestList())) {
                     if (guest.isInMigration()) continue;
-
                     if (guest instanceof Vm vm) {
                         CloudletScheduler scheduler = vm.getCloudletScheduler();
                         boolean hasActiveCloudlets =
                                 !scheduler.getCloudletExecList().isEmpty() ||
-                                        !scheduler.getCloudletWaitingList().isEmpty() ||
-                                        !scheduler.getCloudletFinishedList().isEmpty();
-
+                                !scheduler.getCloudletWaitingList().isEmpty() ||
+                                !scheduler.getCloudletFinishedList().isEmpty();
                         if (!hasActiveCloudlets) {
-                            send(this.getId(),1,CloudActionTagsEx.VM_DELAYED_DESTROY,vm);
+                            send(this.getId(), 1, CloudActionTagsEx.VM_DELAYED_DESTROY, vm);
                         }
                     }
                 }
             }
         }
 
-
-
-
-        Log.println();
+        if (logLevel == LogLevel.VERBOSE) Log.println();
 
         setLastProcessTime(currentTime);
         return minTime;
@@ -244,64 +203,41 @@ public class PowerDatacenterCustom extends PowerDatacenter {
         Vm vm = (Vm) ev.getData();
         totalVmIdsEverAllocated.add(vm.getId());
 
-        // If VM specifies a preferred host, place it there
         if (vm instanceof PowerVmCustom pvm) {
-            if(pvm.getPreferredHostId() != -1){
-                Log.println(this.getName() + ": We're trying to create a PowerVMCustom - using custom allocation logic.");
+            if (pvm.getPreferredHostId() != -1) {
+                Log.println(this.getName() + ": Creating PowerVMCustom with preferred host allocation.");
                 int targetHostId = pvm.getPreferredHostId();
                 HostEntity targetHost = getHostList().get(targetHostId);
 
                 boolean result = false;
-
-                // Allocate through the allocation policy so mapping is stored
                 if (targetHost != null && getVmAllocationPolicy().getHostList().contains(targetHost)) {
                     result = getVmAllocationPolicy().allocateHostForGuest(pvm, targetHost);
                 } else {
-                    // If preferred host is invalid, fall back to normal allocation
                     result = getVmAllocationPolicy().allocateHostForGuest(pvm);
                 }
 
                 if (ack) {
-                    int[] data = new int[]{
-                            getId(),
-                            pvm.getId(),
-                            result ? CloudSimTags.TRUE : CloudSimTags.FALSE
-                    };
-                    send(pvm.getUserId(), CloudSim.getMinTimeBetweenEvents(),
-                            CloudActionTags.VM_CREATE_ACK, data);
+                    int[] data = new int[]{getId(), pvm.getId(), result ? CloudSimTags.TRUE : CloudSimTags.FALSE};
+                    send(pvm.getUserId(), CloudSim.getMinTimeBetweenEvents(), CloudActionTags.VM_CREATE_ACK, data);
                 }
 
                 if (result) {
                     getVmList().add(pvm);
-
-                    if (pvm.isBeingInstantiated()) {
-                        pvm.setBeingInstantiated(false);
-                    }
-
-                    pvm.updateCloudletsProcessing(
-                            CloudSim.clock(),
-                            getVmAllocationPolicy().getHost(pvm)
-                                    .getGuestScheduler()
-                                    .getAllocatedMipsForGuest(pvm)
-                    );
+                    if (pvm.isBeingInstantiated()) pvm.setBeingInstantiated(false);
+                    pvm.updateCloudletsProcessing(CloudSim.clock(),
+                            getVmAllocationPolicy().getHost(pvm).getGuestScheduler().getAllocatedMipsForGuest(pvm));
                 } else {
                     Log.printlnConcat(CloudSim.clock(), ": Datacenter.guestAllocator: Couldn't find a host for PowerVMCustom #", pvm.getId());
                 }
-                return; // Skip normal allocation
+                return;
             }
         }
-
-        // Fallback to normal allocation for all other VMs
         super.processVmCreate(ev, ack);
     }
 
-
     @Override
     public void processEvent(SimEvent ev) {
-        int srcId = -1;
         CloudSimTags tag = ev.getTag();
-
-        // Resource characteristics inquiry
         if (tag == CloudActionTagsEx.VM_DELAYED_DESTROY) {
             scheduleVMDestruction(ev);
             return;
@@ -309,28 +245,24 @@ public class PowerDatacenterCustom extends PowerDatacenter {
         super.processEvent(ev);
     }
 
-    private void scheduleVMDestruction(SimEvent ev){
+    private void scheduleVMDestruction(SimEvent ev) {
         Vm vm = (Vm) ev.getData();
         CloudletScheduler scheduler = vm.getCloudletScheduler();
         boolean hasActiveCloudlets =
                 !scheduler.getCloudletExecList().isEmpty() ||
-                        !scheduler.getCloudletWaitingList().isEmpty() ||
-                        !scheduler.getCloudletFinishedList().isEmpty();
+                !scheduler.getCloudletWaitingList().isEmpty() ||
+                !scheduler.getCloudletFinishedList().isEmpty();
 
-        if(!hasActiveCloudlets){
-            Log.println(CloudSim.clock()  + ": VM #" + vm.getId() + " has been DEALLOCATED and DESTROYED from host");
+        if (!hasActiveCloudlets) {
+            Log.println(CloudSim.clock() + ": VM #" + vm.getId() + " has been DEALLOCATED and DESTROYED from host");
             getVmAllocationPolicy().deallocateHostForGuest(vm);
             getVmList().remove(vm);
-            int brokerId = vm.getUserId(); // This is the owning broker's ID
-            sendNow(brokerId, CloudActionTags.VM_DESTROY_ACK, new int[]{
-                    getId(),     // Datacenter ID
-                    vm.getId(),  // VM ID
-                    CloudSimTags.TRUE
-            });
+            int brokerId = vm.getUserId();
+            sendNow(brokerId, CloudActionTags.VM_DESTROY_ACK, new int[]{getId(), vm.getId(), CloudSimTags.TRUE});
+        } else {
+            if (logLevel == LogLevel.VERBOSE) {
+                Log.println(CloudSim.clock() + ": VM #" + vm.getId() + " destruction deferred (active cloudlets)");
+            }
         }
-        else {
-            Log.println(CloudSim.clock()  + ": VM #" + vm.getId() + " was PREVENTED from being destroyed.");
-        }
-
     }
 }
