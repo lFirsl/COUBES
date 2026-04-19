@@ -3,8 +3,6 @@ services:
   my-scheduler:
     image: registry.k8s.io/kube-scheduler:v1.33.0
     container_name: my-scheduler
-    # Note: network_mode: host doesn't work on Windows/WSL2. Instead, we use host.docker.internal
-    # in kubeconfig.yaml to reach the adapter running on the Windows host at localhost:8080
     volumes:
       - ./my-scheduler.yaml:/etc/kube-scheduler/my-scheduler.yaml
       - ./kubeconfig.yaml:/etc/kube-scheduler/kubeconfig.yaml

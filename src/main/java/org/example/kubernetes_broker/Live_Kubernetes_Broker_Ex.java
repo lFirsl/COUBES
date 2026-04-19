@@ -229,6 +229,9 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
             podJson.put("utilizationBw", cloudlet.getUtilizationModelBw().getUtilization(0));
             podsArray.add(podJson);
             cloudletsSubmittedToMiddle.put(cloudlet.getCloudletId(), cloudlet);
+            if (performanceMetrics != null) {
+                performanceMetrics.recordSubmission(cloudlet.getCloudletId());
+            }
         }
         snapshot.set("pods", podsArray);
         
