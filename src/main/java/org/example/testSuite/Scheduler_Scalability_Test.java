@@ -13,6 +13,7 @@ import org.example.kubernetes_broker.PowerVmCustom;
 import org.example.metrics.PerformanceMetrics;
 import org.example.metrics.SimulationMetrics;
 
+import java.text.DecimalFormat;
 import java.util.*;
 
 /**
@@ -102,13 +103,16 @@ public class Scheduler_Scalability_Test {
         double lastClock = CloudSim.startSimulation();
 
         List<Cloudlet> results = broker.getCloudletReceivedList();
+        Log.printConcat("Broker has a lifetime of: ", broker.getLifeLength());
+
         CloudSim.stopSimulation();
         simMetrics.stopWallClock();
 
         if (results.size() != numPods) {
-            System.out.println("WARNING: Expected " + numPods + " cloudlets but got " + results.size());
+            throw new RuntimeException("WARNING: Expected " + numPods + " cloudlets but got " + results.size());
         }
 
+        printCloudletList(results);
         simMetrics.printSummary(lastClock, broker.tpOverall());
         broker.sendResetRequestToControlPlane();
 
@@ -160,6 +164,24 @@ public class Scheduler_Scalability_Test {
             return dc;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static void printCloudletList(List<Cloudlet> list) {
+        String indent = "    ";
+        System.out.println();
+        System.out.println("========== OUTPUT ==========");
+        System.out.println("Cloudlet ID" + indent + "STATUS" + indent +
+                "Data center ID" + indent + "VM ID" + indent + indent + "Time" + indent + "Start Time" + indent + "Finish Time");
+
+        DecimalFormat dft = new DecimalFormat("###.##");
+        for (Cloudlet cloudlet : list) {
+            if (cloudlet.getStatus() == Cloudlet.CloudletStatus.SUCCESS) {
+                System.out.println(indent + cloudlet.getCloudletId() + indent + indent + "SUCCESS" +
+                        indent + indent + cloudlet.getResourceId() + indent + indent + indent + cloudlet.getGuestId() +
+                        indent + indent + indent + dft.format(cloudlet.getActualCPUTime()) +
+                        indent + indent + dft.format(cloudlet.getExecStartTime()) + indent + indent + indent + dft.format(cloudlet.getExecFinishTime()));
+            }
         }
     }
 }

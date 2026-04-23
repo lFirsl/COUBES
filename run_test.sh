@@ -120,7 +120,7 @@ run_sim() {
     local test_class="$1"
     echo "→ Running $test_class..."
     rm -f "$SIM_LOG"
-    setsid mvn -q exec:java -Dexec.mainClass="$test_class" </dev/null >"$SIM_LOG" 2>&1 &
+    setsid mvn -q compile exec:java -Dexec.mainClass="$test_class" </dev/null >"$SIM_LOG" 2>&1 &
     local sim_pid=$!
 
     local last_size=0
@@ -189,7 +189,7 @@ run_sim "$TEST_CLASS" && RC=0 || RC=$?
 
 if [[ $RC -eq 0 ]]; then
     echo "✓ Test passed."
-    tail -20 "$SIM_LOG"
+    cat "$SIM_LOG"
     exit 0
 elif [[ $RC -eq 2 ]]; then
     # Hung — recover and retry once
