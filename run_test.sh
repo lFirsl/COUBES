@@ -175,6 +175,12 @@ fi
 [[ $# -lt 1 ]] && die "Usage: $0 [--test-mode] <fully.qualified.TestClass>"
 TEST_CLASS="$1"
 
+cleanup() {
+    echo "→ Cleaning up adapter..."
+    pkill -9 -x adapter-linux 2>/dev/null || true
+}
+trap cleanup EXIT
+
 check_prereqs
 ensure_infra
 

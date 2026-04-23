@@ -244,28 +244,13 @@ func (s *InMemoryStore) DeleteAll() {
 	}
 }
 
-// Reset atomically clears all state, resets resourceVersion to 0,
-// and recreates broadcast channels.
+// Reset clears all state and resets resourceVersion to 0.
+// Uses DeleteAll() to emit proper DELETED watch events so that
+// kube-scheduler's informer caches stay in sync. Watch connections
+// and broadcast channels are preserved.
 func (s *InMemoryStore) Reset() {
+	s.DeleteAll()
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	// Cancel old broadcaster goroutines
-	s.cancel()
-
-	// Drain and close old event channels
-	close(s.nodeEventCh)
-	close(s.podEventCh)
-
-	// Clear state
-	s.nodes = make(map[string]*corev1.Node)
-	s.pods = make(map[string]*corev1.Pod)
 	s.resourceVersion = 0
-
-	// Recreate channels and broadcasters
-	s.ctx, s.cancel = context.WithCancel(context.Background())
-	s.nodeEventCh = make(chan metav1.WatchEvent, 1000)
-	s.podEventCh = make(chan metav1.WatchEvent, 1000)
-	s.nodeBroadcaster = NewBroadcastServer[metav1.WatchEvent](s.ctx, s.nodeEventCh)
-	s.podBroadcaster = NewBroadcastServer[metav1.WatchEvent](s.ctx, s.podEventCh)
 }

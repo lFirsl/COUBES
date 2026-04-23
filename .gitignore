@@ -44,3 +44,6 @@ build/
 
 ### PDFs ###
 *.pdf
+kiro-cli.deb
+k8s-cloudsim-adapter/adapter-linux
+k8s-cloudsim-adapter/adapter-linux

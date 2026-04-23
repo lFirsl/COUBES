@@ -8,6 +8,9 @@ services:
       - ./kubeconfig.yaml:/etc/kube-scheduler/kubeconfig.yaml
     # Uncomment the following line to override the scheduler configuration without rebuilding the image:
     # - ./scheduler-config.yaml:/etc/kube-scheduler/my-scheduler.yaml
+    extra_hosts:
+      - "adapter-host:host-gateway"
+    network_mode: host
     command:
       - kube-scheduler
       - --config=/etc/kube-scheduler/my-scheduler.yaml
