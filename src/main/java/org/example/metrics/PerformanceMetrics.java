@@ -107,10 +107,10 @@ public class PerformanceMetrics {
     /**
      * Returns the 99th-percentile scheduling latency.
      * 
-     * @return P99 latency in milliseconds, or 0.0 if fewer than 100 samples
+     * @return P99 latency in milliseconds, or 0.0 if no samples recorded
      */
     public double getP99LatencyMs() {
-        if (latenciesMs.size() < 100) {
+        if (latenciesMs.isEmpty()) {
             return 0.0;
         }
         
@@ -131,12 +131,12 @@ public class PerformanceMetrics {
             return 0.0;
         }
         
-        long elapsedSeconds = Duration.between(firstSubmission, lastBinding).getSeconds();
-        if (elapsedSeconds == 0) {
+        long elapsedMs = Duration.between(firstSubmission, lastBinding).toMillis();
+        if (elapsedMs == 0) {
             return 0.0;
         }
         
-        return (double) totalScheduled.get() / elapsedSeconds;
+        return (double) totalScheduled.get() / (elapsedMs / 1000.0);
     }
     
     /**
