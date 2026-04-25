@@ -125,6 +125,17 @@ public class PowerDatacenterCustom extends PowerDatacenter {
         }
     }
 
+
+    @Override
+    protected void processCloudletSubmit(SimEvent ev, boolean ack) {
+        super.processCloudletSubmit(ev, ack);
+        setCloudletSubmitted(CloudSim.clock());
+        // Ensure the scheduling event chain stays alive after submitting a cloudlet
+        // to a previously-idle VM. The parent's processCloudletSubmit may not schedule
+        // a VM_DATACENTER_EVENT if the VM had 0 allocated MIPS (stale from prior cycle).
+        schedule(getId(), getSchedulingInterval(), CloudActionTags.VM_DATACENTER_EVENT);
+    }
+
     public double getConsolidationAverage(double time) {
         return consolidationTW.average(time);
     }

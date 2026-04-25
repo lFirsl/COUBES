@@ -349,6 +349,20 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
 
         Log.println("Finished scheduling batch. Submitting to CloudSim.");
         cloudSimAllocation();
+
+        // Detect permanently unschedulable pods: if nothing was scheduled this round
+        // and nothing is running, no capacity will ever free up — give up on remaining pods.
+        if (cloudletsSubmitted == 0 && !cloudletsSubmittedToMiddle.isEmpty()
+                && (batchDecision.getScheduled() == null || batchDecision.getScheduled().isEmpty())) {
+            Log.printlnConcat(CloudSim.clock(), ": ", getName(),
+                    ": WARNING: ", cloudletsSubmittedToMiddle.size(),
+                    " pods are permanently unschedulable (no running pods to free capacity). Marking as FAILED.");
+            cloudletsSubmittedToMiddle.clear();
+            if (getCloudletList().isEmpty() && cloudletsReadyForCloudsim.isEmpty()) {
+                clearDatacenters();
+                finishExecution();
+            }
+        }
     }
 
     private String serializeCloudletsForSubmission(List<Cloudlet> cloudletList){
