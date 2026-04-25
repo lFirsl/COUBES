@@ -132,21 +132,36 @@ func (r *SchedulingRound) Wait(ctx context.Context) (BatchDecision, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, r.timeout)
 	defer cancel()
 
-	select {
-	case decision := <-r.decisions:
-		return decision, nil
-	case <-timeoutCtx.Done():
-		r.mu.Lock()
-		scheduled := len(r.assignments)
-		failed := len(r.failures)
-		pending := r.pending
-		r.active = false
-		r.mu.Unlock()
+	stallCheck := time.NewTicker(10 * time.Second)
+	defer stallCheck.Stop()
+	lastResolved := 0
 
-		log.Printf("TIMEOUT: %d scheduled, %d failed, %d still pending after %v",
-			scheduled, failed, pending, r.timeout)
-		return BatchDecision{}, fmt.Errorf("scheduling timeout: %d/%d pods resolved (%d pending) within %v",
-			scheduled+failed, scheduled+failed+pending, pending, r.timeout)
+	for {
+		select {
+		case decision := <-r.decisions:
+			return decision, nil
+		case <-stallCheck.C:
+			r.mu.Lock()
+			resolved := len(r.assignments) + len(r.failures)
+			pending := r.pending
+			r.mu.Unlock()
+			if resolved == lastResolved {
+				log.Printf("STALL: no progress for 10s — %d resolved, %d still pending", resolved, pending)
+			}
+			lastResolved = resolved
+		case <-timeoutCtx.Done():
+			r.mu.Lock()
+			scheduled := len(r.assignments)
+			failed := len(r.failures)
+			pending := r.pending
+			r.active = false
+			r.mu.Unlock()
+
+			log.Printf("TIMEOUT: %d scheduled, %d failed, %d still pending after %v",
+				scheduled, failed, pending, r.timeout)
+			return BatchDecision{}, fmt.Errorf("scheduling timeout: %d/%d pods resolved (%d pending) within %v",
+				scheduled+failed, scheduled+failed+pending, pending, r.timeout)
+		}
 	}
 }
 

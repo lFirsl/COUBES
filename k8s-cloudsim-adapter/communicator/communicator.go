@@ -126,6 +126,18 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 		c.mu.Unlock()
 	}
 
+	// Step 2b: In full mode, delete stale unschedulable pods from the store
+	// before re-creating them in step 4. This forces the scheduler to treat
+	// them as fresh pods instead of leaving them in its backoff queue.
+	if !c.testMode {
+		for _, csPod := range snapshot.Pods {
+			podName := fmt.Sprintf("cspod-%d", csPod.ID)
+			if _, exists := c.store.GetPod(podName); exists {
+				c.store.DeletePod(podName)
+			}
+		}
+	}
+
 	// Step 3: No pending pods → return empty
 	if len(snapshot.Pods) == 0 {
 		logJSON(map[string]interface{}{

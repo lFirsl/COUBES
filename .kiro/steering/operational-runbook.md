@@ -88,19 +88,9 @@ tail -3 /tmp/sim.log
 
 ## kubeconfig.yaml — IP Address
 
-`second-scheduler/kubeconfig.yaml` must point to the WSL2 eth0 IP so Docker containers can reach the adapter:
+`second-scheduler/kubeconfig.yaml` points to `http://localhost:8080`. This works because Docker is installed directly in WSL2 (not Docker Desktop) and the scheduler container uses `network_mode: host`, sharing the host's network stack.
 
-```bash
-ip addr show eth0 | grep 'inet '  # get current IP
-```
-
-- `host.docker.internal` does **not** work on this setup — Docker Desktop routes it to the Windows VM gateway (`192.168.65.254`), not the WSL2 instance.
-- The correct IP is the WSL2 `eth0` address (e.g. `172.25.208.201`). **This can change between WSL2 restarts.**
-- Update `kubeconfig.yaml` if the scheduler logs show "connection refused" on startup.
-
-**Known limitation / future fix:** The IP is currently hardcoded. The clean fix is either:
-- Switch from Docker Desktop to Docker Engine installed directly in WSL2 — then `host.docker.internal:host-gateway` works natively and no IP management is needed.
-- Or add a Windows `netsh portproxy` rule forwarding port 8080 from the Windows host to the WSL2 IP, combined with `extra_hosts: host.docker.internal:host-gateway` in docker-compose.yml.
+If you switch back to Docker Desktop, `localhost` won't work from inside containers — you'd need the WSL2 eth0 IP instead.
 
 ---
 

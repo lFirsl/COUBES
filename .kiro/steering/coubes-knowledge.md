@@ -92,12 +92,15 @@ The `scheduler/scheduler.go` logs round lifecycle events:
 - `Binding: pod=cspod-X -> node=csnode-Y (M/N resolved)`
 - `Round complete: X scheduled, Y failed in Zms`
 - `TIMEOUT: X scheduled, Y failed, Z still pending after 60s`
+- `STALL: no progress for 10s — N resolved, M still pending` (every 10s during a stall)
 
 ### Node Sync (`/nodes`)
 Diff-based: adds missing nodes, removes stale nodes to match the incoming list exactly.
 
 ### Pod Scheduling (`/schedule`)
 The primary scheduling endpoint. Accepts a `SimulationSnapshot` containing nodes, pods, and completed pod IDs. In test mode, calls `TestModeScheduler.Schedule()` synchronously. In full mode, begins a `SchedulingRound` and blocks until all pods are resolved or timeout.
+
+**Scheduler backoff queue (full mode):** When the kube-scheduler declares a pod unschedulable, it puts it in an internal backoff queue (1s initial, 10s max). If the same pod is re-submitted to the fake API server without being deleted first, the scheduler still has it in its backoff queue and won't re-evaluate it until the backoff expires. To avoid this, `HandleSchedule` deletes any existing pods from the store before re-creating them in step 4. This makes the scheduler treat them as fresh pods. Without this, rescheduling rounds stall for 10+ seconds waiting for backoff expiry.
 
 ### Pod Scheduling (`/schedule-pods`)
 Legacy endpoint. Accepts `[]CsPod` only (no node sync or completed IDs). Still functional but `/schedule` is preferred.
