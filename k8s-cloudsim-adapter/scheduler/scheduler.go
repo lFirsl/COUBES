@@ -32,22 +32,24 @@ type BatchDecision struct {
 // SchedulingRound manages synchronisation between the simulation-facing
 // /schedule-pods handler and the kube-scheduler's binding callbacks.
 type SchedulingRound struct {
-	mu          sync.Mutex
-	pending     int
-	decisions   chan BatchDecision
-	assignments []PodAssignment
-	failures    []PodFailure
-	timeout     time.Duration
-	active      bool
-	startTime   time.Time // when the round began
+	mu           sync.Mutex
+	pending      int
+	decisions    chan BatchDecision
+	assignments  []PodAssignment
+	failures     []PodFailure
+	timeout      time.Duration
+	active       bool
+	startTime    time.Time // when the round began
+	lateBindings map[int]PodAssignment // bindings that arrived after the round closed
 }
 
 func NewSchedulingRound(timeout time.Duration) *SchedulingRound {
 	return &SchedulingRound{
-		timeout:     timeout,
-		assignments: make([]PodAssignment, 0),
-		failures:    make([]PodFailure, 0),
-		decisions:   make(chan BatchDecision, 1),
+		timeout:      timeout,
+		assignments:  make([]PodAssignment, 0),
+		failures:     make([]PodFailure, 0),
+		decisions:    make(chan BatchDecision, 1),
+		lateBindings: make(map[int]PodAssignment),
 	}
 }
 
@@ -79,12 +81,16 @@ func (r *SchedulingRound) RecordBinding(podName, nodeName string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if !r.active {
-		return
-	}
-
 	podID := extractID(podName, "cspod-")
 	nodeID := extractID(nodeName, "csnode-")
+
+	if !r.active {
+		r.lateBindings[podID] = PodAssignment{
+			PodID: podID, NodeID: nodeID, BindingTimestamp: time.Now(),
+		}
+		log.Printf("Late binding (round inactive): pod=%s -> node=%s", podName, nodeName)
+		return
+	}
 
 	r.assignments = append(r.assignments, PodAssignment{
 		PodID:           podID,
@@ -182,7 +188,25 @@ func (r *SchedulingRound) Reset() {
 	r.pending = 0
 	r.assignments = make([]PodAssignment, 0)
 	r.failures = make([]PodFailure, 0)
+	r.lateBindings = make(map[int]PodAssignment)
 	log.Printf("Scheduling round reset")
+}
+
+// DrainLateBindings returns and clears any bindings that arrived after the
+// previous round closed. The communicator uses this to exclude already-bound
+// pods from the next round and include them in the batch decision.
+func (r *SchedulingRound) DrainLateBindings() []PodAssignment {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if len(r.lateBindings) == 0 {
+		return nil
+	}
+	result := make([]PodAssignment, 0, len(r.lateBindings))
+	for _, a := range r.lateBindings {
+		result = append(result, a)
+	}
+	r.lateBindings = make(map[int]PodAssignment)
+	return result
 }
 
 func extractID(name, prefix string) int {

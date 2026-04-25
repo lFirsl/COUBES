@@ -145,13 +145,41 @@ The `scheduler/scheduler.go` logs round lifecycle: start (expected decisions), e
 
 ### Preferred: run_test.sh
 
-```bash
-# Test mode (no Docker required)
-./run_test.sh --test-mode org.example.testSuite.Fragmentation_Test
+`run_test.sh` is the single entry point for running tests. It handles everything: killing stale processes, compiling both Java and Go, running Go unit tests, starting/stopping the adapter and scheduler, hang detection with auto-recovery, and output filtering. **Always use this script** — do not run the adapter or simulation manually unless debugging.
 
-# Full mode (with real kube-scheduler via Docker)
-./run_test.sh org.example.testSuite.Fragmentation_Test
+If you find yourself repeatedly doing something before or after `run_test.sh`, that step should be added to the script itself.
+
+```bash
+# Show all options
+bash run_test.sh --help
+
+# Test mode (no Docker required) — builds everything, runs test
+bash run_test.sh --test-mode org.example.testSuite.Fragmentation_Test_Large
+
+# Full mode (real kube-scheduler via Docker)
+bash run_test.sh org.example.testSuite.Scheduler_Scalability_Test
+
+# Skip compilation (use existing binaries)
+bash run_test.sh --test-mode --no-compile org.example.testSuite.Fragmentation_Test_Large
+
+# Show full unfiltered output
+bash run_test.sh --test-mode --no-filter org.example.testSuite.Fragmentation_Test
 ```
+
+**Options:**
+- `--test-mode` — built-in round-robin scheduler, no Docker needed
+- `--no-compile` — skip Go build, Go tests, and Java compilation
+- `--no-filter` — show full simulation output instead of filtered summary
+- `--help` — show usage
+
+**What the script does automatically:**
+1. Kills stale adapter and Java processes
+2. Builds Go adapter + runs Go scheduler tests (unless `--no-compile`)
+3. Compiles Java (unless `--no-compile`)
+4. Starts adapter, starts scheduler (full mode only), resets state
+5. Runs the simulation with hang detection (45s timeout)
+6. Auto-recovers once from a hang (restarts scheduler, retries)
+7. Filters output to show only results, metrics, and errors (unless `--no-filter`)
 
 See `operational-runbook.md` for manual startup and debugging procedures.
 

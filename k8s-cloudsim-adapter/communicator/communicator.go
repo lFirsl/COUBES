@@ -129,12 +129,39 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 	// Step 2b: In full mode, delete stale unschedulable pods from the store
 	// before re-creating them in step 4. This forces the scheduler to treat
 	// them as fresh pods instead of leaving them in its backoff queue.
+	staleDeleted := 0
 	if !c.testMode {
 		for _, csPod := range snapshot.Pods {
 			podName := fmt.Sprintf("cspod-%d", csPod.ID)
 			if _, exists := c.store.GetPod(podName); exists {
 				c.store.DeletePod(podName)
+				staleDeleted++
 			}
+		}
+	}
+
+	// Step 2c: Drain late bindings from the previous round. These are pods the
+	// scheduler bound after the round closed. Exclude them from this round's
+	// pod list and include them directly in the decision.
+	var lateAssignments []scheduler.PodAssignment
+	if !c.testMode {
+		lateAssignments = c.round.DrainLateBindings()
+		if len(lateAssignments) > 0 {
+			lateBound := make(map[int]bool, len(lateAssignments))
+			for _, a := range lateAssignments {
+				lateBound[a.PodID] = true
+			}
+			filtered := make([]CsPod, 0, len(snapshot.Pods))
+			for _, p := range snapshot.Pods {
+				if !lateBound[p.ID] {
+					filtered = append(filtered, p)
+				}
+			}
+			logJSON(map[string]interface{}{
+				"action": "HandleSchedule", "roundId": rid,
+				"phase": "late_bindings", "count": len(lateAssignments),
+			})
+			snapshot.Pods = filtered
 		}
 	}
 
@@ -164,6 +191,16 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 		c.pods[csPod.ID] = &podCopy
 		c.mu.Unlock()
 	}
+
+	prepOverhead := time.Since(t0)
+	logJSON(map[string]interface{}{
+		"action":       "HandleSchedule",
+		"roundId":      rid,
+		"phase":        "prep_done",
+		"prepMs":       prepOverhead.Milliseconds(),
+		"staleDeleted": staleDeleted,
+		"podsCreated":  len(snapshot.Pods),
+	})
 
 	// Step 5: Schedule
 	var decision scheduler.BatchDecision
@@ -214,6 +251,11 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusRequestTimeout)
 			return
 		}
+	}
+
+	// Merge late bindings into the decision
+	if len(lateAssignments) > 0 {
+		decision.Scheduled = append(lateAssignments, decision.Scheduled...)
 	}
 
 	logJSON(map[string]interface{}{
