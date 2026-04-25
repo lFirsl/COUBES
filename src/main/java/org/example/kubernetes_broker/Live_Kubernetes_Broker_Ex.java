@@ -470,13 +470,9 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
             send(getId(), 1.0, CloudActionTagsEx.RESCHEDULE_PENDING, null);
         }
 
-        // Shut down only when all cloudlets are truly done (none pending in middleware)
-        if (getLifeLength() <= 0 && cloudletsSubmitted == 0
-                && cloudletsSubmittedToMiddle.isEmpty() && cloudletsReadyForCloudsim.isEmpty()
-                && getCloudletList().isEmpty()) {
-            clearDatacenters();
-            finishExecution();
-        }
+        // Note: we do NOT call finishExecution() here. The simulation terminates
+        // naturally when no more future events exist. Calling finishExecution() early
+        // would kill the datacenter before delayed cloudlet waves arrive.
     }
 
     @Override
