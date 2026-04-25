@@ -126,19 +126,10 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 		c.mu.Unlock()
 	}
 
-	// Step 2b: In full mode, delete stale unschedulable pods from the store
-	// before re-creating them in step 4. This forces the scheduler to treat
-	// them as fresh pods instead of leaving them in its backoff queue.
+	// Step 2b: (removed — the Java broker now only re-sends unschedulable pods
+	// when completions have freed capacity, so the scheduler's backoff queue is
+	// naturally flushed by the completed pod DELETE events.)
 	staleDeleted := 0
-	if !c.testMode {
-		for _, csPod := range snapshot.Pods {
-			podName := fmt.Sprintf("cspod-%d", csPod.ID)
-			if _, exists := c.store.GetPod(podName); exists {
-				c.store.DeletePod(podName)
-				staleDeleted++
-			}
-		}
-	}
 
 	// Step 2c: Drain late bindings from the previous round. These are pods the
 	// scheduler bound after the round closed. Exclude them from this round's
@@ -160,6 +151,7 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 			logJSON(map[string]interface{}{
 				"action": "HandleSchedule", "roundId": rid,
 				"phase": "late_bindings", "count": len(lateAssignments),
+				"warning": "scheduler bound pods after previous round closed — these will be merged into this round's decision",
 			})
 			snapshot.Pods = filtered
 		}

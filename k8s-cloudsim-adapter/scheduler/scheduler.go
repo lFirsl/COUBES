@@ -88,7 +88,7 @@ func (r *SchedulingRound) RecordBinding(podName, nodeName string) {
 		r.lateBindings[podID] = PodAssignment{
 			PodID: podID, NodeID: nodeID, BindingTimestamp: time.Now(),
 		}
-		log.Printf("Late binding (round inactive): pod=%s -> node=%s", podName, nodeName)
+		log.Printf("WARNING: Late binding (round inactive): pod=%s -> node=%s — scheduler bound a pod after the round closed", podName, nodeName)
 		return
 	}
 

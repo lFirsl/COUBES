@@ -225,10 +225,14 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
                 performanceMetrics.recordSubmission(cloudlet.getCloudletId());
             }
         }
-        for (Cloudlet cloudlet : cloudletsSubmittedToMiddle.values()) {
-            // Skip cloudlets we just added above to avoid duplicates
-            if (getCloudletList().contains(cloudlet)) continue;
-            podsArray.add(buildPodJson(mapper, cloudlet));
+        // Only re-send previously unschedulable pods when capacity has changed
+        // (i.e., completions happened). Otherwise the scheduler already has them
+        // in its backoff queue and will re-evaluate them when capacity frees up.
+        if (!completedSinceLastRound.isEmpty()) {
+            for (Cloudlet cloudlet : cloudletsSubmittedToMiddle.values()) {
+                if (getCloudletList().contains(cloudlet)) continue;
+                podsArray.add(buildPodJson(mapper, cloudlet));
+            }
         }
         snapshot.set("pods", podsArray);
         
