@@ -32,6 +32,8 @@ cloudsim-experimental/
 │   └── utils/
 ├── second-scheduler/          # Docker config for running kube-scheduler
 ├── run_test.sh                # Test runner script with infra management + hang detection
+├── run_all_tests.sh           # Runs all test suite tests, reports summary
+├── docs/                      # Architecture docs (DESIGN.md, scheduling-workflow.md)
 └── k8s-in-the-loop/           # Separate sub-project (do not modify unless instructed)
 ```
 
@@ -135,9 +137,18 @@ The `scheduler/scheduler.go` logs round lifecycle: start (expected decisions), e
 | Test | What it measures |
 |---|---|
 | `Fragmentation_Test` | Bin-packing under mixed workloads; 2 waves, `disableDeallocation=true` |
+| `Fragmentation_Test_Large` | Rescheduling stress test; 50 cloudlets, 2 VMs, multiple rounds |
+| `Fragmentation_Test_5Wave` | 5 waves of mixed cloudlets, multi-round rescheduling |
 | `Performance_vs_Efficiency_Test` | Two hosts with different power models; energy vs throughput tradeoff |
 | `Undercrowding_Test` | Sparse workload; idle energy waste |
-| `Scheduler_Latency_Test` | Scheduling latency under increasing load (20 pods → 100 pods). Blocked by rescheduling bug. |
+| `Scheduler_Scalability_Test` | Scheduling latency at 4:1 and 20:1 pod-to-node ratios |
+| `Scheduler_Latency_Test` | Per-pod scheduling latency under increasing load |
+| `MultiPE_Pod_Test` | Multi-PE pods (3 PEs each) on 5-PE nodes; capacity tracking |
+| `Oversized_Pod_Test` | Pod too large for any node; graceful termination |
+| `Heterogeneous_Node_Test` | Nodes with different PE counts (2, 4, 8); correct placement |
+| `Single_Pod_Test` | Minimal sanity check: 1 host, 1 VM, 1 pod |
+| `Empty_Wave_Test` | Wave 2 arrives after wave 1 completes; no rescheduling needed |
+| `Rapid_Completion_Test` | 10 pods complete simultaneously; batched rescheduling |
 
 ---
 

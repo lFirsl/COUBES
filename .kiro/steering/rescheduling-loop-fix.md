@@ -129,6 +129,28 @@ This is safe because:
 | `src/.../Live_Kubernetes_Broker_Ex.java` | Include `cloudletsSubmittedToMiddle` in snapshot; `buildPodJson` helper |
 | `src/.../PowerDatacenterCustom.java` | Safety net for stale-MIPS event chain death |
 
+### Additional fixes discovered during edge-case testing
+
+**5. `processCloudletSubmit` on idle VMs didn't create scheduling events**
+
+When a cloudlet is submitted to a previously-idle VM, the parent's `cloudletSubmit()`
+processes it with 0 allocated MIPS and returns an invalid estimated finish time. No
+`VM_DATACENTER_EVENT` is created. Fixed by overriding `processCloudletSubmit` in
+`PowerDatacenterCustom` to unconditionally schedule an event after each submission.
+This is more robust than the safety net alone — it catches the problem at the source.
+
+**6. Permanently unschedulable pods caused infinite retry**
+
+If a pod can never fit on any node (e.g., needs 6 PEs but max node has 4), the broker
+kept it in `cloudletsSubmittedToMiddle` forever. Fixed: after a round where 0 pods were
+scheduled and 0 are running, clear the pending queue with a WARNING log.
+
+**7. Early shutdown killed delayed waves**
+
+`processCloudletReturn` called `finishExecution()` when all current cloudlets were done,
+even if delayed waves hadn't arrived yet. Fixed by removing the early shutdown — the
+simulation terminates naturally via "No more future events."
+
 ---
 
 ## Test Evidence

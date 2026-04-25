@@ -1,5 +1,6 @@
 # COUBES Operational Runbook
 # COUBES Operational Runbook
+# COUBES Operational Runbook
 
 ## run_test.sh — The Preferred Way to Run Tests
 
@@ -15,11 +16,18 @@ The `run_test.sh` script handles infrastructure startup, hang detection, auto-re
 
 The script:
 - Checks prerequisites (`mvn`, `go`, `curl`; `docker` only in full mode)
-- Kills any existing adapter, starts a fresh one with the correct flags
-- In full mode: ensures the Docker scheduler is running and has populated caches
-- Resets adapter state before each run
-- Detects hangs (no log output for 45s) and auto-recovers once (restart scheduler + retry)
+- Kills any existing adapter and stale Java processes
+- Builds Go adapter + runs Go scheduler tests (unless `--no-compile`)
+- Compiles Java (unless `--no-compile`)
+- Starts adapter, starts scheduler (full mode only), resets state
+- Runs the simulation with hang detection (45s timeout)
+- Auto-recovers once from a hang (restarts scheduler, retries)
+- Filters output to show only results, metrics, and errors (unless `--no-filter`)
 - Exits non-zero with diagnostic output on failure
+
+**Options:** `--test-mode`, `--no-compile`, `--no-filter`, `--help`
+
+**Run all tests:** `bash run_all_tests.sh [--test-mode] [--no-compile] [--stop-on-fail]`
 
 ---
 

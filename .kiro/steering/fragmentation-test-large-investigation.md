@@ -1,5 +1,10 @@
 # Fragmentation_Test_Large — Investigation Notes
 
+# Fragmentation_Test_Large — Investigation Notes
+
+> **RESOLVED**: All issues described here are fixed. See `rescheduling-loop-fix.md` for
+> the complete fix record, root causes, and troubleshooting guide.
+
 ## Goal
 A test with 10 VMs and 50 cloudlets (35 wave 1 + 15 wave 2) where pods that can't be
 immediately scheduled queue in the adapter and are rescheduled as VMs free up.

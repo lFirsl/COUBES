@@ -69,7 +69,8 @@ processOtherEvent(RESCHEDULE_PENDING)
 - No external dependencies (no Docker, no kube-scheduler)
 - Fake Kubernetes API routes are not registered
 - Scheduling is synchronous and deterministic
-- Pod `i` assigned to `sortedNodes[i % M]` (lexicographic node order)
+- Resource-aware: tracks free PEs per node, returns unschedulable pods when no node has capacity
+- Round-robin with capacity check: tries nodes starting from `rrIndex`, first node with enough free PEs gets the pod
 
 **Full Mode** (default):
 - Implements a fake Kubernetes API server
@@ -170,6 +171,23 @@ Computed in `Helper.getSlaMetrics()` from VM state history. Measures time period
 6. **`disableDeallocation` flag**: When `true`, VMs are never destroyed. Energy is charged for idle VMs indefinitely.
 
 7. **Per-host MIPS output**: CloudSim's base `PowerHost.updateCloudletsProcessing()` prints per-host MIPS allocation every tick. This cannot be suppressed via `LogLevel.QUIET` since it's in upstream code.
+
+8. **Stale-MIPS event chain (FIXED)**: When cloudlets arrive on previously-idle VMs,
+   `HostDynamicWorkload.updateCloudletsProcessing()` processes them with 0 MIPS from the
+   prior cycle. Two fixes in `PowerDatacenterCustom`: (a) safety net in
+   `updateCloudetProcessingWithoutSchedulingFutureEventsForce()` forces a scheduling event
+   when VMs have active cloudlets but `minTime == MAX_VALUE`; (b) `processCloudletSubmit`
+   override unconditionally schedules a `VM_DATACENTER_EVENT` after each submission.
+
+9. **Permanently unschedulable pods (HANDLED)**: If a pod can never fit on any node and
+   no running pods remain to free capacity, the broker detects this (0 scheduled + 0 running
+   + pods still pending) and clears the pending queue with a WARNING log. The simulation
+   terminates gracefully instead of hanging.
+
+10. **Early shutdown with delayed waves (FIXED)**: The broker's `processCloudletReturn`
+    used to call `finishExecution()` when all current cloudlets were done, even if delayed
+    waves hadn't arrived yet. This killed the simulation prematurely. Fixed by removing the
+    early shutdown — the simulation now terminates naturally via "No more future events."
 
 ---
 
