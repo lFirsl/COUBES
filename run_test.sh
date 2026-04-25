@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# run_test.sh [--test-mode] <TestClass>
-# Runs a COUBES test, spinning up infrastructure if needed.
-# --test-mode: use built-in round-robin scheduler (no Docker/kube-scheduler required)
+# run_test.sh [--test-mode] [--no-compile] <TestClass>
+# Builds, tests, and runs a COUBES simulation.
+# --test-mode:  use built-in round-robin scheduler (no Docker/kube-scheduler required)
+# --no-compile: skip Go build, Go tests, and Java compilation (use existing binaries)
 # Auto-recovers once from a scheduler hang. Always exits non-zero on failure.
 
 set -euo pipefail
@@ -14,6 +15,7 @@ ADAPTER_URL="http://localhost:8080"
 HANG_TIMEOUT=45   # seconds of no log output before declaring a hang
 RECOVERY_DONE=0
 TEST_MODE=0
+NO_COMPILE=0
 ADAPTER_FLAGS="--scheduler=default-scheduler"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
@@ -87,6 +89,26 @@ restart_scheduler_and_reset() {
     echo "  Recovery complete."
 }
 
+# ── build ─────────────────────────────────────────────────────────────────────
+
+build_all() {
+    if [[ $NO_COMPILE -eq 1 ]]; then
+        echo "→ Skipping compilation (--no-compile)."
+        return 0
+    fi
+
+    echo "→ Building Go adapter..."
+    (cd k8s-cloudsim-adapter && go build -o adapter-linux .) || die "Go adapter build failed."
+
+    echo "→ Running Go tests..."
+    (cd k8s-cloudsim-adapter && go test ./scheduler/ -count=1) || die "Go tests failed."
+
+    echo "→ Compiling Java..."
+    mvn -q compile || die "Java compilation failed."
+
+    echo "  Build complete."
+}
+
 # ── ensure infrastructure ─────────────────────────────────────────────────────
 
 ensure_infra() {
@@ -120,7 +142,7 @@ run_sim() {
     local test_class="$1"
     echo "→ Running $test_class..."
     rm -f "$SIM_LOG"
-    setsid mvn -q compile exec:java -Dexec.mainClass="$test_class" </dev/null >"$SIM_LOG" 2>&1 &
+    setsid mvn -q exec:java -Dexec.mainClass="$test_class" </dev/null >"$SIM_LOG" 2>&1 &
     local sim_pid=$!
 
     local last_size=0
@@ -164,15 +186,26 @@ run_sim() {
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
-[[ $# -lt 1 ]] && die "Usage: $0 [--test-mode] <fully.qualified.TestClass>"
+[[ $# -lt 1 ]] && die "Usage: $0 [--test-mode] [--no-compile] <fully.qualified.TestClass>"
 
-if [[ "$1" == "--test-mode" ]]; then
-    TEST_MODE=1
-    ADAPTER_FLAGS="--test-mode"
-    shift
-fi
+while [[ $# -gt 0 && "$1" == --* ]]; do
+    case "$1" in
+        --test-mode)
+            TEST_MODE=1
+            ADAPTER_FLAGS="--test-mode"
+            shift
+            ;;
+        --no-compile)
+            NO_COMPILE=1
+            shift
+            ;;
+        *)
+            die "Unknown flag: $1"
+            ;;
+    esac
+done
 
-[[ $# -lt 1 ]] && die "Usage: $0 [--test-mode] <fully.qualified.TestClass>"
+[[ $# -lt 1 ]] && die "Usage: $0 [--test-mode] [--no-compile] <fully.qualified.TestClass>"
 TEST_CLASS="$1"
 
 cleanup() {
@@ -182,6 +215,7 @@ cleanup() {
 trap cleanup EXIT
 
 check_prereqs
+build_all
 ensure_infra
 
 # First attempt
