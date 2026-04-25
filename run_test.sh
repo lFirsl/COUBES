@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
-# run_test.sh [--test-mode] [--no-compile] <TestClass>
-# Builds, tests, and runs a COUBES simulation.
-# --test-mode:  use built-in round-robin scheduler (no Docker/kube-scheduler required)
-# --no-compile: skip Go build, Go tests, and Java compilation (use existing binaries)
+# run_test.sh — Build, test, and run a COUBES simulation.
 # Auto-recovers once from a scheduler hang. Always exits non-zero on failure.
+#
+# Usage: run_test.sh [OPTIONS] <fully.qualified.TestClass>
+#
+# Options:
+#   --test-mode        Use built-in round-robin scheduler (no Docker/kube-scheduler required)
+#   --no-compile       Skip Go build, Go tests, and Java compilation (use existing binaries)
+#   --no-filter        Show full simulation output instead of filtered summary
+#   --help             Show this help message
+#
+# Examples:
+#   bash run_test.sh --test-mode org.example.testSuite.Fragmentation_Test_Large
+#   bash run_test.sh --no-compile org.example.testSuite.Scheduler_Scalability_Test
+#   bash run_test.sh --test-mode --no-compile --no-filter org.example.testSuite.Fragmentation_Test
 
 set -euo pipefail
 
@@ -16,9 +26,18 @@ HANG_TIMEOUT=45   # seconds of no log output before declaring a hang
 RECOVERY_DONE=0
 TEST_MODE=0
 NO_COMPILE=0
+NO_FILTER=0
 ADAPTER_FLAGS="--scheduler=default-scheduler"
 
+# Output filter: shows only the important lines from simulation output
+OUTPUT_FILTER='(SUCCESS|FAIL|ERROR|WARNING|Simulation Metrics|Simulated Time|Wall-clock|Energy|Number of|consolidation|Throughput|Scheduling Latency|SCALABILITY|Phase|Latency ratio|finished!|Exception|round=|Rescheduling|scheduled on|pending|OUTPUT|Cloudlet ID)'
+
 die() { echo "ERROR: $*" >&2; exit 1; }
+
+show_help() {
+    sed -n '2,/^$/{ s/^# \?//; p }' "$0"
+    exit 0
+}
 
 # ── prerequisite checks ─────────────────────────────────────────────────────
 
@@ -62,6 +81,13 @@ wait_for_scheduler() {
         scheduler_ready && echo "  Scheduler ready." && return 0
     done
     return 1
+}
+
+kill_stale_processes() {
+    echo "→ Killing stale processes..."
+    pkill -9 -x adapter-linux 2>/dev/null || true
+    pkill -9 -f "exec:java.*org.example" 2>/dev/null || true
+    sleep 1
 }
 
 start_adapter() {
@@ -112,9 +138,6 @@ build_all() {
 # ── ensure infrastructure ─────────────────────────────────────────────────────
 
 ensure_infra() {
-    # Always restart adapter under script control so we own the log file
-    pgrep -x adapter-linux >/dev/null 2>&1 && pkill -9 -x adapter-linux || true
-    sleep 1
     start_adapter
 
     # Scheduler (skip in test mode)
@@ -165,8 +188,10 @@ run_sim() {
 
             echo "  Adapter log tail:"
             tail -3 "$ADAPTER_LOG" 2>/dev/null || echo "  (no adapter log)"
-            echo "  Scheduler recent:"
-            docker logs my-scheduler --since 30s 2>&1 | grep -v "^E" | tail -3
+            if [[ $TEST_MODE -eq 0 ]]; then
+                echo "  Scheduler recent:"
+                docker logs my-scheduler --since 30s 2>&1 | grep -v "^E" | tail -3
+            fi
 
             if [[ $RECOVERY_DONE -eq 0 ]]; then
                 RECOVERY_DONE=1
@@ -184,9 +209,17 @@ run_sim() {
     return $?
 }
 
+show_results() {
+    if [[ $NO_FILTER -eq 1 ]]; then
+        cat "$SIM_LOG"
+    else
+        grep -E "$OUTPUT_FILTER" "$SIM_LOG" || true
+    fi
+}
+
 # ── main ──────────────────────────────────────────────────────────────────────
 
-[[ $# -lt 1 ]] && die "Usage: $0 [--test-mode] [--no-compile] <fully.qualified.TestClass>"
+[[ $# -lt 1 ]] && show_help
 
 while [[ $# -gt 0 && "$1" == --* ]]; do
     case "$1" in
@@ -199,13 +232,20 @@ while [[ $# -gt 0 && "$1" == --* ]]; do
             NO_COMPILE=1
             shift
             ;;
+        --no-filter)
+            NO_FILTER=1
+            shift
+            ;;
+        --help)
+            show_help
+            ;;
         *)
-            die "Unknown flag: $1"
+            die "Unknown flag: $1. Use --help for usage."
             ;;
     esac
 done
 
-[[ $# -lt 1 ]] && die "Usage: $0 [--test-mode] [--no-compile] <fully.qualified.TestClass>"
+[[ $# -lt 1 ]] && die "Missing test class. Use --help for usage."
 TEST_CLASS="$1"
 
 cleanup() {
@@ -215,6 +255,7 @@ cleanup() {
 trap cleanup EXIT
 
 check_prereqs
+kill_stale_processes
 build_all
 ensure_infra
 
@@ -223,7 +264,7 @@ run_sim "$TEST_CLASS" && RC=0 || RC=$?
 
 if [[ $RC -eq 0 ]]; then
     echo "✓ Test passed."
-    cat "$SIM_LOG"
+    show_results
     exit 0
 elif [[ $RC -eq 2 ]]; then
     # Hung — recover and retry once
@@ -233,7 +274,7 @@ elif [[ $RC -eq 2 ]]; then
     run_sim "$TEST_CLASS" && RC=0 || RC=$?
     if [[ $RC -eq 0 ]]; then
         echo "✓ Test passed (after recovery)."
-        tail -20 "$SIM_LOG"
+        show_results
         exit 0
     else
         echo "FAIL: Test failed after recovery." >&2
