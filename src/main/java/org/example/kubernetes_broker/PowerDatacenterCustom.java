@@ -110,6 +110,15 @@ public class PowerDatacenterCustom extends PowerDatacenter {
             if (minTime != Double.MAX_VALUE) {
                 CloudSim.cancelAll(getId(), new PredicateType(CloudActionTags.VM_DATACENTER_EVENT));
                 send(getId(), getSchedulingInterval(), CloudActionTags.VM_DATACENTER_EVENT);
+            } else {
+                Log.printlnConcat(String.format("%.2f", currentTime), ": [DEBUG] minTime=MAX_VALUE, no future event scheduled. cloudletsSubmitted=", getCloudletSubmitted());
+                for (PowerHost host : this.<PowerHost>getHostList()) {
+                    for (GuestEntity vm : host.getGuestList()) {
+                        Log.printlnConcat(String.format("%.2f", currentTime), ": [DEBUG] VM #", vm.getId(),
+                            " exec=", vm.getCloudletScheduler().getCloudletExecList().size(),
+                            " wait=", vm.getCloudletScheduler().getCloudletWaitingList().size());
+                    }
+                }
             }
 
             setLastProcessTime(currentTime);
@@ -140,6 +149,22 @@ public class PowerDatacenterCustom extends PowerDatacenter {
             if (logLevel == LogLevel.VERBOSE) {
                 Log.formatLine("%.2f: [Host #%d] utilization is %.2f%%",
                         currentTime, host.getId(), host.getUtilizationOfCpu() * 100);
+            }
+        }
+
+        // Safety net: if any VM has active cloudlets but minTime is MAX_VALUE
+        // (happens when cloudlets arrive on previously-idle VMs whose MIPS
+        // allocation was zero from the prior cycle), force a scheduling event
+        // so the next cycle picks up the refreshed MIPS allocation.
+        if (minTime == Double.MAX_VALUE) {
+            outer:
+            for (HostEntity host : getVmAllocationPolicy().getHostList()) {
+                for (GuestEntity vm : host.getGuestList()) {
+                    if (!vm.getCloudletScheduler().getCloudletExecList().isEmpty()) {
+                        minTime = currentTime + getSchedulingInterval();
+                        break outer;
+                    }
+                }
             }
         }
 

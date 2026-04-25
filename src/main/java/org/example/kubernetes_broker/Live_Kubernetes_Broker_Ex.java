@@ -216,24 +216,19 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         }
         snapshot.set("nodes", nodesArray);
         
-        // Add pending pods
+        // Add pending pods (new from getCloudletList + previously unschedulable from cloudletsSubmittedToMiddle)
         ArrayNode podsArray = mapper.createArrayNode();
         for (Cloudlet cloudlet : getCloudletList()) {
-            ObjectNode podJson = mapper.createObjectNode();
-            podJson.put("id", cloudlet.getCloudletId());
-            podJson.put("name", "cloudlet-" + cloudlet.getCloudletId());
-            podJson.put("length", cloudlet.getCloudletLength());
-            podJson.put("pes", cloudlet.getNumberOfPes());
-            podJson.put("fileSize", cloudlet.getCloudletFileSize());
-            podJson.put("outputSize", cloudlet.getCloudletOutputSize());
-            podJson.put("utilizationCpu", cloudlet.getUtilizationModelCpu().getUtilization(0));
-            podJson.put("utilizationRam", cloudlet.getUtilizationModelRam().getUtilization(0));
-            podJson.put("utilizationBw", cloudlet.getUtilizationModelBw().getUtilization(0));
-            podsArray.add(podJson);
+            podsArray.add(buildPodJson(mapper, cloudlet));
             cloudletsSubmittedToMiddle.put(cloudlet.getCloudletId(), cloudlet);
             if (performanceMetrics != null) {
                 performanceMetrics.recordSubmission(cloudlet.getCloudletId());
             }
+        }
+        for (Cloudlet cloudlet : cloudletsSubmittedToMiddle.values()) {
+            // Skip cloudlets we just added above to avoid duplicates
+            if (getCloudletList().contains(cloudlet)) continue;
+            podsArray.add(buildPodJson(mapper, cloudlet));
         }
         snapshot.set("pods", podsArray);
         
@@ -478,6 +473,20 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         } else {
             super.processOtherEvent(ev);
         }
+    }
+
+    private ObjectNode buildPodJson(ObjectMapper mapper, Cloudlet cloudlet) {
+        ObjectNode podJson = mapper.createObjectNode();
+        podJson.put("id", cloudlet.getCloudletId());
+        podJson.put("name", "cloudlet-" + cloudlet.getCloudletId());
+        podJson.put("length", cloudlet.getCloudletLength());
+        podJson.put("pes", cloudlet.getNumberOfPes());
+        podJson.put("fileSize", cloudlet.getCloudletFileSize());
+        podJson.put("outputSize", cloudlet.getCloudletOutputSize());
+        podJson.put("utilizationCpu", cloudlet.getUtilizationModelCpu().getUtilization(0));
+        podJson.put("utilizationRam", cloudlet.getUtilizationModelRam().getUtilization(0));
+        podJson.put("utilizationBw", cloudlet.getUtilizationModelBw().getUtilization(0));
+        return podJson;
     }
 
     private void submitCloudletToVmInCloudSim(Cloudlet cloudlet, int vmId) {

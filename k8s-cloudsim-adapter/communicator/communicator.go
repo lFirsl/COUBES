@@ -157,7 +157,23 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 	var decision scheduler.BatchDecision
 
 	if c.testMode {
-		decision = c.scheduleTestMode(snapshot.Pods)
+		decision = c.scheduleTestMode(snapshot.Pods, snapshot.Nodes)
+		logJSON(map[string]interface{}{
+			"action":      "testModeResult",
+			"roundId":     rid,
+			"newPods":     len(snapshot.Pods),
+			"scheduled":   len(decision.Scheduled),
+			"unschedulable": len(decision.Unschedulable),
+		})
+		// Update pod status so future rounds know which nodes are occupied
+		c.mu.Lock()
+		for _, a := range decision.Scheduled {
+			if pod, ok := c.pods[a.PodID]; ok {
+				pod.Status = "Running"
+				pod.NodeID = a.NodeID
+			}
+		}
+		c.mu.Unlock()
 	} else {
 		if err := c.round.Begin(len(snapshot.Pods)); err != nil {
 			logJSON(map[string]interface{}{
@@ -231,7 +247,7 @@ func (c *Communicator) HandleSchedulePods(w http.ResponseWriter, r *http.Request
 	var decision scheduler.BatchDecision
 
 	if c.testMode {
-		decision = c.scheduleTestMode(csPods)
+		decision = c.scheduleTestMode(csPods, c.snapshotNodesFromStore())
 	} else {
 		if err := c.round.Begin(len(csPods)); err != nil {
 			http.Error(w, err.Error(), http.StatusConflict)
@@ -389,21 +405,52 @@ func (c *Communicator) HandlePodStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // scheduleTestMode runs the built-in round-robin scheduler.
-func (c *Communicator) scheduleTestMode(csPods []CsPod) scheduler.BatchDecision {
-	csNodes := c.store.GetNodes()
+func (c *Communicator) scheduleTestMode(csPods []CsPod, csNodes []CsNode) scheduler.BatchDecision {
+	// Build a map of PEs already consumed by running pods on each node
+	usedPes := make(map[int]int)
+	c.mu.Lock()
+	for _, pod := range c.pods {
+		if pod.Status == "Running" {
+			usedPes[pod.NodeID] += pod.Pes
+		}
+	}
+	c.mu.Unlock()
+
 	nodes := make([]scheduler.SchedulerNode, len(csNodes))
 	for i, node := range csNodes {
-		nodeID, err := extractNodeID(node.Name)
-		if err != nil {
-			nodeID = -1
+		free := node.Pes - usedPes[node.ID]
+		if free < 0 {
+			free = 0
 		}
-		nodes[i] = scheduler.SchedulerNode{ID: nodeID, Name: node.Name}
+		logJSON(map[string]interface{}{
+			"action": "testModeNodeCapacity",
+			"nodeID": node.ID, "totalPes": node.Pes,
+			"usedPes": usedPes[node.ID], "freePes": free,
+		})
+		nodes[i] = scheduler.SchedulerNode{ID: node.ID, Name: node.Name, Pes: free}
 	}
 	pods := make([]scheduler.SchedulerPod, len(csPods))
 	for i, csPod := range csPods {
-		pods[i] = scheduler.SchedulerPod{ID: csPod.ID, Name: csPod.Name}
+		pods[i] = scheduler.SchedulerPod{ID: csPod.ID, Name: csPod.Name, Pes: csPod.Pes}
 	}
 	return c.testSched.Schedule(pods, nodes)
+}
+
+// snapshotNodesFromStore builds CsNode objects from the in-memory K8s store.
+// Used by the legacy HandleSchedulePods endpoint which doesn't receive node info.
+// Resource fields (Pes) are read from the K8s node's Allocatable CPU.
+func (c *Communicator) snapshotNodesFromStore() []CsNode {
+	k8sNodes := c.store.GetNodes()
+	csNodes := make([]CsNode, 0, len(k8sNodes))
+	for _, n := range k8sNodes {
+		id, err := extractNodeID(n.Name)
+		if err != nil {
+			continue
+		}
+		pes := int(n.Status.Allocatable.Cpu().Value())
+		csNodes = append(csNodes, CsNode{ID: id, Name: n.Name, Pes: pes})
+	}
+	return csNodes
 }
 
 func (c *Communicator) applyNodeDiff(incomingNodes []CsNode) error {

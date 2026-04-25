@@ -149,7 +149,12 @@ Computed in `Helper.getSlaMetrics()` from VM state history. Measures time period
 
 ## Known Issues / Limitations
 
-1. **Rescheduling loop bug**: When more cloudlets than VMs are submitted, the base `DatacenterBroker.submitCloudlets()` consumes some cloudlets before the override runs, causing only a subset to reach the adapter. Blocks `Fragmentation_Test_Large` and `Scheduler_Latency_Test`. See `fragmentation-test-large-investigation.md`.
+1. **Rescheduling loop bug (FIXED)**: When more cloudlets than VMs are submitted, four
+   interacting bugs prevented the rescheduling loop from working: the test mode scheduler
+   ignored capacity, the adapter didn't track running pods between rounds, the broker
+   didn't re-send pending pods, and CloudSim's event chain died when cloudlets arrived on
+   idle VMs with stale 0-MIPS allocations. All four are fixed. Full details, affected files,
+   and a "if this breaks again" troubleshooting guide are in `rescheduling-loop-fix.md`.
 
 2. **`UtilizationModelSlice` bug**: `Math.min(0, 1/PEs)` always returns 0.
 

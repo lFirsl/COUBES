@@ -89,7 +89,7 @@ func TestProperty2_RoundRobinFormulaCorrectness(t *testing.T) {
 
 		for i, assignment := range decision.Scheduled {
 			expectedNodeIndex := i % numNodes
-			expectedNodeID := extractID(sortedNodes[expectedNodeIndex].Name, "csnode-")
+			expectedNodeID := sortedNodes[expectedNodeIndex].ID
 			if assignment.NodeID != expectedNodeID {
 				t.Fatalf("Assignment %d: expected node ID %d, got %d", i, expectedNodeID, assignment.NodeID)
 			}
@@ -232,5 +232,67 @@ func TestSchedule_NodeSorting_LexicographicOrder(t *testing.T) {
 		if assignment.NodeID != expectedNodeIDs[i] {
 			t.Errorf("Assignment %d: expected node %d, got %d", i, expectedNodeIDs[i], assignment.NodeID)
 		}
+	}
+}
+
+func TestSchedule_ResourceAware_ExcessPodsUnschedulable(t *testing.T) {
+	scheduler := &TestModeScheduler{}
+	// 2 nodes with 2 PEs each = 4 PE slots total
+	nodes := []SchedulerNode{
+		{ID: 0, Name: "csnode-0", Pes: 2},
+		{ID: 1, Name: "csnode-1", Pes: 2},
+	}
+	// 5 pods each needing 1 PE — only 4 can fit
+	pods := make([]SchedulerPod, 5)
+	for i := 0; i < 5; i++ {
+		pods[i] = SchedulerPod{ID: i, Name: fmt.Sprintf("cspod-%d", i), Pes: 1}
+	}
+	decision := scheduler.Schedule(pods, nodes)
+	if len(decision.Scheduled) != 4 {
+		t.Fatalf("Expected 4 scheduled, got %d", len(decision.Scheduled))
+	}
+	if len(decision.Unschedulable) != 1 {
+		t.Fatalf("Expected 1 unschedulable, got %d", len(decision.Unschedulable))
+	}
+}
+
+func TestSchedule_ResourceAware_LargePodNeedsMultiplePEs(t *testing.T) {
+	scheduler := &TestModeScheduler{}
+	// 2 nodes with 4 PEs each
+	nodes := []SchedulerNode{
+		{ID: 0, Name: "csnode-0", Pes: 4},
+		{ID: 1, Name: "csnode-1", Pes: 4},
+	}
+	// 3 pods each needing 3 PEs — only 2 can fit (one per node)
+	pods := []SchedulerPod{
+		{ID: 0, Name: "cspod-0", Pes: 3},
+		{ID: 1, Name: "cspod-1", Pes: 3},
+		{ID: 2, Name: "cspod-2", Pes: 3},
+	}
+	decision := scheduler.Schedule(pods, nodes)
+	if len(decision.Scheduled) != 2 {
+		t.Fatalf("Expected 2 scheduled, got %d", len(decision.Scheduled))
+	}
+	if len(decision.Unschedulable) != 1 {
+		t.Fatalf("Expected 1 unschedulable, got %d", len(decision.Unschedulable))
+	}
+}
+
+func TestSchedule_ResourceAware_PodTooBigForAnyNode(t *testing.T) {
+	scheduler := &TestModeScheduler{}
+	nodes := []SchedulerNode{
+		{ID: 0, Name: "csnode-0", Pes: 2},
+		{ID: 1, Name: "csnode-1", Pes: 2},
+	}
+	// Pod needs 5 PEs but no node has more than 2
+	pods := []SchedulerPod{
+		{ID: 0, Name: "cspod-0", Pes: 5},
+	}
+	decision := scheduler.Schedule(pods, nodes)
+	if len(decision.Scheduled) != 0 {
+		t.Fatalf("Expected 0 scheduled, got %d", len(decision.Scheduled))
+	}
+	if len(decision.Unschedulable) != 1 {
+		t.Fatalf("Expected 1 unschedulable, got %d", len(decision.Unschedulable))
 	}
 }
