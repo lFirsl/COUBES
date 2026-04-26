@@ -156,6 +156,9 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
                     : guest instanceof Container ? "container-" + guest.getId()
                     : "guest-" + guest.getId();
             nodeJson.put("name", name);
+            if (guest instanceof PowerVmCustom pvm && !pvm.getLabels().isEmpty()) {
+                nodeJson.set("labels", mapper.valueToTree(pvm.getLabels()));
+            }
 
             nodeJsons.add(nodeJson);
         }
@@ -212,6 +215,9 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
                     : guest instanceof Container ? "container-" + guest.getId()
                     : "guest-" + guest.getId();
             nodeJson.put("name", name);
+            if (guest instanceof PowerVmCustom pvm && !pvm.getLabels().isEmpty()) {
+                nodeJson.set("labels", mapper.valueToTree(pvm.getLabels()));
+            }
             nodesArray.add(nodeJson);
         }
         snapshot.set("nodes", nodesArray);
@@ -503,6 +509,24 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         // RAM request in MB — 0 for plain Cloudlets (no memory constraint)
         int ramRequest = (cloudlet instanceof CoubesCloudlet) ? ((CoubesCloudlet) cloudlet).getRamRequest() : 0;
         podJson.put("ramRequest", ramRequest);
+        // Labels and affinity — empty/null for plain Cloudlets
+        if (cloudlet instanceof CoubesCloudlet cc) {
+            if (!cc.getLabels().isEmpty()) {
+                podJson.set("labels", mapper.valueToTree(cc.getLabels()));
+            }
+            if (cc.getAffinityGroup() != null) {
+                podJson.put("affinityGroup", cc.getAffinityGroup());
+                if (!cc.isHardAffinity()) {
+                    podJson.put("hardAffinity", false);
+                }
+            }
+            if (cc.getAntiAffinityGroup() != null) {
+                podJson.put("antiAffinityGroup", cc.getAntiAffinityGroup());
+                if (!cc.isHardAntiAffinity()) {
+                    podJson.put("hardAntiAffinity", false);
+                }
+            }
+        }
         return podJson;
     }
 
@@ -519,6 +543,8 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         cloudlet.setGuestId(targetVm.getId());
     }
 
+
+    public int getRoundCount() { return roundCounter; }
 
     public void sendResetRequestToControlPlane() {
         HttpRequest request = HttpRequest.newBuilder()

@@ -31,7 +31,7 @@ NO_FILTER=0
 ADAPTER_FLAGS="--scheduler=default-scheduler"
 
 # Output filter: shows only the important lines from simulation output
-OUTPUT_FILTER='(SUCCESS|FAIL|ERROR|WARNING|Simulation Metrics|Simulated Time|Wall-clock|Energy|Number of|consolidation|Throughput|Scheduling Latency|SCALABILITY|Phase|Latency ratio|finished!|Exception|round=|Rescheduling|scheduled on|pending|OUTPUT|Cloudlet ID)'
+OUTPUT_FILTER='(SUCCESS|PASS:|FAIL|ERROR|WARNING|Simulation Metrics|Simulated Time|Wall-clock|Energy|Number of|consolidation|Throughput|Scheduling Latency|Scheduling rounds|SCALABILITY|Phase|Latency ratio|finished!|Exception|round=|Rescheduling|scheduled on|pending|OUTPUT|Cloudlet ID)'
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 

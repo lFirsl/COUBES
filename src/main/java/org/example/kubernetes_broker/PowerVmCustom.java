@@ -7,34 +7,36 @@ import org.cloudbus.cloudsim.core.GuestEntity;
 import org.cloudbus.cloudsim.power.PowerVm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class PowerVmCustom extends PowerVm {
 
     private final int preferredHostId;
+    private final Map<String, String> labels;
 
     public PowerVmCustom(
-            int id,
-            int userId,
-            double mips,
-            int numberOfPes,
-            int ram,
-            long bw,
-            long size,
-            int priority,
-            String vmm,
-            CloudletScheduler cloudletScheduler,
-            double schedulingInterval,
-            int preferredHostId
+            int id, int userId, double mips, int numberOfPes, int ram, long bw, long size,
+            int priority, String vmm, CloudletScheduler cloudletScheduler,
+            double schedulingInterval, int preferredHostId
     ) {
-        super(id, userId, mips, numberOfPes, ram, bw, size, priority, vmm, cloudletScheduler,schedulingInterval);
+        this(id, userId, mips, numberOfPes, ram, bw, size, priority, vmm,
+             cloudletScheduler, schedulingInterval, preferredHostId, Collections.emptyMap());
+    }
+
+    public PowerVmCustom(
+            int id, int userId, double mips, int numberOfPes, int ram, long bw, long size,
+            int priority, String vmm, CloudletScheduler cloudletScheduler,
+            double schedulingInterval, int preferredHostId, Map<String, String> labels
+    ) {
+        super(id, userId, mips, numberOfPes, ram, bw, size, priority, vmm, cloudletScheduler, schedulingInterval);
         this.preferredHostId = preferredHostId;
+        this.labels = labels != null ? labels : Collections.emptyMap();
     }
 
-    public int getPreferredHostId() {
-        return preferredHostId;
-    }
-
+    public int getPreferredHostId() { return preferredHostId; }
+    public Map<String, String> getLabels() { return labels; }
 
     @Override
     public double getCurrentRequestedTotalMips() {
@@ -44,12 +46,10 @@ public class PowerVmCustom extends PowerVm {
         final double perPeMips = getMips();
         double demand = 0.0;
 
-        //Check utilization of each Cloudlet
         for (Cloudlet cl : getCloudletScheduler().getCloudletExecList()) {
             demand += cl.getUtilizationOfCpu(time) * cl.getNumberOfPes() * perPeMips;
         }
 
-        // Check for nested guests
         for (GuestEntity guest : getGuestList()) {
             demand += guest.getCurrentRequestedTotalMips();
         }
@@ -68,7 +68,7 @@ public class PowerVmCustom extends PowerVm {
 
         final double totalDemand = getCurrentRequestedTotalMips();
         final double perPeMips = getMips();
-        final double peDemand = totalDemand / perPeMips; // "PEs worth" of demand
+        final double peDemand = totalDemand / perPeMips;
 
         final int full = (int)Math.floor(Math.min(peDemand, getNumberOfPes()));
         final double frac = Math.max(0.0, Math.min(1.0, peDemand - full));
@@ -76,16 +76,11 @@ public class PowerVmCustom extends PowerVm {
         List<Double> req = new ArrayList<>(getNumberOfPes());
         for (int i = 0; i < full; i++) req.add(perPeMips);
         if (full < getNumberOfPes() && frac > 0) req.add(frac * perPeMips);
-        while (req.size() < getNumberOfPes()) req.add(0.0); // pad with zeros
+        while (req.size() < getNumberOfPes()) req.add(0.0);
 
-        // Merge nested guests’ per-PE requests (if applicable)
         for (GuestEntity guest : getGuestList()) {
             req.addAll(guest.getCurrentRequestedMips());
         }
         return req;
     }
-
-
-
-
 }

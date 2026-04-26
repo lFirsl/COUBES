@@ -17,19 +17,24 @@ func BuildNode(csNode CsNode, schedulerName string) *corev1.Node {
 	cpuStr := fmt.Sprintf("%d", csNode.Pes)
 	ramStr := fmt.Sprintf("%dMi", csNode.RAMAval)
 
+	nodeLabels := map[string]string{
+		"kubernetes.io/hostname": csNode.Name,
+		"kubernetes.io/arch":     "amd64",
+		"kubernetes.io/os":       "linux",
+	}
+	for k, v := range csNode.Labels {
+		nodeLabels[k] = v
+	}
+
 	return &corev1.Node{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Node",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("csnode-%d", csNode.ID),
-			UID:  types.UID(fmt.Sprintf("csnode-%d-uid", csNode.ID)),
-			Labels: map[string]string{
-				"kubernetes.io/hostname": csNode.Name,
-				"kubernetes.io/arch":     "amd64",
-				"kubernetes.io/os":       "linux",
-			},
+			Name:   fmt.Sprintf("csnode-%d", csNode.ID),
+			UID:    types.UID(fmt.Sprintf("csnode-%d-uid", csNode.ID)),
+			Labels: nodeLabels,
 			Annotations: map[string]string{
 				"cloudsim.io/id":   fmt.Sprintf("%d", csNode.ID),
 				"cloudsim.io/type": csNode.Type,
@@ -74,7 +79,62 @@ func BuildPod(csPod CsPod, schedulerName string) *corev1.Pod {
 		requests[corev1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dMi", csPod.RamRequest))
 	}
 
-	return &corev1.Pod{
+	podLabels := make(map[string]string)
+	for k, v := range csPod.Labels {
+		podLabels[k] = v
+	}
+	// Affinity groups use a well-known label so the affinity rules can match on it
+	if csPod.AffinityGroup != "" {
+		podLabels["coubes.io/affinity-group"] = csPod.AffinityGroup
+	}
+	if csPod.AntiAffinityGroup != "" {
+		podLabels["coubes.io/anti-affinity-group"] = csPod.AntiAffinityGroup
+	}
+
+	var affinity *corev1.Affinity
+	if csPod.AffinityGroup != "" || csPod.AntiAffinityGroup != "" {
+		affinity = &corev1.Affinity{}
+		if csPod.AffinityGroup != "" {
+			hard := csPod.HardAffinity == nil || *csPod.HardAffinity
+			term := corev1.PodAffinityTerm{
+				LabelSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"coubes.io/affinity-group": csPod.AffinityGroup,
+					},
+				},
+				TopologyKey: "kubernetes.io/hostname",
+			}
+			affinity.PodAffinity = &corev1.PodAffinity{}
+			if hard {
+				affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution = []corev1.PodAffinityTerm{term}
+			} else {
+				affinity.PodAffinity.PreferredDuringSchedulingIgnoredDuringExecution = []corev1.WeightedPodAffinityTerm{
+					{Weight: 100, PodAffinityTerm: term},
+				}
+			}
+		}
+		if csPod.AntiAffinityGroup != "" {
+			hard := csPod.HardAntiAffinity == nil || *csPod.HardAntiAffinity
+			term := corev1.PodAffinityTerm{
+				LabelSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"coubes.io/anti-affinity-group": csPod.AntiAffinityGroup,
+					},
+				},
+				TopologyKey: "kubernetes.io/hostname",
+			}
+			affinity.PodAntiAffinity = &corev1.PodAntiAffinity{}
+			if hard {
+				affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = []corev1.PodAffinityTerm{term}
+			} else {
+				affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution = []corev1.WeightedPodAffinityTerm{
+					{Weight: 100, PodAffinityTerm: term},
+				}
+			}
+		}
+	}
+
+	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pod",
 			APIVersion: "v1",
@@ -89,7 +149,7 @@ func BuildPod(csPod CsPod, schedulerName string) *corev1.Pod {
 		},
 		Spec: corev1.PodSpec{
 			SchedulerName: schedulerName,
-			// No KWOK tolerations or NodeAffinity
+			Affinity:      affinity,
 			Containers: []corev1.Container{
 				{
 					Name:  "fake-container",
@@ -101,6 +161,10 @@ func BuildPod(csPod CsPod, schedulerName string) *corev1.Pod {
 			},
 		},
 	}
+	if len(podLabels) > 0 {
+		pod.ObjectMeta.Labels = podLabels
+	}
+	return pod
 }
 
 // ConvertToCsPod converts a Kubernetes v1.Pod back to a CsPod.

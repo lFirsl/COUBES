@@ -86,4 +86,9 @@ public class SimulationMetrics {
     public void printSummary(Double simTime){
         printSummary(simTime,-1);
     }
+
+    public void printSummary(Double simTime, double throughput, int actualRounds, int expectedMinRounds) {
+        printSummary(simTime, throughput);
+        System.out.println("Scheduling rounds: " + actualRounds + " (minimum expected: " + expectedMinRounds + ")");
+    }
 }

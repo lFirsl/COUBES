@@ -123,7 +123,7 @@ public class Memory_Fragmentation_Test {
 				throw new RuntimeException("Expected 8 cloudlets to complete but only received " + results.size());
 			}
 			printCloudletList(results);
-			metrics.printSummary(lastClock, broker.tpOverall());
+			metrics.printSummary(lastClock, broker.tpOverall(), broker.getRoundCount(), 2);
 
 			broker.sendResetRequestToControlPlane();
 			Log.println("Memory_Fragmentation_Test finished!");

@@ -4,34 +4,40 @@ import "time"
 
 // CsNode represents a simulated Kubernetes CsNode (which maps to a CloudSim VM or Container).
 type CsNode struct {
-	ID       int    `json:"id"`            // Unique identifier for the node (CloudSim VM/Container ID)
-	Name     string `json:"name"`          // Name of the node (e.g., "vm-0", "container-1")
-	MIPSAval int    `json:"mipsAvailable"` // Available MIPS on this node
-	RAMAval  int    `json:"ramAvailable"`  // Available RAM on this node (in MB)
-
-	Pes  int    `json:"pes"`  // Number of processing elements
-	BW   int64  `json:"bw"`   // Bandwidth
-	Size int64  `json:"size"` // Storage size
-	Type string `json:"type"` // "vm" or "container"
+	ID       int               `json:"id"`
+	Name     string            `json:"name"`
+	MIPSAval int               `json:"mipsAvailable"`
+	RAMAval  int               `json:"ramAvailable"`
+	Pes      int               `json:"pes"`
+	BW       int64             `json:"bw"`
+	Size     int64             `json:"size"`
+	Type     string            `json:"type"`
+	Labels   map[string]string `json:"labels,omitempty"`
 }
 
 // CsPod represents a simulated Kubernetes CsPod (which maps to a CloudSim Cloudlet).
 type CsPod struct {
 	ID             int     `json:"id"`
 	Name           string  `json:"name"`
-	Length         int64   `json:"length"`         // cloudletLength
-	Pes            int     `json:"pes"`            // Number of processing elements (cores)
-	RamRequest     int     `json:"ramRequest"`     // RAM requested in MB (0 = no constraint)
-	FileSize       int64   `json:"fileSize"`       // Input size
-	OutputSize     int64   `json:"outputSize"`     // Output size
-	UtilizationCPU float64 `json:"utilizationCpu"` // 0.0 to 1.0
+	Length         int64   `json:"length"`
+	Pes            int     `json:"pes"`
+	RamRequest     int     `json:"ramRequest"`
+	FileSize       int64   `json:"fileSize"`
+	OutputSize     int64   `json:"outputSize"`
+	UtilizationCPU float64 `json:"utilizationCpu"`
 	UtilizationRAM float64 `json:"utilizationRam"`
 	UtilizationBW  float64 `json:"utilizationBw"`
 
-	Status        string `json:"status"` // Kubernetes status ("Pending", "Running", etc.)
+	Status        string `json:"status"`
 	NodeName      string `json:"nodeName,omitempty"`
-	NodeID        int    `json:"vmId"` // CloudSim VM id
+	NodeID        int    `json:"vmId"`
 	SchedulerName string `json:"schedulerName,omitempty"`
+
+	Labels             map[string]string `json:"labels,omitempty"`
+	AffinityGroup      string            `json:"affinityGroup,omitempty"`
+	AntiAffinityGroup  string            `json:"antiAffinityGroup,omitempty"`
+	HardAffinity       *bool             `json:"hardAffinity,omitempty"`     // nil = true (hard)
+	HardAntiAffinity   *bool             `json:"hardAntiAffinity,omitempty"` // nil = true (hard)
 }
 
 // --- Batch Protocol Structs ---
