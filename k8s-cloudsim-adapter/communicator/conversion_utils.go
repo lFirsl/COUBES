@@ -67,6 +67,13 @@ func BuildNode(csNode CsNode, schedulerName string) *corev1.Node {
 func BuildPod(csPod CsPod, schedulerName string) *corev1.Pod {
 	cpuStr := fmt.Sprintf("%d", csPod.Pes)
 
+	requests := corev1.ResourceList{
+		corev1.ResourceCPU: resource.MustParse(cpuStr),
+	}
+	if csPod.RamRequest > 0 {
+		requests[corev1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dMi", csPod.RamRequest))
+	}
+
 	return &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pod",
@@ -88,9 +95,7 @@ func BuildPod(csPod CsPod, schedulerName string) *corev1.Pod {
 					Name:  "fake-container",
 					Image: "fake-image",
 					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU: resource.MustParse(cpuStr),
-						},
+						Requests: requests,
 					},
 				},
 			},

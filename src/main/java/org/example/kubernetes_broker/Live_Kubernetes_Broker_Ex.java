@@ -500,6 +500,9 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         podJson.put("utilizationCpu", cloudlet.getUtilizationModelCpu().getUtilization(0));
         podJson.put("utilizationRam", cloudlet.getUtilizationModelRam().getUtilization(0));
         podJson.put("utilizationBw", cloudlet.getUtilizationModelBw().getUtilization(0));
+        // RAM request in MB — 0 for plain Cloudlets (no memory constraint)
+        int ramRequest = (cloudlet instanceof CoubesCloudlet) ? ((CoubesCloudlet) cloudlet).getRamRequest() : 0;
+        podJson.put("ramRequest", ramRequest);
         return podJson;
     }
 

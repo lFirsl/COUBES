@@ -8,6 +8,7 @@
 #   --test-mode        Use built-in round-robin scheduler (no Docker/kube-scheduler required)
 #   --no-compile       Skip Go build, Go tests, and Java compilation (use existing binaries)
 #   --no-filter        Show full simulation output instead of filtered summary
+#   --scheduler=NAME   Scheduler profile to use (default: default-scheduler, e.g. my-scheduler)
 #   --help             Show this help message
 #
 # Examples:
@@ -234,6 +235,10 @@ while [[ $# -gt 0 && "$1" == --* ]]; do
             ;;
         --no-filter)
             NO_FILTER=1
+            shift
+            ;;
+        --scheduler=*)
+            ADAPTER_FLAGS="--scheduler=${1#--scheduler=}"
             shift
             ;;
         --help)

@@ -18,6 +18,7 @@ import org.cloudbus.cloudsim.power.models.PowerModelLinear;
 import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
+import org.example.kubernetes_broker.CoubesCloudlet;
 import org.example.kubernetes_broker.Live_Kubernetes_Broker_Ex;
 import org.example.kubernetes_broker.PowerDatacenterCustom;
 import org.example.kubernetes_broker.PowerVmCustom;
@@ -67,7 +68,7 @@ public class Fragmentation_Test {
 	}
 
 
-	private static List<Cloudlet> createCloudlet(int userId, int cloudlets,int length, int PES, int idShift){
+	private static List<Cloudlet> createCloudlet(int userId, int cloudlets,int length, int PES, int ramMB, int idShift){
 		// Creates a container to store Cloudlets
 		LinkedList<Cloudlet> list = new LinkedList<>();
 
@@ -79,7 +80,7 @@ public class Fragmentation_Test {
 		Cloudlet[] cloudlet = new Cloudlet[cloudlets];
 
 		for(int i=0;i<cloudlets;i++){
-			cloudlet[i] = new Cloudlet(idShift + i, length, PES, fileSize, outputSize, utilizationModel, utilizationModel, utilizationModel);
+			cloudlet[i] = new CoubesCloudlet(idShift + i, length, PES, fileSize, outputSize, utilizationModel, utilizationModel, utilizationModel, ramMB);
 			// setting the owner of these Cloudlets
 			cloudlet[i].setUserId(userId);
 			list.add(cloudlet[i]);
@@ -121,7 +122,7 @@ public class Fragmentation_Test {
 
 			//Fourth step: Create VMs and Cloudlets and send them to broker
 			vmlist = createVM(brokerId, 5, 0); //creating 5 vms
-			cloudletList = createCloudlet(brokerId, 15, 40000,1,0); // creating 10 cloudlets
+			cloudletList = createCloudlet(brokerId, 15, 40000,1, 64, 0); // creating 15 cloudlets, 64MB RAM each
 
 			cloudletListTemp.addAll(cloudletList);
 			vmlistTemp.addAll(vmlist);
@@ -131,7 +132,7 @@ public class Fragmentation_Test {
 
 			// A thread that will create a new broker at 200 clock time
 			//Create VMs and Cloudlets and send them to broker
-            cloudletList = createCloudlet(brokerId, 5, 400000,2,100); // creating 10 cloudlets
+            cloudletList = createCloudlet(brokerId, 5, 400000,2, 128, 100); // creating 5 cloudlets, 128MB RAM each
 
 
             cloudletListTemp.addAll(cloudletList);

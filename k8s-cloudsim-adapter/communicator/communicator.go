@@ -452,12 +452,14 @@ func (c *Communicator) HandlePodStatus(w http.ResponseWriter, r *http.Request) {
 
 // scheduleTestMode runs the built-in round-robin scheduler.
 func (c *Communicator) scheduleTestMode(csPods []CsPod, csNodes []CsNode) scheduler.BatchDecision {
-	// Build a map of PEs already consumed by running pods on each node
+	// Build a map of PEs and RAM already consumed by running pods on each node
 	usedPes := make(map[int]int)
+	usedRam := make(map[int]int)
 	c.mu.Lock()
 	for _, pod := range c.pods {
 		if pod.Status == "Running" {
 			usedPes[pod.NodeID] += pod.Pes
+			usedRam[pod.NodeID] += pod.RamRequest
 		}
 	}
 	c.mu.Unlock()
@@ -468,16 +470,23 @@ func (c *Communicator) scheduleTestMode(csPods []CsPod, csNodes []CsNode) schedu
 		if free < 0 {
 			free = 0
 		}
+		freeRam := node.RAMAval - usedRam[node.ID]
+		if node.RAMAval == 0 {
+			freeRam = -1 // no RAM tracking on this node
+		} else if freeRam < 0 {
+			freeRam = 0
+		}
 		logJSON(map[string]interface{}{
 			"action": "testModeNodeCapacity",
 			"nodeID": node.ID, "totalPes": node.Pes,
 			"usedPes": usedPes[node.ID], "freePes": free,
+			"totalRam": node.RAMAval, "usedRam": usedRam[node.ID], "freeRam": freeRam,
 		})
-		nodes[i] = scheduler.SchedulerNode{ID: node.ID, Name: node.Name, Pes: free}
+		nodes[i] = scheduler.SchedulerNode{ID: node.ID, Name: node.Name, Pes: free, Ram: freeRam}
 	}
 	pods := make([]scheduler.SchedulerPod, len(csPods))
 	for i, csPod := range csPods {
-		pods[i] = scheduler.SchedulerPod{ID: csPod.ID, Name: csPod.Name, Pes: csPod.Pes}
+		pods[i] = scheduler.SchedulerPod{ID: csPod.ID, Name: csPod.Name, Pes: csPod.Pes, Ram: csPod.RamRequest}
 	}
 	return c.testSched.Schedule(pods, nodes)
 }

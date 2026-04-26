@@ -15,6 +15,7 @@ type SchedulerPod struct {
 	ID   int
 	Name string
 	Pes  int // Number of PEs (cores) required
+	Ram  int // RAM requested in MB (0 = no constraint)
 }
 
 // SchedulerNode represents the minimal node information needed for scheduling.
@@ -22,6 +23,7 @@ type SchedulerNode struct {
 	ID   int
 	Name string
 	Pes  int // Total number of PEs (cores) available
+	Ram  int // Free RAM in MB (-1 = no RAM tracking/unlimited)
 }
 
 // Schedule assigns pods to nodes in round-robin order, respecting PE capacity.
@@ -55,6 +57,12 @@ func (s *TestModeScheduler) Schedule(pods []SchedulerPod, nodes []SchedulerNode)
 		freePes[i] = n.Pes
 	}
 
+	// Track free RAM per node (-1 means node has no RAM tracking)
+	freeRam := make([]int, len(sortedNodes))
+	for i, n := range sortedNodes {
+		freeRam[i] = n.Ram
+	}
+
 	var scheduled []PodAssignment
 	var unschedulable []PodFailure
 	now := time.Now()
@@ -65,8 +73,12 @@ func (s *TestModeScheduler) Schedule(pods []SchedulerPod, nodes []SchedulerNode)
 		// Try each node starting from rrIndex, wrapping around
 		for attempt := 0; attempt < len(sortedNodes); attempt++ {
 			idx := (rrIndex + attempt) % len(sortedNodes)
-			if freePes[idx] >= pod.Pes {
+			ramOk := pod.Ram == 0 || freeRam[idx] < 0 || freeRam[idx] >= pod.Ram
+			if freePes[idx] >= pod.Pes && ramOk {
 				freePes[idx] -= pod.Pes
+				if pod.Ram > 0 && freeRam[idx] >= 0 {
+					freeRam[idx] -= pod.Ram
+				}
 				scheduled = append(scheduled, PodAssignment{
 					PodID:            pod.ID,
 					NodeID:           sortedNodes[idx].ID,
@@ -80,7 +92,7 @@ func (s *TestModeScheduler) Schedule(pods []SchedulerPod, nodes []SchedulerNode)
 		if !placed {
 			unschedulable = append(unschedulable, PodFailure{
 				PodID:  pod.ID,
-				Reason: "insufficient PEs on all nodes",
+				Reason: "insufficient resources on all nodes",
 			})
 		}
 	}

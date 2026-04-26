@@ -21,6 +21,7 @@ type CsPod struct {
 	Name           string  `json:"name"`
 	Length         int64   `json:"length"`         // cloudletLength
 	Pes            int     `json:"pes"`            // Number of processing elements (cores)
+	RamRequest     int     `json:"ramRequest"`     // RAM requested in MB (0 = no constraint)
 	FileSize       int64   `json:"fileSize"`       // Input size
 	OutputSize     int64   `json:"outputSize"`     // Output size
 	UtilizationCPU float64 `json:"utilizationCpu"` // 0.0 to 1.0
