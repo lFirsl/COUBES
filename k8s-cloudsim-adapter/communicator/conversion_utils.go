@@ -134,18 +134,26 @@ func BuildPod(csPod CsPod, schedulerName string) *corev1.Pod {
 		}
 	}
 
+	podName := fmt.Sprintf("cspod-%d", csPod.ID)
+	annotations := map[string]string{
+		"cloudsim.io/id": fmt.Sprintf("%d", csPod.ID),
+	}
+	// Volcano requires every pod to carry this annotation pointing to its PodGroup.
+	// Without it, getJobID() returns "" and Volcano refuses to schedule the pod.
+	if schedulerName == "volcano" {
+		annotations["scheduling.k8s.io/group-name"] = podName
+	}
+
 	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pod",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("cspod-%d", csPod.ID),
-			Namespace: "default",
-			UID:       types.UID(fmt.Sprintf("cspod-%d-uid", csPod.ID)),
-			Annotations: map[string]string{
-				"cloudsim.io/id": fmt.Sprintf("%d", csPod.ID),
-			},
+			Name:        podName,
+			Namespace:   "default",
+			UID:         types.UID(fmt.Sprintf("cspod-%d-uid", csPod.ID)),
+			Annotations: annotations,
 		},
 		Spec: corev1.PodSpec{
 			SchedulerName: schedulerName,
@@ -164,6 +172,9 @@ func BuildPod(csPod CsPod, schedulerName string) *corev1.Pod {
 	if len(podLabels) > 0 {
 		pod.ObjectMeta.Labels = podLabels
 	}
+	// Volcano's getTaskStatus() maps pod.Status.Phase="" to Unknown, which blocks scheduling.
+	// Setting PodPending ensures tasks are classified as Pending and eligible for allocation.
+	pod.Status.Phase = corev1.PodPending
 	return pod
 }
 

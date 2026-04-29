@@ -276,6 +276,7 @@ func (h *FakeAPIHandler) HandleBinding(w http.ResponseWriter, r *http.Request, r
 	}
 
 	pod.Spec.NodeName = nodeName
+	pod.Status.Phase = corev1.PodRunning // tell Volcano this pod is running so it counts against node resources
 	h.store.UpdatePod(podName, pod)
 
 	// Record the binding decision

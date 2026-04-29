@@ -9,12 +9,14 @@
 #   --no-compile       Skip Go build, Go tests, and Java compilation (use existing binaries)
 #   --no-filter        Show full simulation output instead of filtered summary
 #   --scheduler=NAME   Scheduler profile to use (default: default-scheduler, e.g. my-scheduler)
+#   --volcano          Use the Volcano scheduler (sets --scheduler=volcano and uses volcano-scheduler/)
 #   --help             Show this help message
 #
 # Examples:
 #   bash run_test.sh --test-mode org.example.testSuite.Fragmentation_Test_Large
 #   bash run_test.sh --no-compile org.example.testSuite.Scheduler_Scalability_Test
 #   bash run_test.sh --test-mode --no-compile --no-filter org.example.testSuite.Fragmentation_Test
+#   bash run_test.sh --volcano org.example.testSuite.Fragmentation_Test
 
 set -euo pipefail
 
@@ -22,8 +24,9 @@ ADAPTER_BIN="k8s-cloudsim-adapter/adapter-linux"
 ADAPTER_LOG="/tmp/coubes-adapter.log"
 SIM_LOG="/tmp/coubes-sim.log"
 SCHEDULER_DIR="second-scheduler"
+SCHEDULER_CONTAINER="my-scheduler"
 ADAPTER_URL="http://localhost:8080"
-HANG_TIMEOUT=45   # seconds of no log output before declaring a hang
+HANG_TIMEOUT=90   # seconds of no log output before declaring a hang (must exceed scheduling round timeout of 60s)
 RECOVERY_DONE=0
 TEST_MODE=0
 NO_COMPILE=0
@@ -31,7 +34,7 @@ NO_FILTER=0
 ADAPTER_FLAGS="--scheduler=default-scheduler"
 
 # Output filter: shows only the important lines from simulation output
-OUTPUT_FILTER='(SUCCESS|PASS:|FAIL|ERROR|WARNING|Simulation Metrics|Simulated Time|Wall-clock|Energy|Number of|consolidation|Throughput|Scheduling Latency|Scheduling rounds|SCALABILITY|Phase|Latency ratio|finished!|Exception|round=|Rescheduling|scheduled on|pending|OUTPUT|Cloudlet ID)'
+OUTPUT_FILTER='(SUCCESS|PASS:|FAIL|ERROR|WARNING|Simulation Metrics|Simulated Time|Wall-clock|Energy|Number of|consolidation|Throughput|Scheduling Latency|Scheduling rounds|SCALABILITY|Phase|Latency ratio|finished!|Exception|round=|Rescheduling|scheduled on|pending|OUTPUT|Cloudlet ID|── Round)'
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 
@@ -69,10 +72,10 @@ adapter_running() { pgrep -f "adapter-linux" >/dev/null 2>&1; }
 
 adapter_healthy() { curl -s -X DELETE "$ADAPTER_URL/reset" 2>/dev/null | grep -q "Reset complete"; }
 
-scheduler_running() { docker ps --filter "name=my-scheduler" --filter "status=running" -q 2>/dev/null | grep -q .; }
+scheduler_running() { docker ps --filter "name=$SCHEDULER_CONTAINER" --filter "status=running" -q 2>/dev/null | grep -q .; }
 
 scheduler_ready() {
-    docker logs my-scheduler --since 35s 2>&1 | grep -q "Caches populated"
+    docker logs "$SCHEDULER_CONTAINER" 2>&1 | grep -q "Caches populated"
 }
 
 wait_for_scheduler() {
@@ -105,13 +108,13 @@ start_adapter() {
 start_scheduler() {
     echo "→ Starting scheduler..."
     (cd "$SCHEDULER_DIR" && docker compose down 2>/dev/null; docker compose up -d 2>&1) | tail -2
-    wait_for_scheduler || die "Scheduler failed to become ready. Logs: $(docker logs my-scheduler --since 40s 2>&1 | tail -5)"
+    wait_for_scheduler || die "Scheduler failed to become ready. Logs: $(docker logs "$SCHEDULER_CONTAINER" --since 40s 2>&1 | tail -5)"
 }
 
 restart_scheduler_and_reset() {
     echo "→ Restarting scheduler and resetting adapter..."
     (cd "$SCHEDULER_DIR" && docker compose down && docker compose up -d 2>&1) | tail -2
-    wait_for_scheduler || die "Scheduler not ready after restart. Logs: $(docker logs my-scheduler --since 40s 2>&1 | tail -5)"
+    wait_for_scheduler || die "Scheduler not ready after restart. Logs: $(docker logs "$SCHEDULER_CONTAINER" --since 40s 2>&1 | tail -5)"
     adapter_healthy || die "Adapter not responding after scheduler restart."
     echo "  Recovery complete."
 }
@@ -145,11 +148,13 @@ ensure_infra() {
     if [[ $TEST_MODE -eq 0 ]]; then
         if ! scheduler_running; then
             start_scheduler
-        elif ! scheduler_ready; then
+        elif scheduler_ready; then
+            echo "→ Scheduler already ready."
+        elif wait_for_scheduler; then
+            : # became ready while waiting
+        else
             echo "→ Scheduler running but not ready — restarting..."
             restart_scheduler_and_reset
-        else
-            echo "→ Scheduler already ready."
         fi
     else
         echo "→ Test mode: skipping scheduler."
@@ -191,7 +196,7 @@ run_sim() {
             tail -3 "$ADAPTER_LOG" 2>/dev/null || echo "  (no adapter log)"
             if [[ $TEST_MODE -eq 0 ]]; then
                 echo "  Scheduler recent:"
-                docker logs my-scheduler --since 30s 2>&1 | grep -v "^E" | tail -3
+                docker logs "$SCHEDULER_CONTAINER" --since 30s 2>&1 | grep -v "^E" | tail -3
             fi
 
             if [[ $RECOVERY_DONE -eq 0 ]]; then
@@ -239,6 +244,12 @@ while [[ $# -gt 0 && "$1" == --* ]]; do
             ;;
         --scheduler=*)
             ADAPTER_FLAGS="--scheduler=${1#--scheduler=}"
+            shift
+            ;;
+        --volcano)
+            SCHEDULER_DIR="volcano-scheduler"
+            SCHEDULER_CONTAINER="volcano-scheduler"
+            ADAPTER_FLAGS="--scheduler=volcano"
             shift
             ;;
         --help)

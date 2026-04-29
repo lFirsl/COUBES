@@ -1,0 +1,24 @@
+version: "3.8"
+services:
+  volcano-scheduler:
+    image: volcanosh/vc-scheduler:v1.10.0
+    container_name: volcano-scheduler
+    # host networking so the container can reach the adapter on localhost:8080
+    network_mode: host
+    volumes:
+      - ./kubeconfig.yaml:/etc/volcano/kubeconfig.yaml
+      - ./volcano-scheduler.conf:/etc/volcano/volcano-scheduler.conf
+    command:
+      - vc-scheduler
+      - --kubeconfig=/etc/volcano/kubeconfig.yaml
+      - --scheduler-conf=/etc/volcano/volcano-scheduler.conf
+      - --scheduler-name=volcano
+      - --leader-elect=false
+      # Disable the metrics/pprof HTTP server — it defaults to :8080 which conflicts
+      # with the COUBES adapter port.
+      - --enable-metrics=false
+      - --enable-healthz=false
+      # Disable cache dumper (writes to /tmp, not needed for benchmarking)
+      - --cache-dumper=false
+      # Log verbosity: 2=normal, 4=scheduling decisions, 5=all API calls
+      - --v=2

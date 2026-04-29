@@ -157,16 +157,15 @@ func (r *SchedulingRound) Wait(ctx context.Context) (BatchDecision, error) {
 			lastResolved = resolved
 		case <-timeoutCtx.Done():
 			r.mu.Lock()
-			scheduled := len(r.assignments)
-			failed := len(r.failures)
+			partial := BatchDecision{Scheduled: r.assignments, Unschedulable: r.failures}
 			pending := r.pending
 			r.active = false
 			r.mu.Unlock()
 
 			log.Printf("TIMEOUT: %d scheduled, %d failed, %d still pending after %v",
-				scheduled, failed, pending, r.timeout)
-			return BatchDecision{}, fmt.Errorf("scheduling timeout: %d/%d pods resolved (%d pending) within %v",
-				scheduled+failed, scheduled+failed+pending, pending, r.timeout)
+				len(partial.Scheduled), len(partial.Unschedulable), pending, r.timeout)
+			return partial, fmt.Errorf("scheduling timeout: %d/%d pods resolved (%d pending) within %v",
+				len(partial.Scheduled)+len(partial.Unschedulable), len(partial.Scheduled)+len(partial.Unschedulable)+pending, pending, r.timeout)
 		}
 	}
 }

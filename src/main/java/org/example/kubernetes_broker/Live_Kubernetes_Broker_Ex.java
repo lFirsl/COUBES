@@ -36,6 +36,8 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     
     // Guard: true when a RESCHEDULE_PENDING event is already queued, prevents duplicate events
     private boolean reschedulePending = false;
+    // IDs of pods that were unschedulable in the last round — used to detect permanent failures
+    private final java.util.Set<Integer> lastUnschedulableIds = new java.util.HashSet<>();
     // Optional PerformanceMetrics integration
     private PerformanceMetrics performanceMetrics;
 
@@ -248,6 +250,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
             completedArray.add(completedId);
         }
         snapshot.set("completedPodIds", completedArray);
+        boolean hadCompletions = !completedSinceLastRound.isEmpty();
         completedSinceLastRound.clear();
         
         getCloudletList().clear();
@@ -260,7 +263,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         }
 
         // 4. Process scheduling result
-        processBatchDecision(batchDecision);
+        processBatchDecision(batchDecision, hadCompletions);
     }
 
     private BatchDecisionResponse submitSimulationSnapshot(ObjectNode snapshot) {
@@ -323,8 +326,11 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         }
     }
 
-    private void processBatchDecision(BatchDecisionResponse batchDecision) {
-        Log.printlnConcat(getName(), ": [round=" + roundCounter + "] Processing batch decision");
+    private void processBatchDecision(BatchDecisionResponse batchDecision, boolean hadCompletions) {
+        int scheduled = batchDecision.getScheduled() != null ? batchDecision.getScheduled().size() : 0;
+        int unschedulable = batchDecision.getUnschedulable() != null ? batchDecision.getUnschedulable().size() : 0;
+        Log.printlnConcat(getName(), ": ── Round ", roundCounter, " result: ",
+                scheduled, " scheduled, ", unschedulable, " unschedulable ──");
         
         // Process scheduled pods
         if (batchDecision.getScheduled() != null) {
@@ -348,9 +354,34 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         // Process unschedulable pods — keep them in cloudletsSubmittedToMiddle so they
         // are resubmitted when nodes free up (via RESCHEDULE_PENDING event).
         if (batchDecision.getUnschedulable() != null && !batchDecision.getUnschedulable().isEmpty()) {
-            Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": ",
-                    batchDecision.getUnschedulable().size(), " pods pending (no free nodes yet), will retry when nodes free up");
-            // Pods remain in cloudletsSubmittedToMiddle — rescheduling triggered by processCloudletReturn
+            java.util.Set<Integer> currentUnschedulable = new java.util.HashSet<>();
+            for (BatchDecisionResponse.PodFailure f : batchDecision.getUnschedulable()) {
+                currentUnschedulable.add(f.getPodId());
+            }
+
+            // If the exact same pods failed again with no new completions since last round,
+            // they are permanently unschedulable — mark them FAILED immediately rather than
+            // waiting for a timeout that will never resolve.
+            if (!lastUnschedulableIds.isEmpty() && currentUnschedulable.equals(lastUnschedulableIds)
+                    && !hadCompletions && cloudletsSubmitted == 0) {
+                Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": ",
+                        currentUnschedulable.size(), " pods permanently unschedulable (same pods failed twice with no new capacity). Marking as FAILED.");
+                for (int podId : currentUnschedulable) {
+                    Cloudlet c = cloudletsSubmittedToMiddle.remove(podId);
+                    if (c != null) {
+                        c.setCloudletStatus(Cloudlet.CloudletStatus.FAILED);
+                        getCloudletReceivedList().add(c);
+                    }
+                }
+                lastUnschedulableIds.clear();
+            } else {
+                lastUnschedulableIds.clear();
+                lastUnschedulableIds.addAll(currentUnschedulable);
+                Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": ",
+                        batchDecision.getUnschedulable().size(), " pods pending (no free nodes yet), will retry when nodes free up");
+            }
+        } else {
+            lastUnschedulableIds.clear();
         }
 
         Log.println("Finished scheduling batch. Submitting to CloudSim.");

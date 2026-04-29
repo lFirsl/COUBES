@@ -121,6 +121,9 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 	for _, podID := range snapshot.CompletedPodIDs {
 		podName := fmt.Sprintf("cspod-%d", podID)
 		c.store.DeletePod(podName)
+		if c.schedulerName == "volcano" {
+			c.store.DeletePodGroup("default", podName)
+		}
 		c.mu.Lock()
 		delete(c.pods, podID)
 		c.mu.Unlock()
@@ -175,6 +178,9 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 	for _, csPod := range snapshot.Pods {
 		pod := BuildPod(csPod, c.schedulerName)
 		c.store.CreatePod(pod)
+		if c.schedulerName == "volcano" {
+			c.store.CreatePodGroup("default", pod.Name, buildPodGroup(pod.Name, "default"))
+		}
 		c.mu.Lock()
 		podCopy := csPod
 		if podCopy.Status == "" {
@@ -230,18 +236,31 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 		var err error
 		decision, err = c.round.Wait(ctx)
 		if err != nil {
+			// Timeout: Volcano may not report unschedulable pods explicitly (it just skips them).
+			// Treat the partial result as a valid decision — unresolved pods become Unschedulable.
+			resolvedIDs := make(map[int]bool)
+			for _, a := range decision.Scheduled {
+				resolvedIDs[a.PodID] = true
+			}
+			for _, f := range decision.Unschedulable {
+				resolvedIDs[f.PodID] = true
+			}
+			for _, csPod := range snapshot.Pods {
+				if !resolvedIDs[csPod.ID] {
+					decision.Unschedulable = append(decision.Unschedulable, scheduler.PodFailure{
+						PodID:  csPod.ID,
+						Reason: "scheduling timeout: no decision received from scheduler",
+					})
+				}
+			}
 			logJSON(map[string]interface{}{
 				"action": "HandleSchedule", "roundId": rid,
 				"podCount": len(snapshot.Pods),
-				"durationMs": time.Since(t0).Milliseconds(),
-				"result":      "timeout",
-				"scheduled":   len(decision.Scheduled),
+				"durationMs":    time.Since(t0).Milliseconds(),
+				"result":        "timeout_partial",
+				"scheduled":     len(decision.Scheduled),
 				"unschedulable": len(decision.Unschedulable),
-				"pendingLeft": len(snapshot.Pods) - len(decision.Scheduled) - len(decision.Unschedulable),
-				"error":       err.Error(),
 			})
-			http.Error(w, err.Error(), http.StatusRequestTimeout)
-			return
 		}
 	}
 
@@ -281,6 +300,9 @@ func (c *Communicator) HandleSchedulePods(w http.ResponseWriter, r *http.Request
 	for _, csPod := range csPods {
 		pod := BuildPod(csPod, c.schedulerName)
 		c.store.CreatePod(pod)
+		if c.schedulerName == "volcano" {
+			c.store.CreatePodGroup("default", pod.Name, buildPodGroup(pod.Name, "default"))
+		}
 		c.mu.Lock()
 		podCopy := csPod
 		if podCopy.Status == "" {
@@ -448,6 +470,26 @@ func (c *Communicator) HandlePodStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(pod)
+}
+
+// buildPodGroup constructs a minimal Volcano PodGroup raw map for a single pod.
+// minAvailable=1 means Volcano will schedule the pod as soon as one node fits it.
+func buildPodGroup(name, namespace string) map[string]interface{} {
+	return map[string]interface{}{
+		"apiVersion": "scheduling.volcano.sh/v1beta1",
+		"kind":       "PodGroup",
+		"metadata": map[string]interface{}{
+			"name":      name,
+			"namespace": namespace,
+		},
+		"spec": map[string]interface{}{
+			"minMember": 1,
+			"queue":     "default",
+		},
+		"status": map[string]interface{}{
+			"phase": "Pending",
+		},
+	}
 }
 
 // scheduleTestMode runs the built-in round-robin scheduler.
