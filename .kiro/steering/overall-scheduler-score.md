@@ -1,8 +1,12 @@
 ---
-inclusion: always
+inclusion: manual
 ---
 
-# Overall Scheduler Score (OSS) — Scoring Framework
+# [SUPERSEDED] Overall Scheduler Score (OSS) — Original Scoring Framework
+
+**Superseded by:** `oss2-scoring-framework.md` (SDS / SPS / Pareto). Retained for reference.
+
+---
 
 ## Purpose
 
