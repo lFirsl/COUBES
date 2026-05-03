@@ -48,3 +48,6 @@ kiro-cli.deb
 k8s-cloudsim-adapter/adapter-linux
 k8s-cloudsim-adapter/adapter-linux
 COUBES.7z
+
+# Debug logs from run_test.sh
+debug/

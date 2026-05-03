@@ -21,8 +21,10 @@
 set -euo pipefail
 
 ADAPTER_BIN="k8s-cloudsim-adapter/adapter-linux"
-ADAPTER_LOG="/tmp/coubes-adapter.log"
-SIM_LOG="/tmp/coubes-sim.log"
+ADAPTER_LOG="debug/adapter.log"
+SIM_LOG="debug/sim.log"
+SCHEDULER_LOG="debug/scheduler.log"
+mkdir -p debug
 SCHEDULER_DIR="second-scheduler"
 SCHEDULER_CONTAINER="my-scheduler"
 ADAPTER_URL="http://localhost:8080"
@@ -146,16 +148,9 @@ ensure_infra() {
 
     # Scheduler (skip in test mode)
     if [[ $TEST_MODE -eq 0 ]]; then
-        if ! scheduler_running; then
-            start_scheduler
-        elif scheduler_ready; then
-            echo "→ Scheduler already ready."
-        elif wait_for_scheduler; then
-            : # became ready while waiting
-        else
-            echo "→ Scheduler running but not ready — restarting..."
-            restart_scheduler_and_reset
-        fi
+        # Always restart the scheduler — its watch connections are tied to the
+        # adapter instance and don't recover when the adapter is restarted.
+        start_scheduler
     else
         echo "→ Test mode: skipping scheduler."
     fi
@@ -216,11 +211,19 @@ run_sim() {
 }
 
 show_results() {
+    # Capture scheduler logs
+    if [[ $TEST_MODE -eq 0 ]] && scheduler_running; then
+        docker logs "$SCHEDULER_CONTAINER" >"$SCHEDULER_LOG" 2>&1 || true
+    fi
+
     if [[ $NO_FILTER -eq 1 ]]; then
         cat "$SIM_LOG"
     else
         grep -E "$OUTPUT_FILTER" "$SIM_LOG" || true
     fi
+
+    echo ""
+    echo "Logs written to: debug/sim.log, debug/adapter.log$([ $TEST_MODE -eq 0 ] && echo ', debug/scheduler.log')"
 }
 
 # ── main ──────────────────────────────────────────────────────────────────────
