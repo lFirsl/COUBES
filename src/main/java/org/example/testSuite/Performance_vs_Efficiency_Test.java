@@ -21,6 +21,12 @@ import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 import org.example.kubernetes_broker.Live_Kubernetes_Broker_Ex;
 import org.example.kubernetes_broker.PowerDatacenterCustom;
 import org.example.kubernetes_broker.PowerVmCustom;
+import org.example.metrics.BoundsCalculator;
+import org.example.metrics.BoundsCalculator.*;
+import org.example.metrics.SDS;
+import org.example.metrics.BoundsCalculator;
+import org.example.metrics.BoundsCalculator.*;
+import org.example.metrics.SDS;
 import org.example.metrics.SimulationMetrics;
 
 import java.text.DecimalFormat;
@@ -129,6 +135,22 @@ public class Performance_vs_Efficiency_Test {
 			broker.submitGuestList(vmlist);
 			broker.submitCloudletList(cloudletList);
 
+			// ── Compute theoretical bounds via ILP ──
+			List<VmSpec> vmSpecs = List.of(
+				new VmSpec(0, 4, 250, 512, 500, 0.1),  // fast, power-hungry
+				new VmSpec(1, 2, 200, 512, 150, 0.3)   // slow, power-efficient
+			);
+			List<CloudletSpec> clSpecs = new ArrayList<>();
+			for (Cloudlet cl : cloudletList) {
+				clSpecs.add(new CloudletSpec(cl.getCloudletId(), cl.getCloudletLength(),
+						cl.getNumberOfPes(), 0, null, null));
+			}
+			List<Wave> waves = List.of(new Wave(clSpecs, 0.0));
+			TheoreticalBounds bounds = BoundsCalculator.compute(vmSpecs, waves, null);
+			System.out.println("── Theoretical Bounds ──");
+			System.out.println(bounds);
+			System.out.println(bounds.details());
+
 			CloudSim.resumeSimulation();
 
 			SimulationMetrics metrics = new SimulationMetrics(datacenter0,vmlistTemp);
@@ -149,7 +171,12 @@ public class Performance_vs_Efficiency_Test {
 			printCloudletList(newList1);
 			metrics.printSummary(lastClock);
 
-
+			// ── Compute SDS ──
+			double actualEnergy = datacenter0.getPower() / 3600.0;
+			double actualConsolidation = datacenter0.getConsolidationAverage(lastClock);
+			SDS.Result sds = SDS.compute(bounds, lastClock, actualEnergy, actualConsolidation);
+			System.out.println("── SDS Result ──");
+			System.out.println(sds);
 
 			broker.sendResetRequestToControlPlane();
 

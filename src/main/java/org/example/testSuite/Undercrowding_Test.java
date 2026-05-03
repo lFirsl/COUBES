@@ -24,6 +24,9 @@ import org.example.kubernetes_broker.Live_Kubernetes_Broker_Ex;
 import org.example.kubernetes_broker.PowerDatacenterCustom;
 import org.example.kubernetes_broker.PowerVmCustom;
 import org.example.kubernetes_broker.UtilizationModelSlice;
+import org.example.metrics.BoundsCalculator;
+import org.example.metrics.BoundsCalculator.*;
+import org.example.metrics.SDS;
 import org.example.metrics.SimulationMetrics;
 
 import java.text.DecimalFormat;
@@ -128,6 +131,23 @@ public class Undercrowding_Test {
 			broker.submitGuestList(vmlist);
 			broker.submitCloudletList(cloudletList);
 
+			// ── Compute theoretical bounds via ILP ──
+			List<VmSpec> vmSpecs = new ArrayList<>();
+			for (Vm vm : vmlist) {
+				vmSpecs.add(new VmSpec(vm.getId(), vm.getNumberOfPes(),
+						(int) vm.getMips(), vm.getRam()));
+			}
+			PowerModelSpec powerSpec = new PowerModelSpec(500, 0.1);
+			List<CloudletSpec> clSpecs = new ArrayList<>();
+			for (Cloudlet cl : cloudletList) {
+				clSpecs.add(new CloudletSpec(cl.getCloudletId(), cl.getCloudletLength(),
+						cl.getNumberOfPes(), 0, null, null));
+			}
+			List<Wave> waves = List.of(new Wave(clSpecs, 0.0));
+			TheoreticalBounds bounds = BoundsCalculator.compute(vmSpecs, waves, powerSpec);
+			System.out.println("── Theoretical Bounds ──");
+			System.out.println(bounds);
+
 			// Fifth step: Starts the simulation
 			SimulationMetrics metrics = new SimulationMetrics(datacenter0,vmlist);
 			metrics.startWallClock();
@@ -145,6 +165,13 @@ public class Undercrowding_Test {
 			}
 			printCloudletList(newList1);
 			metrics.printSummary(lastClock,broker.tpOverall());
+
+			// ── Compute SDS ──
+			double actualEnergy = datacenter0.getPower() / 3600.0;
+			double actualConsolidation = datacenter0.getConsolidationAverage(lastClock);
+			SDS.Result sds = SDS.compute(bounds, lastClock, actualEnergy, actualConsolidation);
+			System.out.println("── SDS Result ──");
+			System.out.println(sds);
 
 			Helper.printResults(
 					datacenter0,
