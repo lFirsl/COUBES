@@ -84,17 +84,11 @@ $$\text{SPS} = \frac{1}{|P|} \sum_{j \in P} R_j$$
 
 where $P$ is the set of performance-based metrics and $R_j$ is the baseline-relative ratio for metric $j$. An SPS of 1.0 indicates aggregate parity with the baseline scheduler.
 
-### 4.3 Overall Scheduler Score (OSS)
-
-The OSS is the equally-weighted arithmetic mean of the two sub-scores:
-
-$$\text{OSS} = \frac{\text{SDS} + \text{SPS}}{2}$$
-
 ---
 
 ## 5. Pareto Analysis
 
-The OSS provides a single composite ranking, but it obscures tradeoffs between decision quality and scheduling performance. Pareto analysis addresses this by treating SDS and SPS as independent objectives.
+The Pareto frontier is the primary tool for comparing schedulers. It treats SDS and SPS as independent objectives, preserving the tradeoff information that a single composite score would obscure.
 
 ### 5.1 Dominance
 
@@ -123,10 +117,9 @@ The evaluation procedure is as follows:
 1. **Compute SDS and SPS** for each scheduler under evaluation.
 2. **Identify the Pareto frontier** to eliminate dominated schedulers.
 3. **Apply minimum thresholds** if applicable (e.g., "SPS must exceed 0.35") to filter the frontier based on hard constraints.
-4. **Rank remaining schedulers by OSS** to produce a final recommendation.
-5. **Decompose sub-scores into individual metrics** to explain the result.
+4. **Decompose sub-scores into individual metrics** to explain the result.
 
-Step 5 is critical for actionable interpretation. A scheduler on the Pareto frontier with SDS = 0.83 may achieve that score through strong energy efficiency (0.91) but weaker bin-packing (0.72). Similarly, an SPS of 0.55 may reflect acceptable throughput (0.70) constrained by high latency (0.40). The sub-score decomposition reveals which specific metrics drive the composite result and where improvement opportunities exist.
+Step 4 is critical for actionable interpretation. A scheduler on the Pareto frontier with SDS = 0.83 may achieve that score through strong energy efficiency (0.91) but weaker bin-packing (0.72). Similarly, an SPS of 0.55 may reflect acceptable throughput (0.70) constrained by high latency (0.40). The sub-score decomposition reveals which specific metrics drive the composite result and where improvement opportunities exist.
 
 ### 6.1 Tradeoff Quantification
 
@@ -148,7 +141,6 @@ Let $n$ denote the number of schedulers and $m$ the number of individual metrics
 | Sub-score computation | $O(n \cdot m)$ |
 | Pareto frontier (on SDS, SPS) | $O(n^2)$ |
 | Threshold filtering | $O(n)$ |
-| OSS ranking | $O(n \log n)$ |
 
 The overall complexity is $O(n^2 + n \cdot m)$, dominated by the pairwise dominance check. For the expected scale of COUBES evaluations ($n \leq 10$, $m \leq 30$), computation is negligible.
 
@@ -156,9 +148,9 @@ The overall complexity is $O(n^2 + n \cdot m)$, dominated by the pairwise domina
 
 ## 8. Custom Weight Overrides
 
-The default framework uses equal weights at all levels: within SDS, within SPS, and between SDS and SPS. This ensures that the standard COUBES score is deterministic and comparable across independent evaluations.
+The default framework uses equal weights within SDS and within SPS. This ensures that the standard COUBES scores are deterministic and comparable across independent evaluations.
 
-However, specific evaluation contexts may warrant non-equal weighting. The framework supports weight overrides at two independent levels:
+However, specific evaluation contexts may warrant non-equal weighting within a sub-score:
 
 ### 8.1 Within Sub-Scores
 
@@ -170,14 +162,6 @@ $$\text{SPS}_w = \frac{\sum_{j \in P} w_j \cdot R_j}{\sum_{j \in P} w_j}$$
 
 For example, an evaluation focused on energy-constrained environments may assign higher weight to power efficiency within SDS.
 
-### 8.2 Between Sub-Scores
+### 8.2 Reporting Convention
 
-The relative importance of decision quality versus scheduling performance can be adjusted:
-
-$$\text{OSS}_w = \frac{w_{\text{SDS}} \cdot \text{SDS} + w_{\text{SPS}} \cdot \text{SPS}}{w_{\text{SDS}} + w_{\text{SPS}}}$$
-
-For example, an evaluation of batch workloads where scheduling speed is less critical may assign higher weight to SDS.
-
-### 8.3 Reporting Convention
-
-When custom weights are used, the standard equal-weight OSS, SDS, and SPS must also be reported alongside the custom-weighted variants. This preserves comparability with other evaluations while allowing the custom weighting to inform the specific analysis.
+When custom weights are used, the standard equal-weight SDS and SPS must also be reported alongside the custom-weighted variants. This preserves comparability with other evaluations while allowing the custom weighting to inform the specific analysis.
