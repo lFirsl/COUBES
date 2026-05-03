@@ -20,8 +20,8 @@ replacing hand-calculated bounds with programmatic, auditable ones.
 1. The solver decides **which VM each cloudlet goes to** (the assignment).
 2. A greedy simulator computes **when each cloudlet starts** given the assignment.
 3. Energy and consolidation are computed analytically from the placement timeline.
-4. Three placement strategies are explored: SPREAD, PACK_FAST, PACK_EFFICIENT.
-5. The min/max across all three strategies gives the theoretical bounds.
+4. Five placement strategies are explored: SPREAD, PACK_FAST, PACK_EFFICIENT, MIN_ENERGY, MAX_ENERGY.
+5. The min/max across all five strategies gives the theoretical bounds.
 
 ---
 

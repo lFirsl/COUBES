@@ -6,9 +6,9 @@ The `BoundsCalculator` answers: **"What are the best and worst possible outcomes
 
 **How it works in 4 steps:**
 1. You give it the VMs and cloudlets for a scenario.
-2. It tries 3 placement strategies: spread (LeastAllocated-like), pack-fast (MostAllocated onto fastest VMs), pack-efficient (MostAllocated onto most power-efficient VMs).
+2. It tries 5 placement strategies: spread (LeastAllocated-like), pack-fast (MostAllocated onto fastest VMs), pack-efficient (MostAllocated onto most power-efficient VMs), min-energy (directly minimise energy proxy), max-energy (directly maximise energy proxy).
 3. For each strategy, it simulates when each cloudlet starts and finishes, then computes energy and consolidation.
-4. The min/max across all 3 strategies gives the theoretical bounds.
+4. The min/max across all 5 strategies gives the theoretical bounds.
 
 **Key constraint:** The solver doesn't see future waves — it places wave 1 without knowing wave 2 is coming. This is what makes fragmentation possible in the bounds (a real scheduler also can't see the future).
 
@@ -34,7 +34,7 @@ The solver decides **one thing**: which VM each cloudlet is assigned to. It does
 
 Real schedulers don't have foresight. When placing wave 1, they don't know wave 2 is coming. The solver mirrors this:
 
-1. **Wave 1**: CP-SAT solver picks the VM assignment using one of three objectives (spread, pack-fast, pack-efficient).
+1. **Wave 1**: CP-SAT solver picks the VM assignment using one of five objectives (spread, pack-fast, pack-efficient, min-energy, max-energy).
 2. **Wave 2+**: Placed greedily one cloudlet at a time on whatever VM has the earliest available capacity.
 
 This is critical for the Fragmentation Test: if the solver could see wave 2 when placing wave 1, it would always leave room for wave 2's 2-PE cloudlets, and fragmentation would never occur. By hiding future waves, the solver can produce a wave-1 packing that fragments capacity — matching what a real MostAllocated scheduler does.
