@@ -74,11 +74,23 @@ public class BoundsCalculator {
             }
         }
 
-        // Build wave task lists (without precomputed duration — depends on VM)
+        // Build wave task lists, filtering out cloudlets that can't fit on any VM
+        int maxVmPes = resolvedVms.stream().mapToInt(VmSpec::pesNumber).max().orElse(0);
+        int maxVmRam = resolvedVms.stream().mapToInt(VmSpec::ramMb).max().orElse(0);
+        List<CloudletSpec> infeasible = new ArrayList<>();
+
         List<List<CloudletSpec>> waveCloudlets = new ArrayList<>();
         List<Long> waveArrivals = new ArrayList<>();
         for (Wave wave : waves) {
-            waveCloudlets.add(wave.cloudlets());
+            List<CloudletSpec> feasible = new ArrayList<>();
+            for (CloudletSpec cl : wave.cloudlets()) {
+                if (cl.pesNumber() > maxVmPes || (cl.ramMb() > 0 && cl.ramMb() > maxVmRam)) {
+                    infeasible.add(cl);
+                } else {
+                    feasible.add(cl);
+                }
+            }
+            waveCloudlets.add(feasible);
             waveArrivals.add((long) wave.arrivalTime());
         }
 
@@ -96,17 +108,19 @@ public class BoundsCalculator {
         }
 
         // Solve with multiple wave-1 objectives to find true bounds.
-        // Different objectives explore different regions of the placement space:
         // - SPREAD: even distribution across VMs (LeastAllocated behaviour)
         // - PACK_FAST: concentrate onto fewest VMs, preferring fastest (highest MIPS)
         // - PACK_EFFICIENT: concentrate onto fewest VMs, preferring most power-efficient
-        SimResult spreadResult = solveWaveSequential(resolvedVms, waveCloudlets, waveArrivals, WaveObjective.SPREAD);
-        SimResult packFastResult = solveWaveSequential(resolvedVms, waveCloudlets, waveArrivals, WaveObjective.PACK_FAST);
-        SimResult packEfficientResult = solveWaveSequential(resolvedVms, waveCloudlets, waveArrivals, WaveObjective.PACK_EFFICIENT);
+        // - MIN_ENERGY / MAX_ENERGY: directly optimise energy proxy
+        SimResult spreadResult = solveWaveSequential(resolvedVms, waveCloudlets, waveArrivals, WaveObjective.SPREAD, affinityGroups, antiAffinityGroups);
+        SimResult packFastResult = solveWaveSequential(resolvedVms, waveCloudlets, waveArrivals, WaveObjective.PACK_FAST, affinityGroups, antiAffinityGroups);
+        SimResult packEfficientResult = solveWaveSequential(resolvedVms, waveCloudlets, waveArrivals, WaveObjective.PACK_EFFICIENT, affinityGroups, antiAffinityGroups);
+        SimResult minEnergyResult = solveWaveSequential(resolvedVms, waveCloudlets, waveArrivals, WaveObjective.MIN_ENERGY, affinityGroups, antiAffinityGroups);
+        SimResult maxEnergyResult = solveWaveSequential(resolvedVms, waveCloudlets, waveArrivals, WaveObjective.MAX_ENERGY, affinityGroups, antiAffinityGroups);
 
         // Compute all metrics for all placements
-        List<SimResult> results = List.of(spreadResult, packFastResult, packEfficientResult);
-        List<String> labels = List.of("Spread", "Pack-fast", "Pack-efficient");
+        List<SimResult> results = List.of(spreadResult, packFastResult, packEfficientResult, minEnergyResult, maxEnergyResult);
+        List<String> labels = List.of("Spread", "Pack-fast", "Pack-efficient", "Min-energy", "Max-energy");
 
         double minTTC = Long.MAX_VALUE, maxTTC = 0;
         double minE = Double.MAX_VALUE, maxE = 0;
@@ -124,19 +138,29 @@ public class BoundsCalculator {
                     resolvedVms, allCloudlets, r)).append("\n");
         }
 
+        if (!infeasible.isEmpty()) {
+            details.append(String.format("Infeasible cloudlets (can't fit on any VM): %d\n",
+                    infeasible.size()));
+            for (CloudletSpec cl : infeasible)
+                details.append(String.format("  cl-%d (%dPE, %dMB RAM) — exceeds max VM capacity\n",
+                        cl.id(), cl.pesNumber(), cl.ramMb()));
+        }
+
         return new TheoreticalBounds(minTTC, maxTTC, minE, maxE, minC, maxC, details.toString());
     }
 
     // ── Internal types ──────────────────────────────────────────────
 
     private record SimResult(long makespan, int[] vmAssignments, long[] startTimes, long[] durations) {}
-    private enum WaveObjective { SPREAD, PACK_FAST, PACK_EFFICIENT }
+    private enum WaveObjective { SPREAD, PACK_FAST, PACK_EFFICIENT, MIN_ENERGY, MAX_ENERGY }
 
     // ── Wave-sequential solver ──────────────────────────────────────
 
     private static SimResult solveWaveSequential(
             List<VmSpec> vms, List<List<CloudletSpec>> waveCloudlets,
-            List<Long> waveArrivals, WaveObjective objective) {
+            List<Long> waveArrivals, WaveObjective objective,
+            Map<String, List<Integer>> affinityGroups,
+            Map<String, List<Integer>> antiAffinityGroups) {
 
         int totalTasks = waveCloudlets.stream().mapToInt(List::size).sum();
         int[] allAssignments = new int[totalTasks];
@@ -154,11 +178,37 @@ public class BoundsCalculator {
             if (wave.isEmpty()) continue;
 
             int[] waveAssignment;
+            // Build wave-local affinity groups by remapping global indices to wave-local
+            final int offset = taskOffset;
+            final int waveSize = wave.size();
+            Map<String, List<Integer>> waveAffinity = new HashMap<>();
+            Map<String, List<Integer>> waveAntiAffinity = new HashMap<>();
+            for (var e : affinityGroups.entrySet()) {
+                List<Integer> local = e.getValue().stream()
+                        .filter(i -> i >= offset && i < offset + waveSize)
+                        .map(i -> i - offset).toList();
+                if (local.size() > 1) waveAffinity.put(e.getKey(), local);
+            }
+            for (var e : antiAffinityGroups.entrySet()) {
+                List<Integer> local = e.getValue().stream()
+                        .filter(i -> i >= offset && i < offset + waveSize)
+                        .map(i -> i - offset).toList();
+                if (local.size() > 1) waveAntiAffinity.put(e.getKey(), local);
+            }
+
             if (waveIdx == 0) {
-                waveAssignment = solveWaveAssignment(vms, wave, vmRunning, arrival, objective);
+                waveAssignment = solveWaveAssignment(vms, wave, vmRunning, arrival, objective,
+                        waveAffinity, waveAntiAffinity);
             } else {
-                boolean spread = (objective == WaveObjective.SPREAD);
-                waveAssignment = greedyWaveAssignment(vms, wave, vmRunning, arrival, spread);
+                // Later waves: use CP-SAT if there are affinity constraints,
+                // otherwise use greedy (which handles fragmented capacity better)
+                if (!waveAffinity.isEmpty() || !waveAntiAffinity.isEmpty()) {
+                    waveAssignment = solveWaveAssignment(vms, wave, vmRunning, arrival, objective,
+                            waveAffinity, waveAntiAffinity);
+                } else {
+                    boolean spread = (objective == WaveObjective.SPREAD || objective == WaveObjective.MAX_ENERGY);
+                    waveAssignment = greedyWaveAssignment(vms, wave, vmRunning, arrival, spread);
+                }
             }
 
             for (int w = 0; w < wave.size(); w++) {
@@ -186,7 +236,9 @@ public class BoundsCalculator {
 
     private static int[] solveWaveAssignment(List<VmSpec> vms, List<CloudletSpec> wave,
                                               List<long[]>[] vmRunning, long arrival,
-                                              WaveObjective objective) {
+                                              WaveObjective objective,
+                                              Map<String, List<Integer>> affinityGroups,
+                                              Map<String, List<Integer>> antiAffinityGroups) {
         CpModel model = new CpModel();
         int V = vms.size();
         int W = wave.size();
@@ -199,6 +251,7 @@ public class BoundsCalculator {
         BoolVar[][] isOnVm = new BoolVar[W][V];
 
         for (int v = 0; v < V; v++) {
+            // Current occupancy from previous waves still running at this wave's arrival
             int currentPes = 0, currentRam = 0;
             for (long[] running : vmRunning[v]) {
                 if (running[0] > arrival) { currentPes += (int) running[1]; currentRam += (int) running[2]; }
@@ -214,20 +267,68 @@ public class BoundsCalculator {
                 model.addDifferent(assign[w], v).onlyEnforceIf(isOnVm[w][v].not());
                 peSum.addTerm(isOnVm[w][v], wave.get(w).pesNumber());
                 ramSum.addTerm(isOnVm[w][v], wave.get(w).ramMb());
+
+                // Individual cloudlet must physically fit on this VM
+                if (wave.get(w).pesNumber() > vms.get(v).pesNumber()) {
+                    model.addEquality(isOnVm[w][v], 0);
+                }
+                if (wave.get(w).ramMb() > 0 && wave.get(w).ramMb() > vms.get(v).ramMb()) {
+                    model.addEquality(isOnVm[w][v], 0);
+                }
             }
 
-            vmPesUsed[v] = model.newIntVar(0, vms.get(v).pesNumber(), "vmPes_" + v);
-            IntVar vmRamUsed = model.newIntVar(0, vms.get(v).ramMb(), "vmRam_" + v);
+            // Total PE/RAM demand from this wave assigned to this VM.
+            // Upper bound is total demand (cloudlets may queue sequentially).
+            int totalPeDemand = wave.stream().mapToInt(CloudletSpec::pesNumber).sum();
+            int totalRamDemand = wave.stream().mapToInt(CloudletSpec::ramMb).sum();
+            vmPesUsed[v] = model.newIntVar(0, totalPeDemand, "vmPes_" + v);
+            IntVar vmRamUsed = model.newIntVar(0, Math.max(1, totalRamDemand), "vmRam_" + v);
             model.addEquality(vmPesUsed[v], peSum.build());
             model.addEquality(vmRamUsed, ramSum.build());
-            model.addLessOrEqual(vmPesUsed[v], freePes);
-            model.addLessOrEqual(vmRamUsed, freeRam);
+
+            // Simultaneous fit: when total wave PE demand fits in the cluster's
+            // free capacity, enforce that each VM's assigned demand fits in its
+            // free PEs. This prevents artificial queuing when VMs are available.
+            {
+                int clusterFreePes = 0;
+            for (int vv = 0; vv < V; vv++) {
+                int cp = 0;
+                for (long[] r : vmRunning[vv]) if (r[0] > arrival) cp += (int) r[1];
+                clusterFreePes += vms.get(vv).pesNumber() - cp;
+            }
+            int waveTotalPes = wave.stream().mapToInt(CloudletSpec::pesNumber).sum();
+            if (waveTotalPes <= clusterFreePes) {
+                model.addLessOrEqual(vmPesUsed[v], freePes);
+            }
+            if (totalRamDemand > 0) {
+                int clusterFreeRam = 0;
+                for (int vv = 0; vv < V; vv++) {
+                    int cr = 0;
+                    for (long[] r : vmRunning[vv]) if (r[0] > arrival) cr += (int) r[2];
+                    clusterFreeRam += vms.get(vv).ramMb() - cr;
+                }
+                int waveTotalRam = wave.stream().mapToInt(CloudletSpec::ramMb).sum();
+                if (waveTotalRam <= clusterFreeRam) {
+                    model.addLessOrEqual(vmRamUsed, freeRam);
+                }
+            }
+            } // end simultaneous fit block
         }
+
+        // Affinity: same group → same VM
+        for (List<Integer> group : affinityGroups.values())
+            for (int i = 1; i < group.size(); i++)
+                model.addEquality(assign[group.get(0)], assign[group.get(i)]);
+
+        // Anti-affinity: same group → different VMs
+        for (List<Integer> group : antiAffinityGroups.values())
+            model.addAllDifferent(group.stream().map(i -> assign[i]).toArray(IntVar[]::new));
 
         switch (objective) {
             case SPREAD -> {
-                // Minimise max PEs used on any VM (even distribution)
-                IntVar maxPes = model.newIntVar(0, vms.stream().mapToInt(VmSpec::pesNumber).max().orElse(1), "maxPes");
+                // Minimise max PE-demand assigned to any VM (even distribution)
+                int totalPeDemand = wave.stream().mapToInt(CloudletSpec::pesNumber).sum();
+                IntVar maxPes = model.newIntVar(0, totalPeDemand, "maxPes");
                 for (int v = 0; v < V; v++) model.addGreaterOrEqual(maxPes, vmPesUsed[v]);
                 model.minimize(maxPes);
             }
@@ -258,6 +359,38 @@ public class BoundsCalculator {
                     obj.addTerm(used, (long) vms.get(v).powerMaxWatts()); // secondary: prefer efficient (low watts)
                 }
                 model.minimize(obj.build());
+            }
+            case MIN_ENERGY, MAX_ENERGY -> {
+                // Direct energy optimisation via per-cloudlet-VM energy cost proxy.
+                // energyCost[w][v] = P(cl.pes/vm.pes) × (cl.length/vm.mips) in watt-seconds.
+                // CP-SAT works with integers, so we scale by 1000 to preserve precision.
+                LinearExprBuilder obj = LinearExpr.newBuilder();
+                for (int w = 0; w < W; w++) {
+                    CloudletSpec cl = wave.get(w);
+                    for (int v = 0; v < V; v++) {
+                        double util = (double) cl.pesNumber() / vms.get(v).pesNumber();
+                        double duration = (double) cl.lengthMI() / vms.get(v).mipsPerPe();
+                        double watts = vms.get(v).power(util);
+                        long costScaled = (long) (watts * duration * 1000); // milli-watt-seconds
+                        obj.addTerm(isOnVm[w][v], costScaled);
+                    }
+                }
+                // Add idle power cost per VM (paid once if VM is used)
+                for (int v = 0; v < V; v++) {
+                    BoolVar used = model.newBoolVar("vmUsed_" + v);
+                    model.addGreaterThan(vmPesUsed[v], 0).onlyEnforceIf(used);
+                    model.addEquality(vmPesUsed[v], 0).onlyEnforceIf(used.not());
+                    // Idle power for the duration of the longest possible cloudlet on this VM
+                    final int vv = v;
+                    long maxDur = wave.stream().mapToLong(c -> c.lengthMI() / vms.get(vv).mipsPerPe()).max().orElse(0);
+                    long idleCostScaled = (long) (vms.get(v).power(0) * maxDur * 1000);
+                    obj.addTerm(used, idleCostScaled);
+                }
+                if (objective == WaveObjective.MIN_ENERGY) {
+                    model.minimize(obj.build());
+                } else {
+                    model.maximize(obj.build());
+                }
             }
         }
 
