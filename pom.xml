@@ -51,6 +51,13 @@
             <version>2.18.2</version>
         </dependency>
 
+        <!-- Google OR-Tools (CP-SAT solver for theoretical bounds) -->
+        <dependency>
+            <groupId>com.google.ortools</groupId>
+            <artifactId>ortools-java</artifactId>
+            <version>9.12.4544</version>
+        </dependency>
+
         <!-- JUnit 5 for testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

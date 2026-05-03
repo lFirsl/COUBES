@@ -22,6 +22,9 @@ import org.example.kubernetes_broker.CoubesCloudlet;
 import org.example.kubernetes_broker.Live_Kubernetes_Broker_Ex;
 import org.example.kubernetes_broker.PowerDatacenterCustom;
 import org.example.kubernetes_broker.PowerVmCustom;
+import org.example.metrics.BoundsCalculator;
+import org.example.metrics.BoundsCalculator.*;
+import org.example.metrics.SDS;
 import org.example.metrics.SimulationMetrics;
 
 import java.text.DecimalFormat;
@@ -138,6 +141,35 @@ public class Fragmentation_Test {
             cloudletListTemp.addAll(cloudletList);
 			broker.submitCloudletList(cloudletList,50);
 
+			// ── Compute theoretical bounds via ILP ──
+			List<VmSpec> vmSpecs = new ArrayList<>();
+			for (Vm vm : vmlistTemp) {
+				vmSpecs.add(new VmSpec(vm.getId(), vm.getNumberOfPes(),
+						(int) vm.getMips(), vm.getRam()));
+			}
+			PowerModelSpec powerSpec = new PowerModelSpec(500, 0.1);
+
+			List<CloudletSpec> wave1Specs = new ArrayList<>();
+			for (Cloudlet cl : cloudletListTemp.subList(0, 15)) {
+				int ram = (cl instanceof CoubesCloudlet cc) ? cc.getRamRequest() : 0;
+				wave1Specs.add(new CloudletSpec(cl.getCloudletId(), cl.getCloudletLength(),
+						cl.getNumberOfPes(), ram, null, null));
+			}
+			List<CloudletSpec> wave2Specs = new ArrayList<>();
+			for (Cloudlet cl : cloudletListTemp.subList(15, 20)) {
+				int ram = (cl instanceof CoubesCloudlet cc) ? cc.getRamRequest() : 0;
+				wave2Specs.add(new CloudletSpec(cl.getCloudletId(), cl.getCloudletLength(),
+						cl.getNumberOfPes(), ram, null, null));
+			}
+
+			List<Wave> waves = List.of(
+					new Wave(wave1Specs, 0.0),
+					new Wave(wave2Specs, 50.0)
+			);
+			TheoreticalBounds bounds = BoundsCalculator.compute(vmSpecs, waves, powerSpec);
+			System.out.println("── Theoretical Bounds ──");
+			System.out.println(bounds);
+
 			Log.println("And now it's resumed!");
 			CloudSim.resumeSimulation();
 
@@ -159,6 +191,13 @@ public class Fragmentation_Test {
 			}
 			printCloudletList(newList1);
 			metrics.printSummary(lastClock,broker.tpOverall());
+
+			// ── Compute SDS ──
+			double actualEnergy = datacenter0.getPower() / 3600.0;
+			double actualConsolidation = datacenter0.getConsolidationAverage(lastClock);
+			SDS.Result sds = SDS.compute(bounds, lastClock, actualEnergy, actualConsolidation);
+			System.out.println("── SDS Result ──");
+			System.out.println(sds);
 
 //			Helper.printResults(
 //					datacenter0,
