@@ -657,3 +657,119 @@ Total runtime: **140s** with Volcano (vs 315s when restarting per test).
 ### Integration tests (via `run_all_tests.sh`)
 
 All 11 test scenarios pass with both kube-scheduler and Volcano.
+
+---
+
+## Gang Scheduling — Implementation (2026-05-05)
+
+Feature #2 from the differentiating features list. Volcano schedules gang members
+atomically (all-or-nothing); kube-scheduler has no native gang concept.
+
+### What Was Built
+
+Cloudlets with the same `gangId` form a gang. The adapter creates a shared PodGroup
+with `minMember = gang size`. The broker holds scheduled gang members in a "waiting
+room" until all members are placed, then submits them all to CloudSim simultaneously.
+
+### Data Flow
+
+```
+CoubesCloudlet(gangId="A")  →  buildPodJson adds "gangId":"A"
+    →  adapter counts gang sizes, creates PodGroup "gang-A" with minMember=N
+    →  all pods get annotation scheduling.k8s.io/group-name = "gang-A"
+    →  Volcano's gang plugin enforces all-or-nothing
+    →  broker holds scheduled members until gang is complete
+    →  all members submitted to CloudSim at once
+```
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `CoubesCloudlet.java` | `gangId` field (nullable), getter, constructor chain |
+| `Live_Kubernetes_Broker_Ex.java` | `gangWaitingRoom`, `gangHeldCloudlets`, `gangExpectedSizes` maps; gang holding logic in `processBatchDecision`; deadlock detection; `cloudletArrivalTimes` tracking |
+| `communicator/k8s-simplified-structs.go` | `GangId` field on `CsPod` |
+| `communicator/communicator.go` | Shared PodGroup creation for gang pods (created before pods); gang size counting |
+| `store/store.go` | PodGroup deletion in `DeleteAll()` with DELETED watch events |
+| `volcano-scheduler/volcano-scheduler.conf` | `gang` plugin added to tier 1 |
+| `scheduler/scheduler.go` | 5-second stall exit (early return when no progress after first decision) |
+
+### Gang Holding Logic (Broker)
+
+When a scheduled pod is part of a gang:
+1. Pod is removed from `cloudletsSubmittedToMiddle`
+2. Pod + assigned nodeId stored in `gangWaitingRoom[gangId]`
+3. Cloudlet object stored in `gangHeldCloudlets[cloudletId]`
+4. When `gangWaitingRoom[gangId].size() == gangExpectedSizes[gangId]`:
+   - All members submitted to CloudSim via `submitCloudletToVmInCloudSim`
+   - Gang removed from waiting room
+
+### Deadlock Detection
+
+After processing unschedulable pods, if:
+- A gang has held members (`gangWaitingRoom` non-empty)
+- Nothing is running in CloudSim (`cloudletsSubmitted == 0`)
+- Held + pending < expected (some members permanently failed or can't fit)
+
+Then: all held members and remaining pending members are marked FAILED.
+
+### Stall Exit (Adapter)
+
+The scheduling round now exits early after 5 seconds of no progress (no new bindings
+or failures) if at least one decision has been received. This replaces the previous
+30-second full timeout for rounds where Volcano holds gang pods without reporting them.
+
+Impact: Overload_Comparison_Test went from ~700s to ~107s wall-clock with Volcano.
+
+### Verified Results
+
+**Gang_Scheduling_Test** (4 VMs × 4 PEs, 3 gangs):
+- All gangs scheduled atomically (all members start at same simulated time)
+- Works with both Volcano and kube-scheduler (broker enforces atomicity)
+
+**Gang_Constrained_Test** (2 VMs × 4 PEs, gang of 6 needing 12 PEs but only 8 available):
+- Volcano: 0 scheduled, 6 unschedulable (gang can't fit → immediate rejection)
+- kube-scheduler: 4 scheduled + held, 2 unschedulable → deadlock detected → all 6 FAILED
+
+**Overload_Comparison_Test** (5 heterogeneous VMs, 71 pods, mixed gangs + queues):
+
+| Metric | Volcano | kube-scheduler |
+|---|---|---|
+| Simulated TTC | 1013s | 1053s |
+| Energy | 504 Wh | 524 Wh |
+| HP avg scheduling wait | 173s | 391s |
+| Batch avg scheduling wait | 433s | 236s |
+
+Tradeoff: Volcano prioritizes HP (proportion plugin), kube-scheduler treats all equally.
+
+---
+
+## Scheduling Wait Metric Fix (2026-05-05)
+
+### Problem
+
+`printPerQueueMetrics` used CloudSim's `getSubmissionTime()` which reflects when the
+cloudlet was submitted to the VM (after scheduling), not when it first arrived at the
+broker. This made all wait times appear as 0.
+
+### Fix
+
+Added `cloudletArrivalTimes` map to the broker, recording `CloudSim.clock()` when each
+cloudlet first enters `cloudletsSubmittedToMiddle`. Updated `printPerQueueMetrics` to
+accept an optional `arrivalTimes` map and compute wait as `execStartTime - arrivalTime`.
+
+### Impact
+
+Queue_Starvation_Test now correctly shows:
+- Volcano batch avg wait: 80.5s (2/4 batch pods start in round 1)
+- kube-scheduler batch avg wait: 161.0s (all batch pods wait until round 2)
+
+---
+
+## Scheduling Round Timeout Reduction (2026-05-05)
+
+Reduced from 60s to 30s (`main.go`). Combined with the 5-second stall exit, most
+rounds complete in 1-6 seconds. The 30s timeout is only hit when Volcano receives
+zero decisions for a round (rare edge case).
+
+HANG_TIMEOUT in `run_test.sh`: 45s default, 60s for Volcano.

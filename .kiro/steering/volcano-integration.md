@@ -462,18 +462,29 @@ leastrequested.weight: 1
 
 ### Known Limitations
 
-1. **PodGroups are not tracked** — Volcano auto-creates them and writes them back to the API server. We accept the writes but don't store them. This is fine for COUBES because the scheduling decision still comes through the standard `/binding` endpoint.
+1. **PodGroups are tracked and deleted on reset** — PodGroups are stored in the adapter's
+   in-memory store. On `/reset`, they are deleted with DELETED watch events so Volcano's
+   informer cache stays in sync between test runs.
 
-2. **Queue status updates are accepted but not used** — Volcano updates queue status after each scheduling cycle. We store the updates but don't use them for any logic (COUBES doesn't have multi-tenant queue semantics).
+2. **Queue status updates are accepted and stored** — Volcano updates queue status after
+   each scheduling cycle. We store the updates and broadcast MODIFIED watch events.
 
-3. **HyperNode/NumaTopology are stubs** — These are Volcano's network-topology-aware scheduling features. We return empty lists because COUBES doesn't model network topology. Volcano tolerates this and falls back to standard node scoring.
+3. **HyperNode/NumaTopology are stubs** — These are Volcano's network-topology-aware
+   scheduling features. We return empty lists because COUBES doesn't model network topology.
 
-4. **No cluster-autoscaler support** — Same limitation as kube-scheduler in COUBES. The fake API server doesn't implement the autoscaler's node creation/deletion protocol.
+4. **No cluster-autoscaler support** — Same limitation as kube-scheduler in COUBES.
 
-### Next Steps
+5. **Gang pods that Volcano holds (schedulable but gang not ready) cause a 5-second stall
+   per round** — Volcano doesn't report these pods as unschedulable or bind them. The adapter
+   waits 5 seconds of no progress before returning the partial result. For tests with large
+   gangs competing for limited resources, this adds up across many rescheduling rounds.
 
-To benchmark Volcano against kube-scheduler:
-1. Run the same COUBES test (e.g., `Fragmentation_Test`) with both schedulers
-2. Compare the CloudSim metrics (energy consumption, bin-packing efficiency, time-to-completion)
-3. Vary the `mostrequested.weight` / `leastrequested.weight` to test different policies
-4. Document the results in a new steering file (e.g., `volcano-benchmark-results.md`)
+### Current Status (2026-05-05)
+
+The integration is complete with three Volcano-differentiating features exercised:
+- **Queue Resource Management** (proportion plugin) — multi-queue with weighted resource sharing
+- **Gang Scheduling** (gang plugin) — all-or-nothing PodGroup scheduling
+- **Bin-packing** (nodeorder plugin) — same as before
+
+All features produce measurably different scheduling decisions from kube-scheduler.
+See `volcano-future-steering.md` for detailed implementation notes and benchmark results.

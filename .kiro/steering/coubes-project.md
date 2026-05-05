@@ -150,6 +150,13 @@ The `scheduler/scheduler.go` logs round lifecycle: start (expected decisions), e
 | `Empty_Wave_Test` | Wave 2 arrives after wave 1 completes; no rescheduling needed |
 | `Rapid_Completion_Test` | 10 pods complete simultaneously; batched rescheduling |
 | `Queue_Priority_Test` | Volcano multi-queue: 2 queues with different weights competing for resources |
+| `Gang_Scheduling_Test` | Gang scheduling: 3 gangs scheduled atomically (all-or-nothing) |
+| `Gang_Constrained_Test` | Gang too large for cluster: Volcano rejects immediately, kube-scheduler deadlocks |
+| `Gang_PartialFit_Test` | Gang that almost fits: needs fillers to complete first |
+| `Gang_Mixed_Test` | Gang + independent pods competing for resources |
+| `Gang_Energy_Test` | Energy cost comparison of gang waiting patterns |
+| `Queue_Starvation_Test` | Sustained overload: proportion plugin vs greedy scheduling |
+| `Overload_Comparison_Test` | 71 pods, 5 heterogeneous VMs, mixed gangs + queues — full comparison |
 
 ---
 

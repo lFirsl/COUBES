@@ -1,6 +1,4 @@
 # COUBES Operational Runbook
-# COUBES Operational Runbook
-# COUBES Operational Runbook
 
 ## run_test.sh — The Preferred Way to Run Tests
 
@@ -30,9 +28,13 @@ The script:
 - Symlinks `debug/{sim,adapter,scheduler}.log` always point to the latest run
 - Exits non-zero with diagnostic output on failure
 
-**Options:** `--test-mode`, `--volcano`, `--no-compile`, `--no-filter`, `--scheduler=NAME`, `--help`
+**Options:** `--test-mode`, `--volcano`, `--no-compile`, `--no-filter`, `--keep-infra`, `--scheduler=NAME`, `--help`
 
 **Run all tests:** `bash run_all_tests.sh [--volcano] [--no-compile] [--stop-on-fail] [--timeout=N]`
+
+The `run_all_tests.sh` script starts infrastructure once and reuses it across all tests
+(via `--keep-infra`). If a test fails, infrastructure is restarted before the next test.
+Default per-test timeout: 45s (auto-raised to 90s for `--volcano`).
 
 ---
 
