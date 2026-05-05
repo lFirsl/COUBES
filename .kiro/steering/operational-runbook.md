@@ -12,6 +12,9 @@ The `run_test.sh` script handles infrastructure startup, hang detection, auto-re
 
 # Full mode (with real kube-scheduler via Docker)
 ./run_test.sh org.example.testSuite.Fragmentation_Test
+
+# Volcano scheduler
+./run_test.sh --volcano org.example.testSuite.Queue_Priority_Test
 ```
 
 The script:
@@ -20,14 +23,16 @@ The script:
 - Builds Go adapter + runs Go scheduler tests (unless `--no-compile`)
 - Compiles Java (unless `--no-compile`)
 - Starts adapter, starts scheduler (full mode only), resets state
-- Runs the simulation with hang detection (45s timeout)
+- Runs the simulation with hang detection (45s default, 90s for Volcano)
 - Auto-recovers once from a hang (restarts scheduler, retries)
 - Filters output to show only results, metrics, and errors (unless `--no-filter`)
+- Writes logs to `debug/<TestName>_<timestamp>_{sim,adapter,scheduler}.log`
+- Symlinks `debug/{sim,adapter,scheduler}.log` always point to the latest run
 - Exits non-zero with diagnostic output on failure
 
-**Options:** `--test-mode`, `--no-compile`, `--no-filter`, `--help`
+**Options:** `--test-mode`, `--volcano`, `--no-compile`, `--no-filter`, `--scheduler=NAME`, `--help`
 
-**Run all tests:** `bash run_all_tests.sh [--test-mode] [--no-compile] [--stop-on-fail]`
+**Run all tests:** `bash run_all_tests.sh [--volcano] [--no-compile] [--stop-on-fail] [--timeout=N]`
 
 ---
 

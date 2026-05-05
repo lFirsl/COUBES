@@ -504,3 +504,130 @@ kube-scheduler MostAllocated, ranked by implementation feasibility:
    Volcano can evict low-priority pods to make room for high-priority ones.
    Requires: PriorityClass objects, pod eviction handling in fake API, broker
    handling of preempted cloudlets.
+
+---
+
+## Queue Resource Management — Implementation (2026-05-05)
+
+Feature #1 from the list above has been implemented and verified.
+
+### What Was Built
+
+The `proportion` plugin is now enabled in Volcano's config. Cloudlets can be assigned
+to different queues by setting their `classType` field. The adapter creates queues on
+demand with predefined weights when pods reference them.
+
+### Data Flow
+
+```
+Cloudlet.setClassType(1)  →  buildPodJson adds "queue":"high-priority"
+    →  adapter CsPod.Queue = "high-priority"
+    →  ensureVolcanoQueue("high-priority") creates queue with weight=3 if not exists
+    →  buildPodGroup sets spec.queue = "high-priority"
+    →  Volcano's proportion plugin allocates resources proportionally
+```
+
+### Queue Weight Map
+
+| classType | Queue Name | Weight | Share (with default) |
+|---|---|---|---|
+| 0 (default) | `default` | 1 (Volcano built-in) | 100% when alone |
+| 1 | `high-priority` | 3 | 75% when competing with batch |
+| 2 | `batch` | 1 | 25% when competing with high-priority |
+
+Queues are only created when pods reference them. Tests that don't set `classType`
+route everything to `default` and the proportion plugin has nothing to arbitrate —
+behaviour is identical to before.
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `communicator/k8s-simplified-structs.go` | `Queue` field on `CsPod` |
+| `communicator/communicator.go` | `buildPodGroup` accepts queue; `ensureVolcanoQueue` creates on demand |
+| `Live_Kubernetes_Broker_Ex.java` | `QUEUE_NAMES` map; `buildPodJson` includes queue |
+| `metrics/SimulationMetrics.java` | `printPerQueueMetrics()` static method |
+| `testSuite/Queue_Priority_Test.java` | New test scenario |
+| `volcano-scheduler/volcano-scheduler.conf` | `proportion` plugin added to tier 1 |
+
+### Verified Results
+
+With 16 PE slots and 16 pods (8 high-priority + 8 batch, each 2 PEs):
+
+| Scheduler | Round 1 high-priority | Round 1 batch | Behaviour |
+|---|---|---|---|
+| Volcano (proportion, 3:1) | 6 (75%) | 2 (25%) | Fair sharing by weight |
+| kube-scheduler (MostAllocated) | 8 (100%) | 0 (0%) | Complete batch starvation |
+
+### Per-Queue Metrics
+
+`SimulationMetrics.printPerQueueMetrics(completedCloudlets)` reports per queue:
+- **Queue turnaround** — last finish minus earliest submission for that queue
+- **Avg cloudlet turnaround** — mean of (finish - submission) per cloudlet
+- **Avg wait time** — mean of (start - submission) per cloudlet
+
+---
+
+## PUT Pod Status Fix (2026-05-05)
+
+### Problem
+
+Volcano reports unschedulable pods via `PUT /api/v1/namespaces/default/pods/{name}/status`
+(a full status sub-resource replacement). The fake API server only handled `PATCH` on
+that path (used by kube-scheduler). Volcano's PUT was rejected with "method not allowed",
+so the adapter never learned about unschedulable pods and waited the full 60s scheduling
+round timeout for a response that would never come.
+
+This caused Fragmentation_Test_Large to take **420 seconds** (7 minutes) with Volcano
+due to multiple 60s timeouts per rescheduling round.
+
+### Root Cause (confirmed from Volcano source)
+
+`volcano/pkg/scheduler/cache/cache.go` line 345:
+```go
+func (su *defaultStatusUpdater) UpdatePodStatus(pod *v1.Pod) (*v1.Pod, error) {
+    return su.kubeclient.CoreV1().Pods(pod.Namespace).UpdateStatus(...)
+}
+```
+
+This calls `UpdateStatus` which is `PUT /pods/{name}/status`. The pod body contains
+`Status.Conditions` with `PodScheduled=False, Reason=Unschedulable` — the same
+condition kube-scheduler sends via PATCH.
+
+### Fix
+
+One line in `main.go` — register the existing `HandlePodStatusPatch` handler for PUT:
+```go
+router.HandleFunc("/api/v1/namespaces/default/pods/{name}/status", func(...) {
+    fakeAPI.HandlePodStatusPatch(w, r, round)
+}).Methods("PUT")
+```
+
+The handler already parses a full `corev1.Pod` body and checks for the unschedulable
+condition, so it works identically for both PATCH and PUT.
+
+### Impact
+
+Fragmentation_Test_Large: **420s → 7s** with Volcano.
+All 11 test scenarios now pass with Volcano in under 45s each (315s total).
+
+---
+
+## run_test.sh / run_all_tests.sh Improvements (2026-05-05)
+
+### Log File Naming
+
+Logs are now written to `debug/<TestName>_<timestamp>_{sim,adapter,scheduler}.log`.
+Symlinks `debug/{sim,adapter,scheduler}.log` always point to the latest run.
+Previous runs are preserved.
+
+### Timeouts
+
+- `HANG_TIMEOUT=45s` for kube-scheduler tests
+- `HANG_TIMEOUT=90s` for Volcano tests (set by `--volcano` flag)
+- `run_all_tests.sh` has per-test `timeout` wrapper (default 45s, `--timeout=N`)
+
+### run_all_tests.sh
+
+Rewritten to show inline progress (one line per test), timing, all 11 tests, and
+error context on failure. No output buffering.

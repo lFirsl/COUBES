@@ -149,6 +149,7 @@ The `scheduler/scheduler.go` logs round lifecycle: start (expected decisions), e
 | `Single_Pod_Test` | Minimal sanity check: 1 host, 1 VM, 1 pod |
 | `Empty_Wave_Test` | Wave 2 arrives after wave 1 completes; no rescheduling needed |
 | `Rapid_Completion_Test` | 10 pods complete simultaneously; batched rescheduling |
+| `Queue_Priority_Test` | Volcano multi-queue: 2 queues with different weights competing for resources |
 
 ---
 
