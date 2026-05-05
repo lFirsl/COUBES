@@ -11,7 +11,6 @@
 
 set -euo pipefail
 
-SIM_LOG="/tmp/coubes-sim.log"
 NO_COMPILE=""
 TEST_SHORT=""
 
@@ -79,7 +78,7 @@ run_scheduler() {
     # shellcheck disable=SC2086
     bash run_test.sh $flag $compile_flag "$TEST_CLASS"
 
-    cp "$SIM_LOG" "/tmp/coubes-sim-${label}.log"
+    cp "debug/sim.log" "/tmp/coubes-sim-${label}.log"
     echo "  Log saved to /tmp/coubes-sim-${label}.log"
 }
 

@@ -1,0 +1,7 @@
+metric,type,kube_scheduler,volcano,volcano_relative_score,note
+simulated_time_s,decision,1009.0,1008.0,1.0010,lower_is_better
+energy_wh,decision,669.71,664.44,1.0079,lower_is_better
+consolidation_ratio,decision,4.7817537872399525,5.0,1.0456,higher_is_better
+cloudlets_completed,decision,20,20,1.0000,higher_is_better
+wall_clock_ms,performance,8191,8744,0.9368,lower_is_better
+throughput_pods_per_s,performance,64.95193556767991,60.686976574827035,0.9343,higher_is_better

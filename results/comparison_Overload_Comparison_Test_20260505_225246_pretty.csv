@@ -1,0 +1,8 @@
+metric                         type         kube_scheduler     volcano            volcano_relative_score   note                
+------------------------------ ------------ ------------------ ------------------ ------------------------ --------------------
+simulated_time_s               decision     772.01             908.01             0.8502                   lower_is_better     
+energy_wh                      decision     453.02             460.44             0.9839                   lower_is_better     
+consolidation_ratio            decision     2.2717466493731266 1.951488423373766  0.8590                   higher_is_better    
+cloudlets_completed            decision     20                 20                 1.0000                   higher_is_better    
+wall_clock_ms                  performance  17970              57496              0.3125                   lower_is_better     
+throughput_pods_per_s          performance  97.99968987439914  26.642938202826784 0.2719                   higher_is_better    
