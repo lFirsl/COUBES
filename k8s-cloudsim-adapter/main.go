@@ -43,7 +43,7 @@ func main() {
 
 	// Initialize core components
 	store := store.NewInMemoryStore()
-	round := scheduler.NewSchedulingRound(60 * time.Second)
+	round := scheduler.NewSchedulingRound(30 * time.Second)
 	comm := communicator.NewCommunicator(store, round, *schedulerName, *testMode)
 	fakeAPI := fakeapi.NewFakeAPIHandler(store)
 

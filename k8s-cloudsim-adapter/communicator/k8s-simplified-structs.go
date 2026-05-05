@@ -39,6 +39,7 @@ type CsPod struct {
 	HardAffinity       *bool             `json:"hardAffinity,omitempty"`     // nil = true (hard)
 	HardAntiAffinity   *bool             `json:"hardAntiAffinity,omitempty"` // nil = true (hard)
 	Queue              string            `json:"queue,omitempty"`            // Volcano queue name (default: "default")
+	GangId             string            `json:"gangId,omitempty"`           // Gang scheduling: pods with same gangId form a PodGroup
 }
 
 // --- Batch Protocol Structs ---

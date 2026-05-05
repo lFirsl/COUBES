@@ -258,6 +258,20 @@ func (s *InMemoryStore) DeleteAll() {
 			Object: runtime.RawExtension{Object: deletedNode},
 		}
 	}
+
+	// Delete PodGroups with DELETED events so Volcano's informer cache stays in sync
+	for key, pg := range s.podGroups {
+		s.resourceVersion++
+		pgCopy := copyMap(pg)
+		if meta, ok := pgCopy["metadata"].(map[string]interface{}); ok {
+			meta["resourceVersion"] = fmt.Sprintf("%d", s.resourceVersion)
+		}
+		delete(s.podGroups, key)
+		s.podGroupEventCh <- metav1.WatchEvent{
+			Type:   "DELETED",
+			Object: runtime.RawExtension{Raw: mustMarshal(pgCopy)},
+		}
+	}
 }
 
 // Reset clears all state and resets resourceVersion to 0.

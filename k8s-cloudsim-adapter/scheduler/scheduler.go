@@ -138,7 +138,7 @@ func (r *SchedulingRound) Wait(ctx context.Context) (BatchDecision, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, r.timeout)
 	defer cancel()
 
-	stallCheck := time.NewTicker(10 * time.Second)
+	stallCheck := time.NewTicker(5 * time.Second)
 	defer stallCheck.Stop()
 	lastResolved := 0
 
@@ -151,8 +151,20 @@ func (r *SchedulingRound) Wait(ctx context.Context) (BatchDecision, error) {
 			resolved := len(r.assignments) + len(r.failures)
 			pending := r.pending
 			r.mu.Unlock()
-			if resolved == lastResolved {
-				log.Printf("STALL: no progress for 10s — %d resolved, %d still pending", resolved, pending)
+			if resolved > 0 && resolved == lastResolved {
+				// No progress for 5s after receiving at least one decision — return partial result
+				r.mu.Lock()
+				partial := BatchDecision{Scheduled: r.assignments, Unschedulable: r.failures}
+				r.active = false
+				r.mu.Unlock()
+				log.Printf("STALL EXIT: no progress for 5s — %d scheduled, %d failed, %d still pending (returning partial)",
+					len(partial.Scheduled), len(partial.Unschedulable), pending)
+				return partial, fmt.Errorf("scheduling stall: %d/%d pods resolved, %d pending",
+					len(partial.Scheduled)+len(partial.Unschedulable),
+					len(partial.Scheduled)+len(partial.Unschedulable)+pending, pending)
+			}
+			if resolved == lastResolved && resolved == 0 {
+				log.Printf("STALL: no decisions received for 5s — %d still pending", pending)
 			}
 			lastResolved = resolved
 		case <-timeoutCtx.Done():

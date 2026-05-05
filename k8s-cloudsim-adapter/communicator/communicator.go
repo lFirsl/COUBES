@@ -175,6 +175,31 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Step 4: Create pods in store
+	// First, count gang sizes for shared PodGroup creation
+	gangSizes := map[string]int{}
+	for _, csPod := range snapshot.Pods {
+		if csPod.GangId != "" {
+			gangSizes[csPod.GangId]++
+		}
+	}
+	gangPodGroupCreated := map[string]bool{}
+
+	// Pre-create gang PodGroups before pods so Volcano's informer sees them first
+	for _, csPod := range snapshot.Pods {
+		if csPod.GangId != "" && !gangPodGroupCreated[csPod.GangId] && c.schedulerName == "volcano" {
+			queue := csPod.Queue
+			if queue == "" {
+				queue = "default"
+			}
+			c.ensureVolcanoQueue(queue)
+			pgName := "gang-" + csPod.GangId
+			pg := buildPodGroup(pgName, "default", queue)
+			pg["spec"].(map[string]interface{})["minMember"] = gangSizes[csPod.GangId]
+			c.store.CreatePodGroup("default", pgName, pg)
+			gangPodGroupCreated[csPod.GangId] = true
+		}
+	}
+
 	for _, csPod := range snapshot.Pods {
 		pod := BuildPod(csPod, c.schedulerName)
 		c.store.CreatePod(pod)
@@ -183,9 +208,17 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 			if queue == "" {
 				queue = "default"
 			}
-			// Create the queue on demand if it doesn't exist yet
 			c.ensureVolcanoQueue(queue)
-			c.store.CreatePodGroup("default", pod.Name, buildPodGroup(pod.Name, "default", queue))
+
+			if csPod.GangId != "" {
+				// Gang pod: point annotation to the shared PodGroup
+				pgName := "gang-" + csPod.GangId
+				pod.Annotations["scheduling.k8s.io/group-name"] = pgName
+				c.store.UpdatePod(pod.Name, pod)
+			} else {
+				// Non-gang pod: individual PodGroup
+				c.store.CreatePodGroup("default", pod.Name, buildPodGroup(pod.Name, "default", queue))
+			}
 		}
 		c.mu.Lock()
 		podCopy := csPod
@@ -303,6 +336,15 @@ func (c *Communicator) HandleSchedulePods(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Count gang sizes
+	gangSizes2 := map[string]int{}
+	for _, csPod := range csPods {
+		if csPod.GangId != "" {
+			gangSizes2[csPod.GangId]++
+		}
+	}
+	gangPodGroupCreated2 := map[string]bool{}
+
 	for _, csPod := range csPods {
 		pod := BuildPod(csPod, c.schedulerName)
 		c.store.CreatePod(pod)
@@ -312,7 +354,19 @@ func (c *Communicator) HandleSchedulePods(w http.ResponseWriter, r *http.Request
 				queue = "default"
 			}
 			c.ensureVolcanoQueue(queue)
-			c.store.CreatePodGroup("default", pod.Name, buildPodGroup(pod.Name, "default", queue))
+			if csPod.GangId != "" {
+				pgName := "gang-" + csPod.GangId
+				if !gangPodGroupCreated2[csPod.GangId] {
+					pg := buildPodGroup(pgName, "default", queue)
+					pg["spec"].(map[string]interface{})["minMember"] = gangSizes2[csPod.GangId]
+					c.store.CreatePodGroup("default", pgName, pg)
+					gangPodGroupCreated2[csPod.GangId] = true
+				}
+				pod.Annotations["scheduling.k8s.io/group-name"] = pgName
+				c.store.UpdatePod(pod.Name, pod)
+			} else {
+				c.store.CreatePodGroup("default", pod.Name, buildPodGroup(pod.Name, "default", queue))
+			}
 		}
 		c.mu.Lock()
 		podCopy := csPod
@@ -539,6 +593,7 @@ func (c *Communicator) ensureVolcanoQueue(name string) {
 		"kind":       "Queue",
 		"metadata": map[string]interface{}{
 			"name": name,
+			"uid":  name + "-uid",
 		},
 		"spec": map[string]interface{}{
 			"weight": weight,

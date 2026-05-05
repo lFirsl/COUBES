@@ -32,7 +32,7 @@ SCHEDULER_DIR="second-scheduler"
 SCHEDULER_CONTAINER="my-scheduler"
 ADAPTER_URL="http://localhost:8080"
 HANG_TIMEOUT=45   # seconds of no log output before declaring a hang
-                  # Overridden to 90s for Volcano (must exceed 60s scheduling round timeout)
+                  # Overridden to 60s for Volcano (must exceed 30s scheduling round timeout)
 RECOVERY_DONE=0
 TEST_MODE=0
 NO_COMPILE=0
@@ -286,7 +286,7 @@ while [[ $# -gt 0 && "$1" == --* ]]; do
             SCHEDULER_DIR="volcano-scheduler"
             SCHEDULER_CONTAINER="volcano-scheduler"
             ADAPTER_FLAGS="--scheduler=volcano"
-            HANG_TIMEOUT=90  # Volcano's scheduling round timeout is 60s
+            HANG_TIMEOUT=60  # Volcano's scheduling round timeout is 30s; need margin for rescheduling
             shift
             ;;
         --help)

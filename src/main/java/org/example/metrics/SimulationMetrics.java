@@ -106,6 +106,10 @@ public class SimulationMetrics {
      *   - Average wait time: mean of (execStart - submission) per cloudlet
      */
     public static void printPerQueueMetrics(List<Cloudlet> completedCloudlets) {
+        printPerQueueMetrics(completedCloudlets, null);
+    }
+
+    public static void printPerQueueMetrics(List<Cloudlet> completedCloudlets, Map<Integer, Double> arrivalTimes) {
         Map<Integer, List<Cloudlet>> byQueue = completedCloudlets.stream()
                 .collect(Collectors.groupingBy(Cloudlet::getClassType));
 
@@ -117,24 +121,33 @@ public class SimulationMetrics {
             String queueName = Live_Kubernetes_Broker_Ex.QUEUE_NAMES
                     .getOrDefault(classType, "default (classType=" + classType + ")");
 
-            double earliestSubmission = cloudlets.stream()
-                    .mapToDouble(Cloudlet::getSubmissionTime).min().orElse(0);
+            // Use arrival times if available, otherwise fall back to CloudSim submissionTime
+            double earliestArrival = cloudlets.stream()
+                    .mapToDouble(c -> arrivalTimes != null && arrivalTimes.containsKey(c.getCloudletId())
+                            ? arrivalTimes.get(c.getCloudletId()) : c.getSubmissionTime())
+                    .min().orElse(0);
             double latestFinish = cloudlets.stream()
                     .mapToDouble(Cloudlet::getExecFinishTime).max().orElse(0);
-            double queueTurnaround = latestFinish - earliestSubmission;
+            double queueTurnaround = latestFinish - earliestArrival;
 
             double avgTurnaround = cloudlets.stream()
-                    .mapToDouble(c -> c.getExecFinishTime() - c.getSubmissionTime())
-                    .average().orElse(0);
+                    .mapToDouble(c -> {
+                        double arrival = arrivalTimes != null && arrivalTimes.containsKey(c.getCloudletId())
+                                ? arrivalTimes.get(c.getCloudletId()) : c.getSubmissionTime();
+                        return c.getExecFinishTime() - arrival;
+                    }).average().orElse(0);
             double avgWait = cloudlets.stream()
-                    .mapToDouble(c -> c.getExecStartTime() - c.getSubmissionTime())
-                    .average().orElse(0);
+                    .mapToDouble(c -> {
+                        double arrival = arrivalTimes != null && arrivalTimes.containsKey(c.getCloudletId())
+                                ? arrivalTimes.get(c.getCloudletId()) : c.getSubmissionTime();
+                        return c.getExecStartTime() - arrival;
+                    }).average().orElse(0);
 
             System.out.printf("  Queue '%s': %d cloudlets%n", queueName, cloudlets.size());
-            System.out.printf("    Queue turnaround:       %.1fs (submitted=%.1f, last finish=%.1f)%n",
-                    queueTurnaround, earliestSubmission, latestFinish);
+            System.out.printf("    Queue turnaround:       %.1fs (arrived=%.1f, last finish=%.1f)%n",
+                    queueTurnaround, earliestArrival, latestFinish);
             System.out.printf("    Avg cloudlet turnaround: %.1fs%n", avgTurnaround);
-            System.out.printf("    Avg wait time:           %.1fs%n", avgWait);
+            System.out.printf("    Avg scheduling wait:     %.1fs%n", avgWait);
         }
         System.out.println("-----------------------------");
     }

@@ -49,6 +49,15 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     private boolean reschedulePending = false;
     // IDs of pods that were unschedulable in the last round — used to detect permanent failures
     private final java.util.Set<Integer> lastUnschedulableIds = new java.util.HashSet<>();
+    // Tracks when each cloudlet first arrived at the broker (CloudSim clock time)
+    private final Map<Integer, Double> cloudletArrivalTimes = new HashMap<>();
+    // Gang scheduling: holds scheduled gang members until all members are placed
+    // Key: gangId, Value: map of cloudletId → assigned nodeId
+    private final Map<String, Map<Integer, Integer>> gangWaitingRoom = new HashMap<>();
+    // Tracks expected gang sizes (gangId → total members submitted)
+    private final Map<String, Integer> gangExpectedSizes = new HashMap<>();
+    // Holds the actual Cloudlet objects for gang members waiting in the waiting room
+    private final Map<Integer, Cloudlet> gangHeldCloudlets = new HashMap<>();
     // Optional PerformanceMetrics integration
     private PerformanceMetrics performanceMetrics;
 
@@ -240,8 +249,13 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         for (Cloudlet cloudlet : getCloudletList()) {
             podsArray.add(buildPodJson(mapper, cloudlet));
             cloudletsSubmittedToMiddle.put(cloudlet.getCloudletId(), cloudlet);
+            cloudletArrivalTimes.putIfAbsent(cloudlet.getCloudletId(), CloudSim.clock());
             if (performanceMetrics != null) {
                 performanceMetrics.recordSubmission(cloudlet.getCloudletId());
+            }
+            // Track gang membership
+            if (cloudlet instanceof CoubesCloudlet cc && cc.getGangId() != null) {
+                gangExpectedSizes.merge(cc.getGangId(), 1, Integer::sum);
             }
         }
         // Only re-send previously unschedulable pods when capacity has changed
@@ -355,12 +369,49 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
                     continue;
                 }
                 
-                Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": Pod ", cloudletId, " scheduled on node ", nodeId);
-                submitCloudletToVmInCloudSim(cloudlet, nodeId);
-                cloudletsSubmittedToMiddle.remove(cloudletId);
-                cloudletsReadyForCloudsim.put(cloudletId, cloudlet);
+                // Check if this cloudlet is part of a gang
+                String gangId = (cloudlet instanceof CoubesCloudlet cc) ? cc.getGangId() : null;
+                if (gangId != null) {
+                    // Hold in gang waiting room until all members are scheduled
+                    gangWaitingRoom.computeIfAbsent(gangId, k -> new HashMap<>()).put(cloudletId, nodeId);
+                    gangHeldCloudlets.put(cloudletId, cloudlet);
+                    cloudletsSubmittedToMiddle.remove(cloudletId);
+                    Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": Pod ", cloudletId,
+                            " scheduled on node ", nodeId, " (gang '", gangId, "' — ",
+                            gangWaitingRoom.get(gangId).size(), "/", gangExpectedSizes.getOrDefault(gangId, 0), " ready)");
+                } else {
+                    Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": Pod ", cloudletId, " scheduled on node ", nodeId);
+                    submitCloudletToVmInCloudSim(cloudlet, nodeId);
+                    cloudletsSubmittedToMiddle.remove(cloudletId);
+                    cloudletsReadyForCloudsim.put(cloudletId, cloudlet);
+                }
             }
         }
+
+        // Release complete gangs
+        for (var it = gangWaitingRoom.entrySet().iterator(); it.hasNext(); ) {
+            var entry = it.next();
+            String gangId = entry.getKey();
+            Map<Integer, Integer> members = entry.getValue();
+            int expected = gangExpectedSizes.getOrDefault(gangId, members.size());
+            if (members.size() >= expected) {
+                Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": Gang '", gangId,
+                        "' complete (", members.size(), " members). Submitting all to CloudSim.");
+                for (var m : members.entrySet()) {
+                    // Find the cloudlet — it was removed from cloudletsSubmittedToMiddle earlier
+                    // We need to look it up from the original submission. Store it in the waiting room.
+                    Cloudlet cl = gangHeldCloudlets.remove(m.getKey());
+                    if (cl != null) {
+                        submitCloudletToVmInCloudSim(cl, m.getValue());
+                        cloudletsReadyForCloudsim.put(m.getKey(), cl);
+                    }
+                }
+                it.remove();
+                gangExpectedSizes.remove(gangId);
+            }
+        }
+
+        // Detect gang deadlock after unschedulable processing (see below).
         
         // Process unschedulable pods — keep them in cloudletsSubmittedToMiddle so they
         // are resubmitted when nodes free up (via RESCHEDULE_PENDING event).
@@ -374,7 +425,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
             // they are permanently unschedulable — mark them FAILED immediately rather than
             // waiting for a timeout that will never resolve.
             if (!lastUnschedulableIds.isEmpty() && currentUnschedulable.equals(lastUnschedulableIds)
-                    && !hadCompletions && cloudletsSubmitted == 0) {
+                    && !hadCompletions && cloudletsSubmitted == 0 && gangHeldCloudlets.isEmpty()) {
                 Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": ",
                         currentUnschedulable.size(), " pods permanently unschedulable (same pods failed twice with no new capacity). Marking as FAILED.");
                 for (int podId : currentUnschedulable) {
@@ -399,8 +450,9 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         cloudSimAllocation();
 
         // Detect permanently unschedulable pods: if nothing was scheduled this round
-        // and nothing is running, no capacity will ever free up — give up on remaining pods.
-        if (cloudletsSubmitted == 0 && !cloudletsSubmittedToMiddle.isEmpty()
+        // and nothing is running (or held in gang waiting room), no capacity will ever free up.
+        if (cloudletsSubmitted == 0 && gangHeldCloudlets.isEmpty()
+                && !cloudletsSubmittedToMiddle.isEmpty()
                 && (batchDecision.getScheduled() == null || batchDecision.getScheduled().isEmpty())) {
             Log.printlnConcat(CloudSim.clock(), ": ", getName(),
                     ": WARNING: ", cloudletsSubmittedToMiddle.size(),
@@ -409,6 +461,47 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
             if (getCloudletList().isEmpty() && cloudletsReadyForCloudsim.isEmpty()) {
                 clearDatacenters();
                 finishExecution();
+            }
+        }
+
+        // Detect gang deadlock: if a gang has held members but some members are
+        // unschedulable (still pending but can't fit because held members consume capacity),
+        // the gang can never complete. Detect this when nothing is running in CloudSim.
+        if (!gangWaitingRoom.isEmpty() && cloudletsSubmitted == 0) {
+            for (var it = gangWaitingRoom.entrySet().iterator(); it.hasNext(); ) {
+                var entry = it.next();
+                String gId = entry.getKey();
+                int expected = gangExpectedSizes.getOrDefault(gId, 0);
+                int held = entry.getValue().size();
+                int pending = 0;
+                for (var cl : cloudletsSubmittedToMiddle.values()) {
+                    if (cl instanceof CoubesCloudlet cc && gId.equals(cc.getGangId())) pending++;
+                }
+                // Deadlock: held members consume capacity, preventing remaining members from scheduling
+                // OR some members were already failed
+                if (held + pending < expected || (held > 0 && held < expected && pending > 0)) {
+                    Log.printlnConcat(CloudSim.clock(), ": ", getName(), ": Gang '", gId,
+                            "' deadlock detected: ", held, " held + ", pending, " pending, need ", expected,
+                            ". Failing all gang members.");
+                    for (int cId : entry.getValue().keySet()) {
+                        Cloudlet cl = gangHeldCloudlets.remove(cId);
+                        if (cl != null) {
+                            cl.setCloudletStatus(Cloudlet.CloudletStatus.FAILED);
+                            getCloudletReceivedList().add(cl);
+                        }
+                    }
+                    // Also fail the pending members
+                    for (var pendIt = cloudletsSubmittedToMiddle.values().iterator(); pendIt.hasNext(); ) {
+                        Cloudlet cl = pendIt.next();
+                        if (cl instanceof CoubesCloudlet cc && gId.equals(cc.getGangId())) {
+                            cl.setCloudletStatus(Cloudlet.CloudletStatus.FAILED);
+                            getCloudletReceivedList().add(cl);
+                            pendIt.remove();
+                        }
+                    }
+                    it.remove();
+                    gangExpectedSizes.remove(gId);
+                }
             }
         }
     }
@@ -574,6 +667,10 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         if (queue != null) {
             podJson.put("queue", queue);
         }
+        // Gang scheduling — gangId groups pods into a single PodGroup
+        if (cloudlet instanceof CoubesCloudlet cc && cc.getGangId() != null) {
+            podJson.put("gangId", cc.getGangId());
+        }
         return podJson;
     }
 
@@ -588,10 +685,12 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         }
 
         cloudlet.setGuestId(targetVm.getId());
+        cloudlet.setUserId(getId());
     }
 
 
     public int getRoundCount() { return roundCounter; }
+    public Map<Integer, Double> getCloudletArrivalTimes() { return cloudletArrivalTimes; }
 
     public void sendResetRequestToControlPlane() {
         HttpRequest request = HttpRequest.newBuilder()

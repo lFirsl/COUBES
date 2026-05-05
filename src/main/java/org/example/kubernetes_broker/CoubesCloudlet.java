@@ -24,13 +24,14 @@ public class CoubesCloudlet extends Cloudlet {
     private final String antiAffinityGroup;
     private final boolean hardAffinity;      // true = Required, false = Preferred
     private final boolean hardAntiAffinity;  // true = Required, false = Preferred
+    private final String gangId;             // non-null = part of a gang (all-or-nothing scheduling)
 
     /** Minimal constructor — RAM only, no affinity. */
     public CoubesCloudlet(int id, long length, int pesNumber, long fileSize, long outputSize,
                           UtilizationModel cpuModel, UtilizationModel ramModel, UtilizationModel bwModel,
                           int ramRequest) {
         this(id, length, pesNumber, fileSize, outputSize, cpuModel, ramModel, bwModel,
-             ramRequest, Collections.emptyMap(), null, null, true, true);
+             ramRequest, Collections.emptyMap(), null, null, true, true, null);
     }
 
     /** Affinity constructor — both rules default to hard. */
@@ -39,7 +40,7 @@ public class CoubesCloudlet extends Cloudlet {
                           int ramRequest, Map<String, String> labels,
                           String affinityGroup, String antiAffinityGroup) {
         this(id, length, pesNumber, fileSize, outputSize, cpuModel, ramModel, bwModel,
-             ramRequest, labels, affinityGroup, antiAffinityGroup, true, true);
+             ramRequest, labels, affinityGroup, antiAffinityGroup, true, true, null);
     }
 
     /** Full constructor — independent hard/soft per rule. */
@@ -48,6 +49,17 @@ public class CoubesCloudlet extends Cloudlet {
                           int ramRequest, Map<String, String> labels,
                           String affinityGroup, String antiAffinityGroup,
                           boolean hardAffinity, boolean hardAntiAffinity) {
+        this(id, length, pesNumber, fileSize, outputSize, cpuModel, ramModel, bwModel,
+             ramRequest, labels, affinityGroup, antiAffinityGroup, hardAffinity, hardAntiAffinity, null);
+    }
+
+    /** Full constructor with gang support. */
+    public CoubesCloudlet(int id, long length, int pesNumber, long fileSize, long outputSize,
+                          UtilizationModel cpuModel, UtilizationModel ramModel, UtilizationModel bwModel,
+                          int ramRequest, Map<String, String> labels,
+                          String affinityGroup, String antiAffinityGroup,
+                          boolean hardAffinity, boolean hardAntiAffinity,
+                          String gangId) {
         super(id, length, pesNumber, fileSize, outputSize, cpuModel, ramModel, bwModel);
         this.ramRequest = ramRequest;
         this.labels = labels != null ? labels : Collections.emptyMap();
@@ -55,6 +67,7 @@ public class CoubesCloudlet extends Cloudlet {
         this.antiAffinityGroup = antiAffinityGroup;
         this.hardAffinity = hardAffinity;
         this.hardAntiAffinity = hardAntiAffinity;
+        this.gangId = gangId;
     }
 
     public int getRamRequest() { return ramRequest; }
@@ -63,4 +76,5 @@ public class CoubesCloudlet extends Cloudlet {
     public String getAntiAffinityGroup() { return antiAffinityGroup; }
     public boolean isHardAffinity() { return hardAffinity; }
     public boolean isHardAntiAffinity() { return hardAntiAffinity; }
+    public String getGangId() { return gangId; }
 }
