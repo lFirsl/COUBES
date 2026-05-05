@@ -105,7 +105,7 @@ public class Gang_Mixed_Test {
                     "    ", String.format("%.1f", cl.getFinishTime()));
         }
 
-        metrics.printSummary(lastClock);
+        metrics.printSummary(lastClock, broker.tpOverall());
 
         long indepCompleted = results.stream()
                 .filter(c -> !(c instanceof CoubesCloudlet cc && cc.getGangId() != null))

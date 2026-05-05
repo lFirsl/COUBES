@@ -19,6 +19,9 @@ public class BatchDecisionResponse {
     
     @JsonProperty("unschedulable")
     private List<PodFailure> unschedulable;
+
+    @JsonProperty("decisionDurationMs")
+    private long decisionDurationMs;
     
     public List<PodAssignment> getScheduled() {
         return scheduled;
@@ -34,6 +37,10 @@ public class BatchDecisionResponse {
     
     public void setUnschedulable(List<PodFailure> unschedulable) {
         this.unschedulable = unschedulable;
+    }
+
+    public long getDecisionDurationMs() {
+        return decisionDurationMs;
     }
     
     /**

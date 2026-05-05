@@ -191,7 +191,7 @@ public class Overload_Comparison_Test {
         }
 
         Log.printLine("");
-        metrics.printSummary(lastClock);
+        metrics.printSummary(lastClock, broker.tpOverall());
         SimulationMetrics.printPerQueueMetrics(results, broker.getCloudletArrivalTimes());
 
         try { broker.sendResetRequestToControlPlane(); } catch (Exception ignored) {}

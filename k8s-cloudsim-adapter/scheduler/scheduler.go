@@ -25,22 +25,24 @@ type PodFailure struct {
 
 // BatchDecision contains the complete set of scheduling decisions for a round.
 type BatchDecision struct {
-	Scheduled     []PodAssignment `json:"scheduled"`
-	Unschedulable []PodFailure    `json:"unschedulable"`
+	Scheduled         []PodAssignment `json:"scheduled"`
+	Unschedulable     []PodFailure    `json:"unschedulable"`
+	DecisionDurationMs int64          `json:"decisionDurationMs,omitempty"`
 }
 
 // SchedulingRound manages synchronisation between the simulation-facing
 // /schedule-pods handler and the kube-scheduler's binding callbacks.
 type SchedulingRound struct {
-	mu           sync.Mutex
-	pending      int
-	decisions    chan BatchDecision
-	assignments  []PodAssignment
-	failures     []PodFailure
-	timeout      time.Duration
-	active       bool
-	startTime    time.Time // when the round began
-	lateBindings map[int]PodAssignment // bindings that arrived after the round closed
+	mu              sync.Mutex
+	pending         int
+	decisions       chan BatchDecision
+	assignments     []PodAssignment
+	failures        []PodFailure
+	timeout         time.Duration
+	active          bool
+	startTime       time.Time // when the round began
+	lastDecisionAt  time.Time // when the last binding/failure arrived
+	lateBindings    map[int]PodAssignment // bindings that arrived after the round closed
 }
 
 func NewSchedulingRound(timeout time.Duration) *SchedulingRound {
@@ -98,6 +100,7 @@ func (r *SchedulingRound) RecordBinding(podName, nodeName string) {
 		BindingTimestamp: time.Now(),
 	})
 
+	r.lastDecisionAt = time.Now()
 	r.pending--
 	log.Printf("Binding: pod=%s -> node=%s (%d/%d resolved)",
 		podName, nodeName, len(r.assignments)+len(r.failures), len(r.assignments)+len(r.failures)+r.pending)
@@ -105,7 +108,11 @@ func (r *SchedulingRound) RecordBinding(podName, nodeName string) {
 	if r.pending == 0 {
 		log.Printf("Round complete: %d scheduled, %d failed in %v",
 			len(r.assignments), len(r.failures), time.Since(r.startTime))
-		r.decisions <- BatchDecision{Scheduled: r.assignments, Unschedulable: r.failures}
+		r.decisions <- BatchDecision{
+			Scheduled:          r.assignments,
+			Unschedulable:      r.failures,
+			DecisionDurationMs: r.lastDecisionAt.Sub(r.startTime).Milliseconds(),
+		}
 		r.active = false
 	}
 }
@@ -122,6 +129,7 @@ func (r *SchedulingRound) RecordFailure(podName, reason string) {
 
 	r.failures = append(r.failures, PodFailure{PodID: podID, Reason: reason})
 
+	r.lastDecisionAt = time.Now()
 	r.pending--
 	log.Printf("Failure: pod=%s reason=%q (%d/%d resolved)",
 		podName, reason, len(r.assignments)+len(r.failures), len(r.assignments)+len(r.failures)+r.pending)
@@ -129,7 +137,11 @@ func (r *SchedulingRound) RecordFailure(podName, reason string) {
 	if r.pending == 0 {
 		log.Printf("Round complete: %d scheduled, %d failed in %v",
 			len(r.assignments), len(r.failures), time.Since(r.startTime))
-		r.decisions <- BatchDecision{Scheduled: r.assignments, Unschedulable: r.failures}
+		r.decisions <- BatchDecision{
+			Scheduled:          r.assignments,
+			Unschedulable:      r.failures,
+			DecisionDurationMs: r.lastDecisionAt.Sub(r.startTime).Milliseconds(),
+		}
 		r.active = false
 	}
 }
@@ -138,7 +150,7 @@ func (r *SchedulingRound) Wait(ctx context.Context) (BatchDecision, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, r.timeout)
 	defer cancel()
 
-	stallCheck := time.NewTicker(5 * time.Second)
+	stallCheck := time.NewTicker(2 * time.Second)
 	defer stallCheck.Stop()
 	lastResolved := 0
 
@@ -152,19 +164,23 @@ func (r *SchedulingRound) Wait(ctx context.Context) (BatchDecision, error) {
 			pending := r.pending
 			r.mu.Unlock()
 			if resolved > 0 && resolved == lastResolved {
-				// No progress for 5s after receiving at least one decision — return partial result
+				// No progress for 2s after receiving at least one decision — return partial result
 				r.mu.Lock()
-				partial := BatchDecision{Scheduled: r.assignments, Unschedulable: r.failures}
+				partial := BatchDecision{
+					Scheduled:          r.assignments,
+					Unschedulable:      r.failures,
+					DecisionDurationMs: r.lastDecisionAt.Sub(r.startTime).Milliseconds(),
+				}
 				r.active = false
 				r.mu.Unlock()
-				log.Printf("STALL EXIT: no progress for 5s — %d scheduled, %d failed, %d still pending (returning partial)",
+				log.Printf("STALL EXIT: no progress for 2s — %d scheduled, %d failed, %d still pending (returning partial)",
 					len(partial.Scheduled), len(partial.Unschedulable), pending)
 				return partial, fmt.Errorf("scheduling stall: %d/%d pods resolved, %d pending",
 					len(partial.Scheduled)+len(partial.Unschedulable),
 					len(partial.Scheduled)+len(partial.Unschedulable)+pending, pending)
 			}
 			if resolved == lastResolved && resolved == 0 {
-				log.Printf("STALL: no decisions received for 5s — %d still pending", pending)
+				log.Printf("STALL: no decisions received for 2s — %d still pending", pending)
 			}
 			lastResolved = resolved
 		case <-timeoutCtx.Done():

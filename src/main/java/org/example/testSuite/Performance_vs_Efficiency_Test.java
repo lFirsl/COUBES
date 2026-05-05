@@ -169,7 +169,7 @@ public class Performance_vs_Efficiency_Test {
 				throw new RuntimeException("Expected 2 cloudlets to complete but only received " + newList1.size());
 			}
 			printCloudletList(newList1);
-			metrics.printSummary(lastClock);
+			metrics.printSummary(lastClock, broker.tpOverall());
 
 			// ── Compute SDS ──
 			double actualEnergy = datacenter0.getPower() / 3600.0;

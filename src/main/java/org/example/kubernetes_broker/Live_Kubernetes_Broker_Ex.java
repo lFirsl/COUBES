@@ -312,19 +312,23 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             final long t1 = System.nanoTime();
 
-            // Record throughput metrics (even on non-200)
-            tpRecord(podsInBatch, t1 - t0);
-
             if (response.statusCode() == 200) {
+                BatchDecisionResponse batchDecision = mapper.readValue(response.body(), BatchDecisionResponse.class);
+
+                // Use decision duration (time to last actual decision) for throughput,
+                // falling back to full HTTP duration if not available
+                long durationNanos = batchDecision.getDecisionDurationMs() > 0
+                        ? batchDecision.getDecisionDurationMs() * 1_000_000
+                        : (t1 - t0);
+                tpRecord(podsInBatch, durationNanos);
+
                 Log.printlnConcat(getName(), ": [round=" + roundCounter + "] Batch scheduled. "
-                        , "inst=", String.format("%.2f", (podsInBatch / ((t1 - t0) / 1e9)))
+                        , "inst=", String.format("%.2f", (podsInBatch / (durationNanos / 1e9)))
                         , " pods/s; ewma=", String.format("%.2f", tpEwma())
                         , "; window(", TP_WINDOW, ")=", String.format("%.2f", tpWindowAvg())
                         , "; overall=", String.format("%.2f", tpOverall())
                         , " [batches=", tpBatchCount(), "]"
                 );
-                
-                BatchDecisionResponse batchDecision = mapper.readValue(response.body(), BatchDecisionResponse.class);
                 
                 // Record batch decision for performance metrics
                 if (performanceMetrics != null) {
