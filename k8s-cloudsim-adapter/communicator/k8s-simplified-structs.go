@@ -38,6 +38,7 @@ type CsPod struct {
 	AntiAffinityGroup  string            `json:"antiAffinityGroup,omitempty"`
 	HardAffinity       *bool             `json:"hardAffinity,omitempty"`     // nil = true (hard)
 	HardAntiAffinity   *bool             `json:"hardAntiAffinity,omitempty"` // nil = true (hard)
+	Queue              string            `json:"queue,omitempty"`            // Volcano queue name (default: "default")
 }
 
 // --- Batch Protocol Structs ---

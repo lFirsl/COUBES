@@ -21,6 +21,8 @@
 set -euo pipefail
 
 ADAPTER_BIN="k8s-cloudsim-adapter/adapter-linux"
+# Log paths are set after parsing args (see below) to include test name + timestamp.
+# These are defaults that get overwritten.
 ADAPTER_LOG="debug/adapter.log"
 SIM_LOG="debug/sim.log"
 SCHEDULER_LOG="debug/scheduler.log"
@@ -28,7 +30,8 @@ mkdir -p debug
 SCHEDULER_DIR="second-scheduler"
 SCHEDULER_CONTAINER="my-scheduler"
 ADAPTER_URL="http://localhost:8080"
-HANG_TIMEOUT=90   # seconds of no log output before declaring a hang (must exceed scheduling round timeout of 60s)
+HANG_TIMEOUT=45   # seconds of no log output before declaring a hang
+                  # Overridden to 90s for Volcano (must exceed 60s scheduling round timeout)
 RECOVERY_DONE=0
 TEST_MODE=0
 NO_COMPILE=0
@@ -223,7 +226,7 @@ show_results() {
     fi
 
     echo ""
-    echo "Logs written to: debug/sim.log, debug/adapter.log$([ $TEST_MODE -eq 0 ] && echo ', debug/scheduler.log')"
+    echo "Logs written to: $SIM_LOG, $ADAPTER_LOG$([ $TEST_MODE -eq 0 ] && echo ", $SCHEDULER_LOG")"
 }
 
 # ── main ──────────────────────────────────────────────────────────────────────
@@ -253,6 +256,7 @@ while [[ $# -gt 0 && "$1" == --* ]]; do
             SCHEDULER_DIR="volcano-scheduler"
             SCHEDULER_CONTAINER="volcano-scheduler"
             ADAPTER_FLAGS="--scheduler=volcano"
+            HANG_TIMEOUT=90  # Volcano's scheduling round timeout is 60s
             shift
             ;;
         --help)
@@ -266,6 +270,17 @@ done
 
 [[ $# -lt 1 ]] && die "Missing test class. Use --help for usage."
 TEST_CLASS="$1"
+
+# Set log paths: debug/<ShortTestName>_<timestamp>_{sim,adapter,scheduler}.log
+# Also symlink debug/{sim,adapter,scheduler}.log → latest run for convenience.
+LOG_SHORT="${TEST_CLASS##*.}"
+LOG_TS="$(date +%Y%m%d_%H%M%S)"
+ADAPTER_LOG="debug/${LOG_SHORT}_${LOG_TS}_adapter.log"
+SIM_LOG="debug/${LOG_SHORT}_${LOG_TS}_sim.log"
+SCHEDULER_LOG="debug/${LOG_SHORT}_${LOG_TS}_scheduler.log"
+ln -sf "${LOG_SHORT}_${LOG_TS}_adapter.log" debug/adapter.log
+ln -sf "${LOG_SHORT}_${LOG_TS}_sim.log" debug/sim.log
+ln -sf "${LOG_SHORT}_${LOG_TS}_scheduler.log" debug/scheduler.log
 
 cleanup() {
     echo "→ Cleaning up adapter..."

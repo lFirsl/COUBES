@@ -1,16 +1,20 @@
 package org.example.metrics;
 
+import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.Datacenter;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.power.PowerDatacenter;
+import org.example.kubernetes_broker.Live_Kubernetes_Broker_Ex;
 import org.example.kubernetes_broker.PowerDatacenterCustom;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SimulationMetrics {
     private Instant wallStart;
@@ -90,5 +94,48 @@ public class SimulationMetrics {
     public void printSummary(Double simTime, double throughput, int actualRounds, int expectedMinRounds) {
         printSummary(simTime, throughput);
         System.out.println("Scheduling rounds: " + actualRounds + " (minimum expected: " + expectedMinRounds + ")");
+    }
+
+    /**
+     * Prints per-queue turnaround metrics for completed cloudlets.
+     * Groups cloudlets by classType (mapped to queue names via {@link Live_Kubernetes_Broker_Ex#QUEUE_NAMES}).
+     * For each queue, reports:
+     *   - Number of cloudlets
+     *   - Queue turnaround: (last finish) - (earliest submission)
+     *   - Average per-cloudlet turnaround: mean of (finish - submission) per cloudlet
+     *   - Average wait time: mean of (execStart - submission) per cloudlet
+     */
+    public static void printPerQueueMetrics(List<Cloudlet> completedCloudlets) {
+        Map<Integer, List<Cloudlet>> byQueue = completedCloudlets.stream()
+                .collect(Collectors.groupingBy(Cloudlet::getClassType));
+
+        System.out.println("----- Per-Queue Metrics -----");
+        for (var entry : byQueue.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey()).toList()) {
+            int classType = entry.getKey();
+            List<Cloudlet> cloudlets = entry.getValue();
+            String queueName = Live_Kubernetes_Broker_Ex.QUEUE_NAMES
+                    .getOrDefault(classType, "default (classType=" + classType + ")");
+
+            double earliestSubmission = cloudlets.stream()
+                    .mapToDouble(Cloudlet::getSubmissionTime).min().orElse(0);
+            double latestFinish = cloudlets.stream()
+                    .mapToDouble(Cloudlet::getExecFinishTime).max().orElse(0);
+            double queueTurnaround = latestFinish - earliestSubmission;
+
+            double avgTurnaround = cloudlets.stream()
+                    .mapToDouble(c -> c.getExecFinishTime() - c.getSubmissionTime())
+                    .average().orElse(0);
+            double avgWait = cloudlets.stream()
+                    .mapToDouble(c -> c.getExecStartTime() - c.getSubmissionTime())
+                    .average().orElse(0);
+
+            System.out.printf("  Queue '%s': %d cloudlets%n", queueName, cloudlets.size());
+            System.out.printf("    Queue turnaround:       %.1fs (submitted=%.1f, last finish=%.1f)%n",
+                    queueTurnaround, earliestSubmission, latestFinish);
+            System.out.printf("    Avg cloudlet turnaround: %.1fs%n", avgTurnaround);
+            System.out.printf("    Avg wait time:           %.1fs%n", avgWait);
+        }
+        System.out.println("-----------------------------");
     }
 }

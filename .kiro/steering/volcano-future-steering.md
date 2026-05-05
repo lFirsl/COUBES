@@ -436,3 +436,71 @@ endpoints if upgrading significantly.
 `minMember` to the number of pods in the gang. Note that gang scheduling requires
 all pods in a group to be schedulable simultaneously — this interacts with the
 fragmentation detection logic.
+
+---
+
+## Volcano Feature Audit — What COUBES Supports vs. What Volcano Offers
+
+**Date:** 2026-05-04
+
+Volcano positions itself as a "cloud native batch scheduling platform for high-performance
+workloads" (CNCF's first and only official container batch scheduling project). Gang
+scheduling is one feature among many — not the sole headline. The official feature list
+from volcano.sh is broader than what COUBES currently exercises.
+
+### Feature-by-Feature Status
+
+| Volcano Feature | COUBES Status | What Would Be Needed |
+|---|---|---|
+| **Unified Scheduling** (native K8s workloads + batch frameworks) | ✅ Partially supported | We schedule standard pods. No VolcanoJob CRD support, but not needed — pods are the unit of work in COUBES. |
+| **Binpack Scheduling** (`nodeorder` with `mostrequested.weight`) | ✅ Supported | Already configured and working. This is what COUBES currently uses Volcano for. |
+| **Spread Scheduling** (`nodeorder` with `leastrequested.weight`) | ✅ Supported | Just change weights in `volcano-scheduler.conf`. |
+| **Gang Scheduling** (all-or-nothing per PodGroup) | ❌ Not exercised | Every pod has its own PodGroup with `minMember: 1`, so gang semantics never trigger. Requires: (1) grouping multiple cloudlets into one PodGroup with `minMember > 1`, (2) broker logic to hold cloudlets until all gang members are bound, (3) `gang` plugin added to config. |
+| **Queue Resource Management** (multi-queue with quotas/weights) | ❌ Not exercised | All pods go to the `default` queue. Requires: (1) creating additional queues with weight/capacity specs via the fake API, (2) assigning cloudlets to different queues, (3) enabling the `proportion` plugin. |
+| **Hierarchical Queues** (parent-child queue trees) | ❌ Not exercised | Extension of queue management. Requires queue tree creation in the fake API + `proportion` plugin. |
+| **DRF (Dominant Resource Fairness)** | ❌ Not exercised | Requires: (1) multiple queues or jobs competing for resources, (2) `drf` plugin enabled. Without multi-queue, DRF has nothing to arbitrate. |
+| **Proportion/Capacity Scheduling** (queue-based resource sharing/preemption) | ❌ Not exercised | Requires: (1) multiple queues with `weight` or `capacity` fields, (2) `proportion` plugin enabled, (3) workloads assigned to different queues. |
+| **Priority Scheduling** (inter-job priority ordering) | ⚠️ Partially supported | The `priority` plugin is enabled in config, but all pods have the same default priority. Requires: (1) PriorityClass objects in the fake API (currently returns empty list), (2) pods with different `priorityClassName` values. |
+| **Preemption** (evicting lower-priority pods for higher-priority ones) | ❌ Not supported | Requires priority differentiation + preemption logic. The fake API server doesn't handle pod eviction/deletion initiated by the scheduler. |
+| **Network Topology-aware Scheduling** (HyperNode) | ❌ Stubbed out | Returns empty HyperNode list. COUBES doesn't model network topology between nodes. Would require: (1) HyperNode objects describing node topology, (2) CloudSim modelling of network bandwidth/latency. |
+| **NUMA-aware Scheduling** | ❌ Stubbed out | Returns empty NumaTopology list. COUBES doesn't model NUMA architecture. Would require: (1) NumaTopology objects per node, (2) CloudSim modelling of NUMA memory access patterns. |
+| **GPU/NPU Scheduling** (heterogeneous devices, MIG, vGPU) | ❌ Not supported | COUBES models CPU (PEs) only. Would require: (1) extended resource types on nodes (e.g., `nvidia.com/gpu`), (2) pods requesting GPU resources, (3) CloudSim modelling of GPU workloads. |
+| **Task-topology Scheduling** (co-locate communicating tasks) | ❌ Not supported | Requires inter-task communication modelling, which CloudSim doesn't have. |
+| **SLA Scheduling** (service quality guarantees) | ❌ Not supported | Requires SLA definitions and deadline-aware scheduling. Not modelled in COUBES. |
+| **Online-Offline Colocation** (mixed workload types sharing a cluster) | ❌ Not supported | Requires workload type differentiation and QoS enforcement. |
+| **Multi-cluster Scheduling** (volcano-global) | ❌ Not applicable | COUBES simulates a single cluster. |
+| **Load-aware Descheduling** | ❌ Not applicable | Requires the Volcano descheduler component, not just the scheduler. |
+| **Overcommit** (allow queues to use more than their quota) | ❌ Not exercised | Requires: (1) `overcommit` plugin enabled, (2) multiple queues with quotas. |
+| **Backfill** (schedule small jobs into gaps) | ✅ Enabled | The `backfill` action is in the config. However, with single-pod PodGroups, backfill behaves identically to regular allocation. It becomes meaningful with gang scheduling (backfill can place small jobs while large gangs wait). |
+
+### Summary
+
+**Currently exercised:** 3 features (binpack, spread, backfill — all basic node scoring)
+**Partially supported but not exercised:** 2 features (unified scheduling, priority)
+**Not exercised but feasible to add:** 5 features (gang, queue management, DRF, proportion, overcommit)
+**Not feasible without CloudSim extensions:** 6 features (topology, NUMA, GPU, task-topology, SLA, colocation)
+**Not applicable:** 2 features (multi-cluster, descheduling)
+
+### Which Features Would Differentiate Volcano from kube-scheduler in COUBES?
+
+The features that would produce measurably different scheduling decisions from
+kube-scheduler MostAllocated, ranked by implementation feasibility:
+
+1. **Queue Resource Management + Proportion plugin** (easiest) — Create 2-3 queues
+   with different weights, assign cloudlet batches to different queues. Volcano
+   allocates resources proportionally; kube-scheduler has no queue concept at all.
+   Requires: fake API queue creation with weights, cloudlet-to-queue mapping in broker.
+
+2. **Gang Scheduling** (moderate) — Group related cloudlets into PodGroups with
+   `minMember > 1`. Volcano places all-or-nothing; kube-scheduler places greedily.
+   Requires: cloudlet grouping in broker, hold-until-complete logic, `gang` plugin.
+
+3. **DRF Fairness** (moderate, depends on #1) — With multiple queues competing for
+   multi-dimensional resources (CPU + memory), DRF ensures no queue dominates.
+   kube-scheduler has no fairness concept. Requires: queue management + memory
+   modelling on pods.
+
+4. **Priority + Preemption** (harder) — Different priority classes with preemption.
+   Volcano can evict low-priority pods to make room for high-priority ones.
+   Requires: PriorityClass objects, pod eviction handling in fake API, broker
+   handling of preempted cloudlets.

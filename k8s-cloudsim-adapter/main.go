@@ -81,6 +81,9 @@ func main() {
 		router.HandleFunc("/api/v1/namespaces/default/pods/{name}/status", func(w http.ResponseWriter, r *http.Request) {
 			fakeAPI.HandlePodStatusPatch(w, r, round)
 		}).Methods("PATCH")
+		router.HandleFunc("/api/v1/namespaces/default/pods/{name}/status", func(w http.ResponseWriter, r *http.Request) {
+			fakeAPI.HandlePodStatusPatch(w, r, round)
+		}).Methods("PUT")
 		router.HandleFunc("/api/v1/namespaces", fakeAPI.HandleListNamespaces).Methods("GET")
 
 		// Stub endpoints for resources queried by kube-scheduler

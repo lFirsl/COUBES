@@ -179,7 +179,13 @@ func (c *Communicator) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 		pod := BuildPod(csPod, c.schedulerName)
 		c.store.CreatePod(pod)
 		if c.schedulerName == "volcano" {
-			c.store.CreatePodGroup("default", pod.Name, buildPodGroup(pod.Name, "default"))
+			queue := csPod.Queue
+			if queue == "" {
+				queue = "default"
+			}
+			// Create the queue on demand if it doesn't exist yet
+			c.ensureVolcanoQueue(queue)
+			c.store.CreatePodGroup("default", pod.Name, buildPodGroup(pod.Name, "default", queue))
 		}
 		c.mu.Lock()
 		podCopy := csPod
@@ -301,7 +307,12 @@ func (c *Communicator) HandleSchedulePods(w http.ResponseWriter, r *http.Request
 		pod := BuildPod(csPod, c.schedulerName)
 		c.store.CreatePod(pod)
 		if c.schedulerName == "volcano" {
-			c.store.CreatePodGroup("default", pod.Name, buildPodGroup(pod.Name, "default"))
+			queue := csPod.Queue
+			if queue == "" {
+				queue = "default"
+			}
+			c.ensureVolcanoQueue(queue)
+			c.store.CreatePodGroup("default", pod.Name, buildPodGroup(pod.Name, "default", queue))
 		}
 		c.mu.Lock()
 		podCopy := csPod
@@ -432,6 +443,12 @@ func (c *Communicator) HandleReset(w http.ResponseWriter, r *http.Request) {
 	c.pods = make(map[int]*CsPod)
 	c.mu.Unlock()
 
+	// Pre-create weighted Volcano queues so the proportion plugin can arbitrate.
+	// Volcano creates "root" and "default" on its own; additional queues are
+	// created on demand when pods reference them (see HandleSchedule step 4).
+	// No queues are pre-created here to avoid starving the default queue via
+	// the proportion plugin when tests don't use multi-queue.
+
 	logJSON(map[string]interface{}{
 		"action": "HandleReset", "roundId": rid, "result": "ok",
 	})
@@ -474,7 +491,11 @@ func (c *Communicator) HandlePodStatus(w http.ResponseWriter, r *http.Request) {
 
 // buildPodGroup constructs a minimal Volcano PodGroup raw map for a single pod.
 // minAvailable=1 means Volcano will schedule the pod as soon as one node fits it.
-func buildPodGroup(name, namespace string) map[string]interface{} {
+// The queue parameter determines which Volcano queue this pod belongs to.
+func buildPodGroup(name, namespace, queue string) map[string]interface{} {
+	if queue == "" {
+		queue = "default"
+	}
 	return map[string]interface{}{
 		"apiVersion": "scheduling.volcano.sh/v1beta1",
 		"kind":       "PodGroup",
@@ -484,12 +505,54 @@ func buildPodGroup(name, namespace string) map[string]interface{} {
 		},
 		"spec": map[string]interface{}{
 			"minMember": 1,
-			"queue":     "default",
+			"queue":     queue,
 		},
 		"status": map[string]interface{}{
 			"phase": "Pending",
 		},
 	}
+}
+
+// volcanoQueueWeights maps queue names to their proportion weights.
+// Volcano creates "default" with weight 1 on its own. Additional queues
+// are created on demand when pods reference them.
+var volcanoQueueWeights = map[string]int{
+	"high-priority": 3,
+	"batch":         1,
+}
+
+// ensureVolcanoQueue creates a Volcano queue if it doesn't already exist in the store.
+// The "default" queue is created by Volcano itself, so we skip it here.
+func (c *Communicator) ensureVolcanoQueue(name string) {
+	if name == "default" {
+		return // Volcano creates this on startup
+	}
+	if _, exists := c.store.GetQueue(name); exists {
+		return // already created
+	}
+	weight, ok := volcanoQueueWeights[name]
+	if !ok {
+		weight = 1
+	}
+	raw := map[string]interface{}{
+		"apiVersion": "scheduling.volcano.sh/v1beta1",
+		"kind":       "Queue",
+		"metadata": map[string]interface{}{
+			"name": name,
+		},
+		"spec": map[string]interface{}{
+			"weight": weight,
+		},
+		"status": map[string]interface{}{
+			"state": "Open",
+		},
+	}
+	c.store.CreateQueue(name, raw)
+	logJSON(map[string]interface{}{
+		"action": "ensureVolcanoQueue",
+		"queue":  name,
+		"weight": weight,
+	})
 }
 
 // scheduleTestMode runs the built-in round-robin scheduler.

@@ -19,10 +19,21 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
 
     private static final String CONTROL_PLANE_URL = "http://localhost:8080";
+
+    /**
+     * Maps Cloudlet classType values to Volcano queue names.
+     * classType 0 (default) → no queue field sent (uses "default").
+     * Set classType on cloudlets to route them to different queues.
+     */
+    public static final Map<Integer, String> QUEUE_NAMES = Map.of(
+            1, "high-priority",
+            2, "batch"
+    );
     private final HttpClient httpClient;
     private int guestIndex = 0;
     private int roundCounter = 0;
@@ -557,6 +568,11 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
                     podJson.put("hardAntiAffinity", false);
                 }
             }
+        }
+        // Volcano queue — classType maps to queue name
+        String queue = QUEUE_NAMES.get(cloudlet.getClassType());
+        if (queue != null) {
+            podJson.put("queue", queue);
         }
         return podJson;
     }
