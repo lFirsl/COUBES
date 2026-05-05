@@ -10,6 +10,7 @@
 #   --no-filter        Show full simulation output instead of filtered summary
 #   --scheduler=NAME   Scheduler profile to use (default: default-scheduler, e.g. my-scheduler)
 #   --volcano          Use the Volcano scheduler (sets --scheduler=volcano and uses volcano-scheduler/)
+#   --keep-infra       Don't start/stop adapter or scheduler (used by run_all_tests.sh)
 #   --help             Show this help message
 #
 # Examples:
@@ -36,6 +37,7 @@ RECOVERY_DONE=0
 TEST_MODE=0
 NO_COMPILE=0
 NO_FILTER=0
+KEEP_INFRA=0
 ADAPTER_FLAGS="--scheduler=default-scheduler"
 
 # Output filter: shows only the important lines from simulation output
@@ -94,12 +96,22 @@ wait_for_scheduler() {
 
 kill_stale_processes() {
     echo "→ Killing stale processes..."
-    pkill -9 -x adapter-linux 2>/dev/null || true
     pkill -9 -f "exec:java.*org.example" 2>/dev/null || true
-    sleep 1
+    # Only kill adapter if it's unhealthy (preserves scheduler watch connections)
+    if adapter_running && ! adapter_healthy; then
+        pkill -9 -x adapter-linux 2>/dev/null || true
+        sleep 1
+    fi
 }
 
 start_adapter() {
+    if adapter_running && adapter_healthy; then
+        echo "  Adapter already running."
+        return 0
+    fi
+    # Kill any unhealthy adapter
+    pkill -9 -x adapter-linux 2>/dev/null || true
+    sleep 1
     echo "→ Starting adapter..."
     setsid "$ADAPTER_BIN" $ADAPTER_FLAGS </dev/null >"$ADAPTER_LOG" 2>&1 &
     local deadline=$((SECONDS + 10))
@@ -118,6 +130,11 @@ start_scheduler() {
 
 restart_scheduler_and_reset() {
     echo "→ Restarting scheduler and resetting adapter..."
+    # Kill adapter so scheduler gets fresh watch connections
+    pkill -9 -x adapter-linux 2>/dev/null || true
+    sleep 1
+    setsid "$ADAPTER_BIN" $ADAPTER_FLAGS </dev/null >"$ADAPTER_LOG" 2>&1 &
+    sleep 2
     (cd "$SCHEDULER_DIR" && docker compose down && docker compose up -d 2>&1) | tail -2
     wait_for_scheduler || die "Scheduler not ready after restart. Logs: $(docker logs "$SCHEDULER_CONTAINER" --since 40s 2>&1 | tail -5)"
     adapter_healthy || die "Adapter not responding after scheduler restart."
@@ -147,13 +164,22 @@ build_all() {
 # ── ensure infrastructure ─────────────────────────────────────────────────────
 
 ensure_infra() {
+    if [[ $KEEP_INFRA -eq 1 ]]; then
+        # Assume infra is already running (managed by caller, e.g. run_all_tests.sh)
+        adapter_healthy || die "Adapter not healthy (--keep-infra but adapter not responding)."
+        echo "→ Adapter reset: $(curl -s -X DELETE $ADAPTER_URL/reset)"
+        return 0
+    fi
+
     start_adapter
 
     # Scheduler (skip in test mode)
     if [[ $TEST_MODE -eq 0 ]]; then
-        # Always restart the scheduler — its watch connections are tied to the
-        # adapter instance and don't recover when the adapter is restarted.
-        start_scheduler
+        if scheduler_running && scheduler_ready && adapter_healthy; then
+            echo "  Scheduler already running and ready."
+        else
+            start_scheduler
+        fi
     else
         echo "→ Test mode: skipping scheduler."
     fi
@@ -248,6 +274,10 @@ while [[ $# -gt 0 && "$1" == --* ]]; do
             NO_FILTER=1
             shift
             ;;
+        --keep-infra)
+            KEEP_INFRA=1
+            shift
+            ;;
         --scheduler=*)
             ADAPTER_FLAGS="--scheduler=${1#--scheduler=}"
             shift
@@ -283,13 +313,17 @@ ln -sf "${LOG_SHORT}_${LOG_TS}_sim.log" debug/sim.log
 ln -sf "${LOG_SHORT}_${LOG_TS}_scheduler.log" debug/scheduler.log
 
 cleanup() {
-    echo "→ Cleaning up adapter..."
-    pkill -9 -x adapter-linux 2>/dev/null || true
+    if [[ $KEEP_INFRA -eq 0 ]]; then
+        echo "→ Cleaning up adapter..."
+        pkill -9 -x adapter-linux 2>/dev/null || true
+    fi
 }
 trap cleanup EXIT
 
 check_prereqs
-kill_stale_processes
+if [[ $KEEP_INFRA -eq 0 ]]; then
+    kill_stale_processes
+fi
 build_all
 ensure_infra
 

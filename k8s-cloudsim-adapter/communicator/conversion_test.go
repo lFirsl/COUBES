@@ -202,7 +202,11 @@ func TestProperty10_SimulationSnapshotSerialisationRoundTrip(t *testing.T) {
 
 		// Deep equality check for nodes
 		for i := range original.Nodes {
-			if decoded.Nodes[i] != original.Nodes[i] {
+			if decoded.Nodes[i].ID != original.Nodes[i].ID ||
+				decoded.Nodes[i].Name != original.Nodes[i].Name ||
+				decoded.Nodes[i].Pes != original.Nodes[i].Pes ||
+				decoded.Nodes[i].MIPSAval != original.Nodes[i].MIPSAval ||
+				decoded.Nodes[i].RAMAval != original.Nodes[i].RAMAval {
 				t.Fatalf("Node %d mismatch: got %+v, want %+v", i, decoded.Nodes[i], original.Nodes[i])
 			}
 		}

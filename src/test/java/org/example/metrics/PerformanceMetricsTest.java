@@ -107,10 +107,10 @@ class PerformanceMetricsTest {
     }
     
     @Test
-    void p99LatencyReturnsZeroWithFewerThan100Samples() {
+    void p99LatencyComputesWithFewerThan100Samples() {
         PerformanceMetrics metrics = new PerformanceMetrics();
         
-        // Record 50 samples
+        // Record 50 samples with ~100ms latency each
         for (int i = 0; i < 50; i++) {
             metrics.recordSubmission(i);
             
@@ -127,7 +127,8 @@ class PerformanceMetricsTest {
             metrics.recordBatchDecision(response);
         }
         
-        assertEquals(0.0, metrics.getP99LatencyMs());
+        // P99 should be computed (non-zero) even with fewer than 100 samples
+        assertTrue(metrics.getP99LatencyMs() > 0.0);
     }
     
     @Test

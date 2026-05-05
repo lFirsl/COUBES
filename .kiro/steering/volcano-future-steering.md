@@ -630,4 +630,30 @@ Previous runs are preserved.
 ### run_all_tests.sh
 
 Rewritten to show inline progress (one line per test), timing, all 11 tests, and
-error context on failure. No output buffering.
+error context on failure. Starts infrastructure once and reuses across tests via
+`--keep-infra`. Restarts adapter + scheduler automatically on test failure.
+Total runtime: **140s** with Volcano (vs 315s when restarting per test).
+
+---
+
+## Test Coverage (2026-05-05)
+
+### Go unit tests (`go test ./...` — all pass)
+
+| File | Tests | What it guards |
+|---|---|---|
+| `fakeapi/volcano_handlers_test.go` | 7 | PUT/PATCH unschedulable, queue CRUD, 404 format |
+| `communicator/volcano_test.go` | 11 | buildPodGroup queue, BuildPod annotations/phase, ensureVolcanoQueue idempotency |
+| `scheduler/scheduler_test.go` | 7 | Round lifecycle, partial result on timeout |
+| `communicator/conversion_test.go` | fixed | Struct comparison with map field |
+
+### Java unit tests (`mvn test` — 27/27 pass)
+
+| File | Tests | What it guards |
+|---|---|---|
+| `QueueMappingTest.java` | 5 | classType→queue name mapping, immutability |
+| `PerformanceMetricsTest.java` | 5 | P99 latency, throughput (1 assertion fixed) |
+
+### Integration tests (via `run_all_tests.sh`)
+
+All 11 test scenarios pass with both kube-scheduler and Volcano.

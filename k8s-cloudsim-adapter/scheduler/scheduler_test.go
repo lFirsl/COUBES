@@ -180,6 +180,37 @@ func TestWait_TimesOutWhenIncomplete(t *testing.T) {
 	}
 }
 
+// Test that Wait returns partial results (bindings + failures) on timeout.
+// This is critical for Volcano: when some pods are bound and others are silently
+// skipped, the partial result must preserve the successful bindings.
+func TestWait_PartialResultPreservedOnTimeout(t *testing.T) {
+	round := NewSchedulingRound(100 * time.Millisecond)
+
+	err := round.Begin(5)
+	if err != nil {
+		t.Fatalf("Begin failed: %v", err)
+	}
+
+	// Record 2 bindings and 1 failure out of 5 expected
+	round.RecordBinding("cspod-1", "csnode-1")
+	round.RecordBinding("cspod-2", "csnode-2")
+	round.RecordFailure("cspod-3", "Unschedulable")
+
+	ctx := context.Background()
+	decision, err := round.Wait(ctx)
+	if err == nil {
+		t.Fatal("Expected timeout error")
+	}
+
+	// The partial result must contain the 2 bindings and 1 failure
+	if len(decision.Scheduled) != 2 {
+		t.Fatalf("Expected 2 scheduled pods in partial result, got %d", len(decision.Scheduled))
+	}
+	if len(decision.Unschedulable) != 1 {
+		t.Fatalf("Expected 1 unschedulable pod in partial result, got %d", len(decision.Unschedulable))
+	}
+}
+
 // Test that Reset cancels an active round
 func TestReset_CancelsActiveRound(t *testing.T) {
 	round := NewSchedulingRound(5 * time.Second)
