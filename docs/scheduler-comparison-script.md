@@ -11,11 +11,24 @@ The kube-scheduler result is the baseline; all Volcano scores are expressed rela
 ## Usage
 
 ```bash
-# Full run (compiles everything)
-bash compare_schedulers.sh
+bash compare_schedulers.sh [--no-compile] <TestClassName>
+```
 
-# Skip compilation (use existing binaries)
-bash compare_schedulers.sh --no-compile
+`<TestClassName>` can be short or fully qualified:
+
+```bash
+# Short name (auto-expanded to org.example.testSuite.*)
+bash compare_schedulers.sh Fragmentation_Test
+
+# Skip compilation on subsequent runs
+bash compare_schedulers.sh --no-compile Fragmentation_Test
+
+# Any other test
+bash compare_schedulers.sh Undercrowding_Test
+bash compare_schedulers.sh Scheduler_Latency_Test
+
+# Fully qualified name also works
+bash compare_schedulers.sh org.example.testSuite.Fragmentation_Test_Large
 ```
 
 Both Docker schedulers must be available. The script delegates to `run_test.sh` for each
