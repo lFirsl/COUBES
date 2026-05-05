@@ -18,17 +18,17 @@ bash compare_schedulers.sh [--no-compile] <TestClassName>
 
 ```bash
 # Short name (auto-expanded to org.example.testSuite.*)
-bash compare_schedulers.sh Fragmentation_Test
+compare_schedulers.sh Fragmentation_Test
 
 # Skip compilation on subsequent runs
-bash compare_schedulers.sh --no-compile Fragmentation_Test
+compare_schedulers.sh --no-compile Fragmentation_Test
 
 # Any other test
-bash compare_schedulers.sh Undercrowding_Test
-bash compare_schedulers.sh Scheduler_Latency_Test
+compare_schedulers.sh Undercrowding_Test
+compare_schedulers.sh Scheduler_Latency_Test
 
 # Fully qualified name also works
-bash compare_schedulers.sh org.example.testSuite.Fragmentation_Test_Large
+compare_schedulers.sh org.example.testSuite.Fragmentation_Test_Large
 ```
 
 Both Docker schedulers must be available. The script delegates to `run_test.sh` for each
@@ -85,6 +85,29 @@ A score of `1.0` means parity. `N/A` means the metric was not available in the l
 4. Copies log to `/tmp/coubes-sim-volcano.log`
 5. Parses both logs with `grep -oP` regex against the `SimulationMetrics.printSummary()` output format
 6. Computes relative scores and writes both CSV files
+
+---
+
+## Running Every Test
+
+Run these one at a time. The first command compiles everything; the rest skip recompilation.
+
+```bash
+compare_schedulers.sh Fragmentation_Test
+compare_schedulers.sh --no-compile Fragmentation_Test_Large
+compare_schedulers.sh --no-compile Fragmentation_Test_5Wave
+compare_schedulers.sh --no-compile Undercrowding_Test
+compare_schedulers.sh --no-compile Performance_vs_Efficiency_Test
+compare_schedulers.sh --no-compile Scheduler_Scalability_Test
+compare_schedulers.sh --no-compile Scheduler_Latency_Test
+compare_schedulers.sh --no-compile MultiPE_Pod_Test
+compare_schedulers.sh --no-compile Heterogeneous_Node_Test
+compare_schedulers.sh --no-compile Rapid_Completion_Test
+compare_schedulers.sh --no-compile Single_Pod_Test
+```
+
+Each run overwrites `scheduler_comparison.csv` and `scheduler_comparison_pretty.csv`,
+so save or rename the files between runs if you want to keep all results.
 
 ---
 
