@@ -1,24 +1,42 @@
 #!/usr/bin/env bash
-# compare_schedulers.sh — Run Fragmentation_Test on kube-scheduler and Volcano,
+# compare_schedulers.sh — Run a test on kube-scheduler and Volcano,
 # then output a CSV with raw values and Volcano scores relative to kube-scheduler baseline.
 #
-# Usage: bash compare_schedulers.sh [--no-compile]
+# Usage: bash compare_schedulers.sh [--no-compile] <TestClassName>
 #
-# Output: scheduler_comparison.csv
+# <TestClassName> can be short (Fragmentation_Test) or fully qualified
+#                 (org.example.testSuite.Fragmentation_Test)
+#
+# Output: scheduler_comparison.csv, scheduler_comparison_pretty.csv
 
 set -euo pipefail
 
-TEST_CLASS="org.example.testSuite.Fragmentation_Test"
-OUTPUT_CSV="scheduler_comparison.csv"
 SIM_LOG="/tmp/coubes-sim.log"
 NO_COMPILE=""
+TEST_SHORT=""
 
 for arg in "$@"; do
     case "$arg" in
         --no-compile) NO_COMPILE="--no-compile" ;;
-        *) echo "Unknown argument: $arg" >&2; exit 1 ;;
+        --*) echo "Unknown flag: $arg" >&2; exit 1 ;;
+        *) TEST_SHORT="$arg" ;;
     esac
 done
+
+if [[ -z "$TEST_SHORT" ]]; then
+    echo "Usage: bash compare_schedulers.sh [--no-compile] <TestClassName>" >&2
+    echo "Example: bash compare_schedulers.sh Fragmentation_Test" >&2
+    exit 1
+fi
+
+# Expand short name to fully qualified if needed
+if [[ "$TEST_SHORT" != *"."* ]]; then
+    TEST_CLASS="org.example.testSuite.${TEST_SHORT}"
+else
+    TEST_CLASS="$TEST_SHORT"
+fi
+
+OUTPUT_CSV="scheduler_comparison.csv"
 
 # ── parse metrics from sim log ────────────────────────────────────────────────
 
