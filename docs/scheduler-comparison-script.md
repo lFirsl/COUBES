@@ -11,7 +11,7 @@ The kube-scheduler result is the baseline; all Volcano scores are expressed rela
 ## Usage
 
 ```bash
-bash compare_schedulers.sh [--no-compile] <TestClassName>
+compare_schedulers.sh [--no-compile] <TestClassName>
 ```
 
 `<TestClassName>` can be short or fully qualified:
@@ -93,17 +93,31 @@ A score of `1.0` means parity. `N/A` means the metric was not available in the l
 Run these one at a time. The first command compiles everything; the rest skip recompilation.
 
 ```bash
-compare_schedulers.sh Fragmentation_Test
-compare_schedulers.sh --no-compile Fragmentation_Test_Large
+compare_schedulers.sh Affinity_Test
+compare_schedulers.sh --no-compile Empty_Wave_Test
+compare_schedulers.sh --no-compile Fragmentation_Test
 compare_schedulers.sh --no-compile Fragmentation_Test_5Wave
-compare_schedulers.sh --no-compile Undercrowding_Test
-compare_schedulers.sh --no-compile Performance_vs_Efficiency_Test
-compare_schedulers.sh --no-compile Scheduler_Scalability_Test
-compare_schedulers.sh --no-compile Scheduler_Latency_Test
-compare_schedulers.sh --no-compile MultiPE_Pod_Test
+compare_schedulers.sh --no-compile Fragmentation_Test_Large
+compare_schedulers.sh --no-compile Gang_Constrained_Test
+compare_schedulers.sh --no-compile Gang_Energy_Test
+compare_schedulers.sh --no-compile Gang_Mixed_Test
+compare_schedulers.sh --no-compile Gang_PartialFit_Test
+compare_schedulers.sh --no-compile Gang_Scheduling_Test
 compare_schedulers.sh --no-compile Heterogeneous_Node_Test
+compare_schedulers.sh --no-compile Memory_Fragmentation_Test
+compare_schedulers.sh --no-compile Mixed_Affinity_Test
+compare_schedulers.sh --no-compile Mixed_Workload_Test
+compare_schedulers.sh --no-compile MultiPE_Pod_Test
+compare_schedulers.sh --no-compile Overload_Comparison_Test
+compare_schedulers.sh --no-compile Oversized_Pod_Test
+compare_schedulers.sh --no-compile Performance_vs_Efficiency_Test
+compare_schedulers.sh --no-compile Queue_Priority_Test
+compare_schedulers.sh --no-compile Queue_Starvation_Test
 compare_schedulers.sh --no-compile Rapid_Completion_Test
+compare_schedulers.sh --no-compile Scheduler_Latency_Test
+compare_schedulers.sh --no-compile Scheduler_Scalability_Test
 compare_schedulers.sh --no-compile Single_Pod_Test
+compare_schedulers.sh --no-compile Undercrowding_Test
 ```
 
 Each run overwrites `scheduler_comparison.csv` and `scheduler_comparison_pretty.csv`,
