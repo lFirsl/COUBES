@@ -37,8 +37,9 @@ else
 fi
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-OUTPUT_CSV="comparison_${TEST_SHORT}_${TIMESTAMP}.csv"
-PRETTY_CSV="comparison_${TEST_SHORT}_${TIMESTAMP}_pretty.csv"
+mkdir -p results
+OUTPUT_CSV="results/comparison_${TEST_SHORT}_${TIMESTAMP}.csv"
+PRETTY_CSV="results/comparison_${TEST_SHORT}_${TIMESTAMP}_pretty.csv"
 
 # ── parse metrics from sim log ────────────────────────────────────────────────
 
