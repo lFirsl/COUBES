@@ -36,7 +36,9 @@ else
     TEST_CLASS="$TEST_SHORT"
 fi
 
-OUTPUT_CSV="scheduler_comparison.csv"
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+OUTPUT_CSV="comparison_${TEST_SHORT}_${TIMESTAMP}.csv"
+PRETTY_CSV="comparison_${TEST_SHORT}_${TIMESTAMP}_pretty.csv"
 
 # ── parse metrics from sim log ────────────────────────────────────────────────
 
@@ -141,7 +143,7 @@ cat "$OUTPUT_CSV"
 
 # ── pretty-printed aligned table ──────────────────────────────────────────────
 
-PRETTY_CSV="scheduler_comparison_pretty.csv"
+
 {
     printf "%-30s %-12s %-18s %-18s %-24s %-20s\n" \
         "metric" "type" "kube_scheduler" "volcano" "volcano_relative_score" "note"
