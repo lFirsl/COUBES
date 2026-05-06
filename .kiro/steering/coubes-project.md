@@ -202,6 +202,17 @@ bash run_test.sh --test-mode --no-filter org.example.testSuite.Fragmentation_Tes
 
 See `operational-runbook.md` for manual startup and debugging procedures.
 
+### Comparing schedulers
+
+```bash
+# Run same test on kube-scheduler then Volcano, produce comparison CSV
+bash compare_schedulers.sh Fragmentation_Test
+bash compare_schedulers.sh --no-compile Overload_Comparison_Test
+```
+
+Outputs timestamped CSVs in `results/` with raw metric values and relative scores
+(>1.0 = Volcano better). See `compare-schedulers-script.md` for full details.
+
 ---
 
 ## Important Conventions

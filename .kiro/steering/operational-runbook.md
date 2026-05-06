@@ -36,6 +36,12 @@ The `run_all_tests.sh` script starts infrastructure once and reuses it across al
 (via `--keep-infra`). If a test fails, infrastructure is restarted before the next test.
 Default per-test timeout: 45s (auto-raised to 90s for `--volcano`).
 
+**Compare schedulers:** `bash compare_schedulers.sh [--no-compile] <TestClassName>`
+
+Runs the same test on kube-scheduler then Volcano, outputs timestamped CSVs in `results/`
+with raw values and relative scores (>1.0 = Volcano better). Delegates to `run_test.sh`
+for each run. See `compare-schedulers-script.md` steering file for details.
+
 ---
 
 ## Starting the Stack Manually
