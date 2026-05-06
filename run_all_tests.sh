@@ -41,8 +41,8 @@ TIMEOUT_SET=0
 TEST_MODE=0
 NO_COMPILE=0
 SCHEDULER_DIR="second-scheduler"
-SCHEDULER_CONTAINER="my-scheduler"
-ADAPTER_FLAGS="--scheduler=default-scheduler"
+SCHEDULER_CONTAINER="kube-scheduler"
+ADAPTER_FLAGS="--scheduler=least-allocated"
 USER_FLAGS=()
 
 show_help() {

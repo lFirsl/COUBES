@@ -1,19 +1,19 @@
 version: "3.8"
 services:
-  my-scheduler:
+  kube-scheduler:
     image: registry.k8s.io/kube-scheduler:v1.33.0
-    container_name: my-scheduler
+    container_name: kube-scheduler
     volumes:
-      - ./my-scheduler.yaml:/etc/kube-scheduler/my-scheduler.yaml
+      - ./scheduler-config.yaml:/etc/kube-scheduler/scheduler-config.yaml
       - ./kubeconfig.yaml:/etc/kube-scheduler/kubeconfig.yaml
     # Uncomment the following line to override the scheduler configuration without rebuilding the image:
-    # - ./scheduler-config.yaml:/etc/kube-scheduler/my-scheduler.yaml
+    # - ./scheduler-config.yaml:/etc/kube-scheduler/scheduler-config.yaml
     extra_hosts:
       - "adapter-host:host-gateway"
     network_mode: host
     command:
       - kube-scheduler
-      - --config=/etc/kube-scheduler/my-scheduler.yaml
+      - --config=/etc/kube-scheduler/scheduler-config.yaml
       - --secure-port=10260
       # Default verbosity level (--v=2). Increase to --v=4 or --v=5 for more detailed debugging logs.
       - --v=2

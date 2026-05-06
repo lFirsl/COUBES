@@ -1,7 +1,7 @@
 FROM registry.k8s.io/kube-scheduler:v1.33.0
 
 # Copy scheduler configuration defining scheduling profiles (LeastAllocated vs MostAllocated)
-COPY my-scheduler.yaml /etc/kube-scheduler/scheduler-config.yaml
+COPY scheduler-config.yaml /etc/kube-scheduler/scheduler-config.yaml
 
 # Copy kubeconfig pointing to the adapter's fake API server at localhost:8080
 COPY kubeconfig.yaml /etc/kube-scheduler/kubeconfig.yaml

@@ -11,11 +11,11 @@ leaderElection:
 # This configuration defines two scheduling profiles with different resource allocation strategies.
 # Pods select a profile by setting spec.schedulerName in their manifest.
 profiles:
-  # Profile 1: default-scheduler (spreading strategy)
+  # Profile 1: least-allocated (spreading strategy)
   # Uses LeastAllocated scoring to distribute pods evenly across nodes, minimizing resource
   # concentration. This strategy optimizes for availability and fault tolerance by avoiding
   # overloading individual nodes.
-  - schedulerName: default-scheduler
+  - schedulerName: least-allocated
     plugins:
       score:
         enabled:
@@ -33,11 +33,11 @@ profiles:
               - name: memory
                 weight: 1
 
-  # Profile 2: my-scheduler (bin-packing strategy)
+  # Profile 2: most-allocated (bin-packing strategy)
   # Uses MostAllocated scoring to pack pods tightly onto fewer nodes, maximizing resource
   # utilization. This strategy optimizes for energy efficiency by allowing unused nodes to
   # remain idle or be powered down.
-  - schedulerName: my-scheduler
+  - schedulerName: most-allocated
     plugins:
       score:
         enabled:

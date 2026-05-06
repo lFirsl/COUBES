@@ -8,7 +8,7 @@
 #   --test-mode        Use built-in round-robin scheduler (no Docker/kube-scheduler required)
 #   --no-compile       Skip Go build, Go tests, and Java compilation (use existing binaries)
 #   --no-filter        Show full simulation output instead of filtered summary
-#   --scheduler=NAME   Scheduler profile to use (default: default-scheduler, e.g. my-scheduler)
+#   --scheduler=NAME   Scheduler profile to use (default: least-allocated, e.g. most-allocated)
 #   --volcano          Use the Volcano scheduler (sets --scheduler=volcano and uses volcano-scheduler/)
 #   --keep-infra       Don't start/stop adapter or scheduler (used by run_all_tests.sh)
 #   --help             Show this help message
@@ -29,7 +29,7 @@ SIM_LOG="debug/sim.log"
 SCHEDULER_LOG="debug/scheduler.log"
 mkdir -p debug
 SCHEDULER_DIR="second-scheduler"
-SCHEDULER_CONTAINER="my-scheduler"
+SCHEDULER_CONTAINER="kube-scheduler"
 ADAPTER_URL="http://localhost:8080"
 HANG_TIMEOUT=45   # seconds of no log output before declaring a hang
                   # Overridden to 60s for Volcano (must exceed 30s scheduling round timeout)
@@ -38,7 +38,7 @@ TEST_MODE=0
 NO_COMPILE=0
 NO_FILTER=0
 KEEP_INFRA=0
-ADAPTER_FLAGS="--scheduler=default-scheduler"
+ADAPTER_FLAGS="--scheduler=least-allocated"
 
 # Output filter: shows only the important lines from simulation output
 OUTPUT_FILTER='(SUCCESS|PASS:|FAIL|ERROR|WARNING|Simulation Metrics|Simulated Time|Wall-clock|Energy|Number of|consolidation|Throughput|Scheduling Latency|Scheduling rounds|SCALABILITY|Phase|Latency ratio|finished!|Exception|round=|Rescheduling|scheduled on|pending|OUTPUT|Cloudlet ID|── Round)'
