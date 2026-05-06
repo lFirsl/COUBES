@@ -28,7 +28,7 @@ The script:
 - Symlinks `debug/{sim,adapter,scheduler}.log` always point to the latest run
 - Exits non-zero with diagnostic output on failure
 
-**Options:** `--test-mode`, `--volcano`, `--no-compile`, `--no-filter`, `--keep-infra`, `--scheduler=NAME`, `--help`
+**Options:** `--test-mode`, `--volcano`, `--no-compile`, `--no-filter`, `--keep-infra`, `--scheduler=NAME`, `--run-id=ID`, `--help`
 
 **Run all tests:** `bash run_all_tests.sh [--volcano] [--no-compile] [--stop-on-fail] [--timeout=N]`
 

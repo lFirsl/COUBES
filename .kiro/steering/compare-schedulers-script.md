@@ -29,8 +29,13 @@ hang detection, auto-recovery all apply).
 Timestamped files in `results/`:
 - `results/comparison_<Test>_<timestamp>.csv` — machine-readable
 - `results/comparison_<Test>_<timestamp>_pretty.csv` — aligned for terminal viewing
+- `results/kube-scheduler_<Test>_<runId>.json` — kube-scheduler metrics (structured)
+- `results/volcano_<Test>_<runId>.json` — Volcano metrics (structured)
 
-Intermediate logs: `/tmp/coubes-sim-kube-scheduler.log`, `/tmp/coubes-sim-volcano.log`
+The script generates a random 8-char hex run ID and passes `--run-id=<ID>` to both
+`run_test.sh` calls. Each run writes `results/latest_run.json` (via `SimulationMetrics`),
+which `run_test.sh` renames to `results/<scheduler>_<Test>_<runId>.json`. The comparison
+script then reads both JSON files by their known paths — no overwrite race.
 
 ---
 
