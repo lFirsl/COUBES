@@ -53,7 +53,7 @@ for each run. See `compare-schedulers-script.md` steering file for details.
 Always use `setsid` with stdin redirected from `/dev/null`:
 
 ```bash
-setsid ./adapter-linux --scheduler=default-scheduler </dev/null >/tmp/adapter.log 2>&1 &
+setsid ./adapter-linux --scheduler=least-allocated </dev/null >/tmp/adapter.log 2>&1 &
 echo $!
 ```
 
@@ -71,7 +71,7 @@ echo $!
 cd k8s-cloudsim-adapter && go build -o adapter-linux .
 
 # 2. Start adapter
-setsid ./adapter-linux --scheduler=default-scheduler </dev/null >/tmp/adapter.log 2>&1 &
+setsid ./adapter-linux --scheduler=least-allocated </dev/null >/tmp/adapter.log 2>&1 &
 sleep 2 && curl -s -X DELETE http://localhost:8080/reset  # verify it's up
 
 # 3. Start Docker scheduler
@@ -135,7 +135,7 @@ cat /tmp/coubes-adapter.log | grep '"result":"timeout"'
 
 ### Scheduler has gone silent (most common failure)
 
-Symptom: adapter receives `HandleSchedule` calls but scheduling never completes; `docker logs my-scheduler --since 60s` returns nothing.
+Symptom: adapter receives `HandleSchedule` calls but scheduling never completes; `docker logs kube-scheduler --since 60s` returns nothing.
 
 Cause: the kube-scheduler's watch connections to the adapter break when the adapter is restarted, and the scheduler enters a silent retry loop.
 
@@ -167,7 +167,7 @@ Fix: restart scheduler, reset adapter, rerun.
 ### Verifying the scheduler is ready
 
 ```bash
-docker logs my-scheduler --since 15s 2>&1 | grep "Caches populated" | wc -l
+docker logs kube-scheduler --since 15s 2>&1 | grep "Caches populated" | wc -l
 # Should be ~15 (one per resource type)
 ```
 
@@ -204,6 +204,6 @@ If the adapter is restarted for any reason, the kube-scheduler must also be rest
 pkill -9 -x adapter-linux
 cd second-scheduler && docker compose down && docker compose up -d
 sleep 10
-cd ../k8s-cloudsim-adapter && setsid ./adapter-linux --scheduler=default-scheduler </dev/null >/tmp/adapter.log 2>&1 &
+cd ../k8s-cloudsim-adapter && setsid ./adapter-linux --scheduler=least-allocated </dev/null >/tmp/adapter.log 2>&1 &
 sleep 2 && curl -s -X DELETE http://localhost:8080/reset
 ```

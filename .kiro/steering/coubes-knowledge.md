@@ -112,8 +112,8 @@ Legacy endpoint. Accepts `[]CsPod` only (no node sync or completed IDs). Still f
 
 The `second-scheduler/` folder provides a custom `kube-scheduler` instance with two scheduling profiles:
 
-1. **`default-scheduler`** — LeastAllocated (spreading): distributes pods evenly across nodes
-2. **`my-scheduler`** — MostAllocated (bin-packing): packs pods tightly onto fewer nodes
+1. **`least-allocated`** — LeastAllocated (spreading): distributes pods evenly across nodes
+2. **`most-allocated`** — MostAllocated (bin-packing): packs pods tightly onto fewer nodes
 
 Both profiles use equal CPU/memory weights and disable all score plugins except `NodeResourcesFit`.
 

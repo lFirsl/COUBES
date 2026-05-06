@@ -172,7 +172,7 @@ to advertise the Volcano groups.
 | Docker image | `registry.k8s.io/kube-scheduler:v1.33.0` | `volcanosh/vc-scheduler:v1.10.0` |
 | Config format | `KubeSchedulerConfiguration` YAML | Volcano actions/tiers YAML |
 | Config flag | `--config` | `--scheduler-conf` |
-| Scheduler name | `default-scheduler` / `my-scheduler` | `volcano` (default) |
+| Scheduler name | `least-allocated` / `most-allocated` | `volcano` (default) |
 | Pod grouping | None (individual pods) | PodGroup CRD (mandatory) |
 | Queue concept | None | Queue CRD (mandatory, created on startup) |
 | Extra CRD groups | None | `scheduling.volcano.sh`, `topology.volcano.sh`, `nodeinfo.volcano.sh`, `shard.volcano.sh` |
@@ -438,8 +438,8 @@ The adapter will submit pods with `spec.schedulerName: volcano`. Volcano will sc
 
 | Scheduler | Adapter Flag | Scheduler Startup |
 |---|---|---|
-| kube-scheduler (spreading) | `--scheduler=default-scheduler` | `cd second-scheduler && docker-compose up` |
-| kube-scheduler (bin-packing) | `--scheduler=my-scheduler` | `cd second-scheduler && docker-compose up` |
+| kube-scheduler (spreading) | `--scheduler=least-allocated` | `cd second-scheduler && docker-compose up` |
+| kube-scheduler (bin-packing) | `--scheduler=most-allocated` | `cd second-scheduler && docker-compose up` |
 | Volcano (bin-packing) | `--scheduler=volcano` | `cd volcano-scheduler && docker-compose up` |
 
 To switch Volcano to spreading, edit `volcano-scheduler/volcano-scheduler.conf`:

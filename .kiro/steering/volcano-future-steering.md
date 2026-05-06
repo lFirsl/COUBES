@@ -366,7 +366,7 @@ the same port as the COUBES adapter. Without this flag, the container fails to s
 
 - Added `--volcano` flag: sets `SCHEDULER_DIR=volcano-scheduler`,
   `SCHEDULER_CONTAINER=volcano-scheduler`, `ADAPTER_FLAGS=--scheduler=volcano`
-- `SCHEDULER_CONTAINER` variable replaces hardcoded `my-scheduler` throughout
+- `SCHEDULER_CONTAINER` variable replaces hardcoded `kube-scheduler` throughout
 - `scheduler_ready()` checks all logs (not `--since 35s`) — Volcano containers from
   previous runs would fail the readiness check if their "Caches populated" lines
   were older than 35 seconds
@@ -386,7 +386,7 @@ the same port as the COUBES adapter. Without this flag, the container fails to s
 
 # kube-scheduler (unchanged)
 ./run_test.sh org.example.testSuite.Fragmentation_Test
-./run_test.sh --scheduler=my-scheduler org.example.testSuite.Fragmentation_Test
+./run_test.sh --scheduler=most-allocated org.example.testSuite.Fragmentation_Test
 ```
 
 ---
