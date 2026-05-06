@@ -59,7 +59,7 @@ public class Rapid_Completion_Test {
             }
 
             printCloudletList(results);
-            metrics.printSummary(lastClock, broker.tpOverall());
+            metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
             broker.sendResetRequestToControlPlane();
             Log.println("Rapid_Completion_Test finished!");
 

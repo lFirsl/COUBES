@@ -67,7 +67,7 @@ public class Oversized_Pod_Test {
             metrics.stopWallClock();
 
             printCloudletList(results);
-            metrics.printSummary(lastClock, broker.tpOverall());
+            metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
 
             // We expect only 2 to complete — the oversized pod can never be scheduled
             if (results.size() == 2) {

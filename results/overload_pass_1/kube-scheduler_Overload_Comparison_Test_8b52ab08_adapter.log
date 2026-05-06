@@ -1,0 +1,842 @@
+2026/05/06 16:10:29 Starting K8s Sim Control Plane with Fake API Server on port :8080
+Using scheduler: default-scheduler
+2026/05/06 16:10:29 Serving HTTP API on :8080
+2026/05/06 16:10:29 Fake Kubernetes API server ready for kube-scheduler connections
+2026/05/06 16:10:29 Start kube-scheduler with: --master http://localhost:8080 --leader-elect=false
+2026/05/06 16:10:30 Scheduling round reset
+2026/05/06 16:10:30 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-06T16:10:30.433524202+01:00"}
+2026/05/06 16:10:33 Scheduling round reset
+2026/05/06 16:10:33 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-06T16:10:33.720784878+01:00"}
+2026/05/06 16:10:33 Scheduling round reset
+2026/05/06 16:10:33 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-06T16:10:33.725049348+01:00"}
+2026/05/06 16:10:38 {"action":"HandleNodes","durationMs":1,"nodeCount":5,"result":"ok","roundId":"0","ts":"2026-05-06T16:10:38.87648072+01:00"}
+2026/05/06 16:10:38 error encoding watch event: write tcp [::1]:8080->[::1]:48100: write: broken pipe
+2026/05/06 16:10:38 {"action":"HandleSchedule","completedIds":0,"nodeCount":5,"phase":"start","podCount":37,"roundId":"1","ts":"2026-05-06T16:10:38.903665779+01:00"}
+2026/05/06 16:10:38 {"action":"HandleSchedule","phase":"prep_done","podsCreated":37,"prepMs":1,"roundId":"1","staleDeleted":0,"ts":"2026-05-06T16:10:38.904520817+01:00"}
+2026/05/06 16:10:38 Scheduling round started: expecting 37 decisions
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-0 -> node=csnode-4
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-1 -> node=csnode-0
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-2 -> node=csnode-2
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-3 -> node=csnode-3
+2026/05/06 16:10:38 Binding: pod=cspod-1 -> node=csnode-0 (1/37 resolved)
+2026/05/06 16:10:38 Binding: pod=cspod-3 -> node=csnode-3 (2/37 resolved)
+2026/05/06 16:10:38 Binding: pod=cspod-2 -> node=csnode-2 (3/37 resolved)
+2026/05/06 16:10:38 Binding: pod=cspod-0 -> node=csnode-4 (4/37 resolved)
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-4 -> node=csnode-1
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-6 -> node=csnode-4
+2026/05/06 16:10:38 Binding: pod=cspod-4 -> node=csnode-1 (5/37 resolved)
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-7 -> node=csnode-2
+2026/05/06 16:10:38 Binding: pod=cspod-6 -> node=csnode-4 (6/37 resolved)
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-5 -> node=csnode-4
+2026/05/06 16:10:38 Binding: pod=cspod-7 -> node=csnode-2 (7/37 resolved)
+2026/05/06 16:10:38 Binding: pod=cspod-5 -> node=csnode-4 (8/37 resolved)
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-8 -> node=csnode-3
+2026/05/06 16:10:38 Binding: pod=cspod-8 -> node=csnode-3 (9/37 resolved)
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-9 -> node=csnode-1
+2026/05/06 16:10:38 Binding: pod=cspod-9 -> node=csnode-1 (10/37 resolved)
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-10 -> node=csnode-0
+2026/05/06 16:10:38 Binding: pod=cspod-10 -> node=csnode-0 (11/37 resolved)
+2026/05/06 16:10:38 Parsed protobuf binding: pod=cspod-11 -> node=csnode-4
+2026/05/06 16:10:38 Binding: pod=cspod-11 -> node=csnode-4 (12/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-12 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-13 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-14 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-15 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-16 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-17 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-18 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-19 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-20 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-21 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-22 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-23 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-24 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-25 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-26 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-27 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (30/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (31/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (32/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (33/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (34/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (35/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (36/37 resolved)
+2026/05/06 16:10:38 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (37/37 resolved)
+2026/05/06 16:10:38 Round complete: 12 scheduled, 25 failed in 18.600982ms
+2026/05/06 16:10:38 {"action":"HandleSchedule","durationMs":19,"podCount":37,"result":"ok","roundId":"1","scheduled":12,"ts":"2026-05-06T16:10:38.923264356+01:00","unschedulable":25}
+2026/05/06 16:10:39 {"action":"HandleSchedule","completedIds":0,"nodeCount":5,"phase":"start","podCount":18,"roundId":"2","ts":"2026-05-06T16:10:39.019618752+01:00"}
+2026/05/06 16:10:39 {"action":"HandleSchedule","phase":"prep_done","podsCreated":18,"prepMs":0,"roundId":"2","staleDeleted":0,"ts":"2026-05-06T16:10:39.019806583+01:00"}
+2026/05/06 16:10:39 Scheduling round started: expecting 18 decisions
+2026/05/06 16:10:39 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (1/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (2/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/18 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/18 resolved)
+2026/05/06 16:10:39 Round complete: 0 scheduled, 18 failed in 11.62257ms
+2026/05/06 16:10:39 {"action":"HandleSchedule","durationMs":12,"podCount":18,"result":"ok","roundId":"2","scheduled":0,"ts":"2026-05-06T16:10:39.031548195+01:00","unschedulable":18}
+2026/05/06 16:10:39 {"action":"HandleSchedule","completedIds":4,"nodeCount":5,"phase":"start","podCount":43,"roundId":"3","ts":"2026-05-06T16:10:39.052704234+01:00"}
+2026/05/06 16:10:39 {"action":"HandleSchedule","phase":"prep_done","podsCreated":43,"prepMs":0,"roundId":"3","staleDeleted":0,"ts":"2026-05-06T16:10:39.052928197+01:00"}
+2026/05/06 16:10:39 Scheduling round started: expecting 43 decisions
+2026/05/06 16:10:39 Parsed protobuf binding: pod=cspod-12 -> node=csnode-4
+2026/05/06 16:10:39 Binding: pod=cspod-12 -> node=csnode-4 (1/43 resolved)
+2026/05/06 16:10:39 Parsed protobuf binding: pod=cspod-13 -> node=csnode-4
+2026/05/06 16:10:39 Binding: pod=cspod-13 -> node=csnode-4 (2/43 resolved)
+2026/05/06 16:10:39 Parsed protobuf binding: pod=cspod-14 -> node=csnode-4
+2026/05/06 16:10:39 Binding: pod=cspod-14 -> node=csnode-4 (3/43 resolved)
+2026/05/06 16:10:39 Parsed protobuf binding: pod=cspod-15 -> node=csnode-4
+2026/05/06 16:10:39 Binding: pod=cspod-15 -> node=csnode-4 (4/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-16 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-17 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-18 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-19 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-20 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-21 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-22 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-23 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-24 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-25 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-26 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-27 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (30/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (31/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (32/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (33/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (34/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (35/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (36/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (37/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (38/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (39/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (40/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (41/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (42/43 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (43/43 resolved)
+2026/05/06 16:10:39 Round complete: 4 scheduled, 39 failed in 25.573014ms
+2026/05/06 16:10:39 {"action":"HandleSchedule","durationMs":26,"podCount":43,"result":"ok","roundId":"3","scheduled":4,"ts":"2026-05-06T16:10:39.078615227+01:00","unschedulable":39}
+2026/05/06 16:10:39 {"action":"HandleSchedule","completedIds":0,"nodeCount":5,"phase":"start","podCount":15,"roundId":"4","ts":"2026-05-06T16:10:39.091951777+01:00"}
+2026/05/06 16:10:39 {"action":"HandleSchedule","phase":"prep_done","podsCreated":15,"prepMs":0,"roundId":"4","staleDeleted":0,"ts":"2026-05-06T16:10:39.092103148+01:00"}
+2026/05/06 16:10:39 Scheduling round started: expecting 15 decisions
+2026/05/06 16:10:39 Failure: pod=cspod-55 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (1/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-56 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (2/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-57 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-58 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-59 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-60 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-61 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-62 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-63 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-64 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-65 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-66 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-67 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-68 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/15 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-69 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/15 resolved)
+2026/05/06 16:10:39 Round complete: 0 scheduled, 15 failed in 74.676089ms
+2026/05/06 16:10:39 {"action":"HandleSchedule","durationMs":75,"podCount":15,"result":"ok","roundId":"4","scheduled":0,"ts":"2026-05-06T16:10:39.166949101+01:00","unschedulable":15}
+2026/05/06 16:10:39 {"action":"HandleSchedule","completedIds":4,"nodeCount":5,"phase":"start","podCount":54,"roundId":"5","ts":"2026-05-06T16:10:39.179347398+01:00"}
+2026/05/06 16:10:39 {"action":"HandleSchedule","phase":"prep_done","podsCreated":54,"prepMs":0,"roundId":"5","staleDeleted":0,"ts":"2026-05-06T16:10:39.179767507+01:00"}
+2026/05/06 16:10:39 Scheduling round started: expecting 54 decisions
+2026/05/06 16:10:39 Parsed protobuf binding: pod=cspod-55 -> node=csnode-2
+2026/05/06 16:10:39 Binding: pod=cspod-55 -> node=csnode-2 (1/54 resolved)
+2026/05/06 16:10:39 Parsed protobuf binding: pod=cspod-56 -> node=csnode-3
+2026/05/06 16:10:39 Binding: pod=cspod-56 -> node=csnode-3 (2/54 resolved)
+2026/05/06 16:10:39 Parsed protobuf binding: pod=cspod-57 -> node=csnode-3
+2026/05/06 16:10:39 Binding: pod=cspod-57 -> node=csnode-3 (3/54 resolved)
+2026/05/06 16:10:39 Parsed protobuf binding: pod=cspod-58 -> node=csnode-2
+2026/05/06 16:10:39 Binding: pod=cspod-58 -> node=csnode-2 (4/54 resolved)
+2026/05/06 16:10:39 Parsed protobuf binding: pod=cspod-59 -> node=csnode-3
+2026/05/06 16:10:39 Binding: pod=cspod-59 -> node=csnode-3 (5/54 resolved)
+2026/05/06 16:10:39 Parsed protobuf binding: pod=cspod-60 -> node=csnode-2
+2026/05/06 16:10:39 Binding: pod=cspod-60 -> node=csnode-2 (6/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-62 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-63 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-64 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-65 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-66 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-67 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-68 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-69 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-16 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-17 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-18 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-19 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-20 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-21 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-22 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-23 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-24 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-25 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-26 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-27 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (30/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (31/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (32/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (33/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (34/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (35/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (36/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (37/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (38/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (39/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (40/54 resolved)
+2026/05/06 16:10:39 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (41/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (42/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (43/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (44/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (45/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (46/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (47/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (48/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (49/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (50/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (51/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (52/54 resolved)
+2026/05/06 16:10:40 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (53/54 resolved)
+2026/05/06 16:10:41 STALL EXIT: no progress for 2s — 6 scheduled, 47 failed, 1 still pending (returning partial)
+2026/05/06 16:10:41 {"action":"HandleSchedule","durationMs":4003,"podCount":54,"result":"timeout_partial","roundId":"5","scheduled":6,"ts":"2026-05-06T16:10:41.576232017+01:00","unschedulable":48}
+2026/05/06 16:10:41 {"action":"HandleSchedule","durationMs":4003,"podCount":54,"result":"ok","roundId":"5","scheduled":6,"ts":"2026-05-06T16:10:41.576260763+01:00","unschedulable":48}
+2026/05/06 16:10:41 {"action":"HandleSchedule","completedIds":4,"nodeCount":5,"phase":"start","podCount":48,"roundId":"6","ts":"2026-05-06T16:10:41.589004375+01:00"}
+2026/05/06 16:10:41 {"action":"HandleSchedule","phase":"prep_done","podsCreated":48,"prepMs":0,"roundId":"6","staleDeleted":0,"ts":"2026-05-06T16:10:41.589225705+01:00"}
+2026/05/06 16:10:41 Scheduling round started: expecting 48 decisions
+2026/05/06 16:10:41 Parsed protobuf binding: pod=cspod-61 -> node=csnode-1
+2026/05/06 16:10:41 Parsed protobuf binding: pod=cspod-62 -> node=csnode-0
+2026/05/06 16:10:41 Binding: pod=cspod-61 -> node=csnode-1 (1/48 resolved)
+2026/05/06 16:10:41 Binding: pod=cspod-62 -> node=csnode-0 (2/48 resolved)
+2026/05/06 16:10:41 Parsed protobuf binding: pod=cspod-64 -> node=csnode-0
+2026/05/06 16:10:41 Binding: pod=cspod-64 -> node=csnode-0 (3/48 resolved)
+2026/05/06 16:10:41 Parsed protobuf binding: pod=cspod-63 -> node=csnode-1
+2026/05/06 16:10:41 Binding: pod=cspod-63 -> node=csnode-1 (4/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-61 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-67 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-68 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-69 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-16 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-17 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-18 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-19 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-20 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-21 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-22 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-23 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-24 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-25 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-26 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-27 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (30/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (31/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (32/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (33/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (34/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (35/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (36/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (37/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (38/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (39/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (40/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (41/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (42/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (43/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (44/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (45/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (46/48 resolved)
+2026/05/06 16:10:41 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (47/48 resolved)
+2026/05/06 16:10:45 STALL EXIT: no progress for 2s — 4 scheduled, 43 failed, 1 still pending (returning partial)
+2026/05/06 16:10:45 {"action":"HandleSchedule","durationMs":4039,"podCount":48,"result":"timeout_partial","roundId":"6","scheduled":4,"ts":"2026-05-06T16:10:45.627998558+01:00","unschedulable":45}
+2026/05/06 16:10:45 {"action":"HandleSchedule","durationMs":4039,"podCount":48,"result":"ok","roundId":"6","scheduled":4,"ts":"2026-05-06T16:10:45.628026598+01:00","unschedulable":45}
+2026/05/06 16:10:45 {"action":"HandleSchedule","completedIds":4,"nodeCount":5,"phase":"start","podCount":44,"roundId":"7","ts":"2026-05-06T16:10:45.635160053+01:00"}
+2026/05/06 16:10:45 {"action":"HandleSchedule","phase":"prep_done","podsCreated":44,"prepMs":0,"roundId":"7","staleDeleted":0,"ts":"2026-05-06T16:10:45.635380829+01:00"}
+2026/05/06 16:10:45 Scheduling round started: expecting 44 decisions
+2026/05/06 16:10:45 Parsed protobuf binding: pod=cspod-65 -> node=csnode-4
+2026/05/06 16:10:45 Binding: pod=cspod-65 -> node=csnode-4 (1/44 resolved)
+2026/05/06 16:10:45 Parsed protobuf binding: pod=cspod-66 -> node=csnode-4
+2026/05/06 16:10:45 Binding: pod=cspod-66 -> node=csnode-4 (2/44 resolved)
+2026/05/06 16:10:45 Parsed protobuf binding: pod=cspod-67 -> node=csnode-4
+2026/05/06 16:10:45 Parsed protobuf binding: pod=cspod-68 -> node=csnode-4
+2026/05/06 16:10:45 Binding: pod=cspod-67 -> node=csnode-4 (3/44 resolved)
+2026/05/06 16:10:45 Binding: pod=cspod-68 -> node=csnode-4 (4/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-16 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-17 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-18 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-19 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-20 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-21 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-22 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-23 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-24 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-25 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-26 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-27 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (30/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (31/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (32/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (33/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (34/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (35/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (36/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (37/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (38/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (39/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (40/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (41/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (42/44 resolved)
+2026/05/06 16:10:45 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (43/44 resolved)
+2026/05/06 16:10:49 STALL EXIT: no progress for 2s — 4 scheduled, 39 failed, 1 still pending (returning partial)
+2026/05/06 16:10:49 {"action":"HandleSchedule","durationMs":4018,"podCount":44,"result":"timeout_partial","roundId":"7","scheduled":4,"ts":"2026-05-06T16:10:49.653546455+01:00","unschedulable":40}
+2026/05/06 16:10:49 {"action":"HandleSchedule","durationMs":4018,"podCount":44,"result":"ok","roundId":"7","scheduled":4,"ts":"2026-05-06T16:10:49.653572962+01:00","unschedulable":40}
+2026/05/06 16:10:49 {"action":"HandleSchedule","completedIds":5,"nodeCount":5,"phase":"start","podCount":40,"roundId":"8","ts":"2026-05-06T16:10:49.661263575+01:00"}
+2026/05/06 16:10:49 {"action":"HandleSchedule","phase":"prep_done","podsCreated":40,"prepMs":0,"roundId":"8","staleDeleted":0,"ts":"2026-05-06T16:10:49.661436143+01:00"}
+2026/05/06 16:10:49 Scheduling round started: expecting 40 decisions
+2026/05/06 16:10:49 Parsed protobuf binding: pod=cspod-69 -> node=csnode-3
+2026/05/06 16:10:49 Binding: pod=cspod-69 -> node=csnode-3 (1/40 resolved)
+2026/05/06 16:10:49 Parsed protobuf binding: pod=cspod-16 -> node=csnode-3
+2026/05/06 16:10:49 Binding: pod=cspod-16 -> node=csnode-3 (2/40 resolved)
+2026/05/06 16:10:49 Parsed protobuf binding: pod=cspod-17 -> node=csnode-2
+2026/05/06 16:10:49 Binding: pod=cspod-17 -> node=csnode-2 (3/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-18 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-19 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-20 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-21 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-22 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-23 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-24 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-25 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-26 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-27 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (30/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (31/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (32/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (33/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (34/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (35/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (36/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (37/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (38/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (39/40 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (40/40 resolved)
+2026/05/06 16:10:49 Round complete: 3 scheduled, 37 failed in 22.493927ms
+2026/05/06 16:10:49 {"action":"HandleSchedule","durationMs":22,"podCount":40,"result":"ok","roundId":"8","scheduled":3,"ts":"2026-05-06T16:10:49.684030416+01:00","unschedulable":37}
+2026/05/06 16:10:49 {"action":"HandleSchedule","completedIds":4,"nodeCount":5,"phase":"start","podCount":37,"roundId":"9","ts":"2026-05-06T16:10:49.700898233+01:00"}
+2026/05/06 16:10:49 {"action":"HandleSchedule","phase":"prep_done","podsCreated":37,"prepMs":1,"roundId":"9","staleDeleted":0,"ts":"2026-05-06T16:10:49.701722816+01:00"}
+2026/05/06 16:10:49 Scheduling round started: expecting 37 decisions
+2026/05/06 16:10:49 Parsed protobuf binding: pod=cspod-18 -> node=csnode-4
+2026/05/06 16:10:49 Binding: pod=cspod-18 -> node=csnode-4 (1/37 resolved)
+2026/05/06 16:10:49 Parsed protobuf binding: pod=cspod-19 -> node=csnode-4
+2026/05/06 16:10:49 Binding: pod=cspod-19 -> node=csnode-4 (2/37 resolved)
+2026/05/06 16:10:49 Parsed protobuf binding: pod=cspod-20 -> node=csnode-4
+2026/05/06 16:10:49 Binding: pod=cspod-20 -> node=csnode-4 (3/37 resolved)
+2026/05/06 16:10:49 Parsed protobuf binding: pod=cspod-21 -> node=csnode-4
+2026/05/06 16:10:49 Binding: pod=cspod-21 -> node=csnode-4 (4/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-22 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-23 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-24 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-25 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-26 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-27 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (30/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (31/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (32/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (33/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (34/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (35/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (36/37 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (37/37 resolved)
+2026/05/06 16:10:49 Round complete: 4 scheduled, 33 failed in 20.668359ms
+2026/05/06 16:10:49 {"action":"HandleSchedule","durationMs":21,"podCount":37,"result":"ok","roundId":"9","scheduled":4,"ts":"2026-05-06T16:10:49.722521493+01:00","unschedulable":33}
+2026/05/06 16:10:49 {"action":"HandleSchedule","completedIds":1,"nodeCount":5,"phase":"start","podCount":33,"roundId":"10","ts":"2026-05-06T16:10:49.732040093+01:00"}
+2026/05/06 16:10:49 {"action":"HandleSchedule","phase":"prep_done","podsCreated":33,"prepMs":0,"roundId":"10","staleDeleted":0,"ts":"2026-05-06T16:10:49.732228381+01:00"}
+2026/05/06 16:10:49 Scheduling round started: expecting 33 decisions
+2026/05/06 16:10:49 Parsed protobuf binding: pod=cspod-22 -> node=csnode-2
+2026/05/06 16:10:49 Binding: pod=cspod-22 -> node=csnode-2 (1/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-23 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (2/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-24 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-25 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-26 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-27 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (30/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (31/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (32/33 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (33/33 resolved)
+2026/05/06 16:10:49 Round complete: 1 scheduled, 32 failed in 130.658375ms
+2026/05/06 16:10:49 {"action":"HandleSchedule","durationMs":131,"podCount":33,"result":"ok","roundId":"10","scheduled":1,"ts":"2026-05-06T16:10:49.863030988+01:00","unschedulable":32}
+2026/05/06 16:10:49 {"action":"HandleSchedule","completedIds":2,"nodeCount":5,"phase":"start","podCount":32,"roundId":"11","ts":"2026-05-06T16:10:49.868191713+01:00"}
+2026/05/06 16:10:49 {"action":"HandleSchedule","phase":"prep_done","podsCreated":32,"prepMs":0,"roundId":"11","staleDeleted":0,"ts":"2026-05-06T16:10:49.868351486+01:00"}
+2026/05/06 16:10:49 Scheduling round started: expecting 32 decisions
+2026/05/06 16:10:49 Parsed protobuf binding: pod=cspod-23 -> node=csnode-3
+2026/05/06 16:10:49 Binding: pod=cspod-23 -> node=csnode-3 (1/32 resolved)
+2026/05/06 16:10:49 Parsed protobuf binding: pod=cspod-24 -> node=csnode-2
+2026/05/06 16:10:49 Binding: pod=cspod-24 -> node=csnode-2 (2/32 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-25 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/32 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-26 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/32 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-27 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/32 resolved)
+2026/05/06 16:10:49 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (30/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (31/32 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (32/32 resolved)
+2026/05/06 16:10:50 Round complete: 2 scheduled, 30 failed in 635.133878ms
+2026/05/06 16:10:50 {"action":"HandleSchedule","durationMs":635,"podCount":32,"result":"ok","roundId":"11","scheduled":2,"ts":"2026-05-06T16:10:50.503646336+01:00","unschedulable":30}
+2026/05/06 16:10:50 {"action":"HandleSchedule","completedIds":1,"nodeCount":5,"phase":"start","podCount":30,"roundId":"12","ts":"2026-05-06T16:10:50.512786203+01:00"}
+2026/05/06 16:10:50 {"action":"HandleSchedule","phase":"prep_done","podsCreated":30,"prepMs":0,"roundId":"12","staleDeleted":0,"ts":"2026-05-06T16:10:50.512980144+01:00"}
+2026/05/06 16:10:50 Scheduling round started: expecting 30 decisions
+2026/05/06 16:10:50 Parsed protobuf binding: pod=cspod-25 -> node=csnode-3
+2026/05/06 16:10:50 Binding: pod=cspod-25 -> node=csnode-3 (1/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-26 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (2/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-27 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/30 resolved)
+2026/05/06 16:10:50 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/30 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/30 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/30 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/30 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/30 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/30 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (30/30 resolved)
+2026/05/06 16:10:51 Round complete: 1 scheduled, 29 failed in 590.712825ms
+2026/05/06 16:10:51 {"action":"HandleSchedule","durationMs":591,"podCount":30,"result":"ok","roundId":"12","scheduled":1,"ts":"2026-05-06T16:10:51.103819135+01:00","unschedulable":29}
+2026/05/06 16:10:51 {"action":"HandleSchedule","completedIds":2,"nodeCount":5,"phase":"start","podCount":29,"roundId":"13","ts":"2026-05-06T16:10:51.110290365+01:00"}
+2026/05/06 16:10:51 {"action":"HandleSchedule","phase":"prep_done","podsCreated":29,"prepMs":0,"roundId":"13","staleDeleted":0,"ts":"2026-05-06T16:10:51.110499487+01:00"}
+2026/05/06 16:10:51 Scheduling round started: expecting 29 decisions
+2026/05/06 16:10:51 Parsed protobuf binding: pod=cspod-26 -> node=csnode-4
+2026/05/06 16:10:51 Binding: pod=cspod-26 -> node=csnode-4 (1/29 resolved)
+2026/05/06 16:10:51 Parsed protobuf binding: pod=cspod-27 -> node=csnode-4
+2026/05/06 16:10:51 Binding: pod=cspod-27 -> node=csnode-4 (2/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-28 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-29 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-30 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-31 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (28/29 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (29/29 resolved)
+2026/05/06 16:10:51 Round complete: 2 scheduled, 27 failed in 573.20495ms
+2026/05/06 16:10:51 {"action":"HandleSchedule","durationMs":573,"podCount":29,"result":"ok","roundId":"13","scheduled":2,"ts":"2026-05-06T16:10:51.68384363+01:00","unschedulable":27}
+2026/05/06 16:10:51 {"action":"HandleSchedule","completedIds":4,"nodeCount":5,"phase":"start","podCount":27,"roundId":"14","ts":"2026-05-06T16:10:51.690742677+01:00"}
+2026/05/06 16:10:51 {"action":"HandleSchedule","phase":"prep_done","podsCreated":27,"prepMs":0,"roundId":"14","staleDeleted":0,"ts":"2026-05-06T16:10:51.690899165+01:00"}
+2026/05/06 16:10:51 Scheduling round started: expecting 27 decisions
+2026/05/06 16:10:51 Parsed protobuf binding: pod=cspod-28 -> node=csnode-1
+2026/05/06 16:10:51 Binding: pod=cspod-28 -> node=csnode-1 (1/27 resolved)
+2026/05/06 16:10:51 Parsed protobuf binding: pod=cspod-29 -> node=csnode-0
+2026/05/06 16:10:51 Binding: pod=cspod-29 -> node=csnode-0 (2/27 resolved)
+2026/05/06 16:10:51 Parsed protobuf binding: pod=cspod-30 -> node=csnode-0
+2026/05/06 16:10:51 Binding: pod=cspod-30 -> node=csnode-0 (3/27 resolved)
+2026/05/06 16:10:51 Parsed protobuf binding: pod=cspod-31 -> node=csnode-1
+2026/05/06 16:10:51 Binding: pod=cspod-31 -> node=csnode-1 (4/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-32 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-33 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/27 resolved)
+2026/05/06 16:10:51 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (24/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (25/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (26/27 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (27/27 resolved)
+2026/05/06 16:10:52 Round complete: 4 scheduled, 23 failed in 531.923557ms
+2026/05/06 16:10:52 {"action":"HandleSchedule","durationMs":532,"podCount":27,"result":"ok","roundId":"14","scheduled":4,"ts":"2026-05-06T16:10:52.222953029+01:00","unschedulable":23}
+2026/05/06 16:10:52 {"action":"HandleSchedule","completedIds":2,"nodeCount":5,"phase":"start","podCount":23,"roundId":"15","ts":"2026-05-06T16:10:52.229922015+01:00"}
+2026/05/06 16:10:52 {"action":"HandleSchedule","phase":"prep_done","podsCreated":23,"prepMs":0,"roundId":"15","staleDeleted":0,"ts":"2026-05-06T16:10:52.230070019+01:00"}
+2026/05/06 16:10:52 Scheduling round started: expecting 23 decisions
+2026/05/06 16:10:52 Parsed protobuf binding: pod=cspod-32 -> node=csnode-4
+2026/05/06 16:10:52 Binding: pod=cspod-32 -> node=csnode-4 (1/23 resolved)
+2026/05/06 16:10:52 Parsed protobuf binding: pod=cspod-33 -> node=csnode-4
+2026/05/06 16:10:52 Binding: pod=cspod-33 -> node=csnode-4 (2/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-34 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-35 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (22/23 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (23/23 resolved)
+2026/05/06 16:10:52 Round complete: 2 scheduled, 21 failed in 452.840501ms
+2026/05/06 16:10:52 {"action":"HandleSchedule","durationMs":453,"podCount":23,"result":"ok","roundId":"15","scheduled":2,"ts":"2026-05-06T16:10:52.683031086+01:00","unschedulable":21}
+2026/05/06 16:10:52 {"action":"HandleSchedule","completedIds":2,"nodeCount":5,"phase":"start","podCount":21,"roundId":"16","ts":"2026-05-06T16:10:52.696334899+01:00"}
+2026/05/06 16:10:52 {"action":"HandleSchedule","phase":"prep_done","podsCreated":21,"prepMs":0,"roundId":"16","staleDeleted":0,"ts":"2026-05-06T16:10:52.696475719+01:00"}
+2026/05/06 16:10:52 Scheduling round started: expecting 21 decisions
+2026/05/06 16:10:52 Parsed protobuf binding: pod=cspod-34 -> node=csnode-4
+2026/05/06 16:10:52 Binding: pod=cspod-34 -> node=csnode-4 (1/21 resolved)
+2026/05/06 16:10:52 Parsed protobuf binding: pod=cspod-35 -> node=csnode-4
+2026/05/06 16:10:52 Binding: pod=cspod-35 -> node=csnode-4 (2/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-36 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/21 resolved)
+2026/05/06 16:10:52 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/21 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/21 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/21 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/21 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/21 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (20/21 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (21/21 resolved)
+2026/05/06 16:10:53 Round complete: 2 scheduled, 19 failed in 407.223728ms
+2026/05/06 16:10:53 {"action":"HandleSchedule","durationMs":407,"podCount":21,"result":"ok","roundId":"16","scheduled":2,"ts":"2026-05-06T16:10:53.103847694+01:00","unschedulable":19}
+2026/05/06 16:10:53 {"action":"HandleSchedule","completedIds":1,"nodeCount":5,"phase":"start","podCount":19,"roundId":"17","ts":"2026-05-06T16:10:53.109715746+01:00"}
+2026/05/06 16:10:53 {"action":"HandleSchedule","phase":"prep_done","podsCreated":19,"prepMs":0,"roundId":"17","staleDeleted":0,"ts":"2026-05-06T16:10:53.109907563+01:00"}
+2026/05/06 16:10:53 Scheduling round started: expecting 19 decisions
+2026/05/06 16:10:53 Parsed protobuf binding: pod=cspod-36 -> node=csnode-4
+2026/05/06 16:10:53 Binding: pod=cspod-36 -> node=csnode-4 (1/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-37 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (2/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-38 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-39 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/19 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (19/19 resolved)
+2026/05/06 16:10:53 Round complete: 1 scheduled, 18 failed in 373.482093ms
+2026/05/06 16:10:53 {"action":"HandleSchedule","durationMs":374,"podCount":19,"result":"ok","roundId":"17","scheduled":1,"ts":"2026-05-06T16:10:53.483515661+01:00","unschedulable":18}
+2026/05/06 16:10:53 {"action":"HandleSchedule","completedIds":3,"nodeCount":5,"phase":"start","podCount":18,"roundId":"18","ts":"2026-05-06T16:10:53.488292705+01:00"}
+2026/05/06 16:10:53 {"action":"HandleSchedule","phase":"prep_done","podsCreated":18,"prepMs":0,"roundId":"18","staleDeleted":0,"ts":"2026-05-06T16:10:53.488468029+01:00"}
+2026/05/06 16:10:53 Scheduling round started: expecting 18 decisions
+2026/05/06 16:10:53 Parsed protobuf binding: pod=cspod-37 -> node=csnode-2
+2026/05/06 16:10:53 Binding: pod=cspod-37 -> node=csnode-2 (1/18 resolved)
+2026/05/06 16:10:53 Parsed protobuf binding: pod=cspod-38 -> node=csnode-3
+2026/05/06 16:10:53 Binding: pod=cspod-38 -> node=csnode-3 (2/18 resolved)
+2026/05/06 16:10:53 Parsed protobuf binding: pod=cspod-39 -> node=csnode-2
+2026/05/06 16:10:53 Binding: pod=cspod-39 -> node=csnode-2 (3/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-40 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (16/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (17/18 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (18/18 resolved)
+2026/05/06 16:10:53 Round complete: 3 scheduled, 15 failed in 355.101733ms
+2026/05/06 16:10:53 {"action":"HandleSchedule","durationMs":355,"podCount":18,"result":"ok","roundId":"18","scheduled":3,"ts":"2026-05-06T16:10:53.843750848+01:00","unschedulable":15}
+2026/05/06 16:10:53 {"action":"HandleSchedule","completedIds":1,"nodeCount":5,"phase":"start","podCount":15,"roundId":"19","ts":"2026-05-06T16:10:53.850057135+01:00"}
+2026/05/06 16:10:53 {"action":"HandleSchedule","phase":"prep_done","podsCreated":15,"prepMs":0,"roundId":"19","staleDeleted":0,"ts":"2026-05-06T16:10:53.850285946+01:00"}
+2026/05/06 16:10:53 Scheduling round started: expecting 15 decisions
+2026/05/06 16:10:53 Parsed protobuf binding: pod=cspod-40 -> node=csnode-3
+2026/05/06 16:10:53 Binding: pod=cspod-40 -> node=csnode-3 (1/15 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-41 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (2/15 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-42 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/15 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-43 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/15 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/15 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/15 resolved)
+2026/05/06 16:10:53 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/15 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/15 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/15 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/15 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/15 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/15 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/15 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/15 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (15/15 resolved)
+2026/05/06 16:10:54 Round complete: 1 scheduled, 14 failed in 293.308004ms
+2026/05/06 16:10:54 {"action":"HandleSchedule","durationMs":293,"podCount":15,"result":"ok","roundId":"19","scheduled":1,"ts":"2026-05-06T16:10:54.143781584+01:00","unschedulable":14}
+2026/05/06 16:10:54 {"action":"HandleSchedule","completedIds":3,"nodeCount":5,"phase":"start","podCount":14,"roundId":"20","ts":"2026-05-06T16:10:54.150487943+01:00"}
+2026/05/06 16:10:54 {"action":"HandleSchedule","phase":"prep_done","podsCreated":14,"prepMs":0,"roundId":"20","staleDeleted":0,"ts":"2026-05-06T16:10:54.15062423+01:00"}
+2026/05/06 16:10:54 Scheduling round started: expecting 14 decisions
+2026/05/06 16:10:54 Parsed protobuf binding: pod=cspod-41 -> node=csnode-2
+2026/05/06 16:10:54 Binding: pod=cspod-41 -> node=csnode-2 (1/14 resolved)
+2026/05/06 16:10:54 Parsed protobuf binding: pod=cspod-42 -> node=csnode-2
+2026/05/06 16:10:54 Binding: pod=cspod-42 -> node=csnode-2 (2/14 resolved)
+2026/05/06 16:10:54 Parsed protobuf binding: pod=cspod-43 -> node=csnode-3
+2026/05/06 16:10:54 Binding: pod=cspod-43 -> node=csnode-3 (3/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-44 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-45 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (12/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (13/14 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (14/14 resolved)
+2026/05/06 16:10:54 Round complete: 3 scheduled, 11 failed in 272.898802ms
+2026/05/06 16:10:54 {"action":"HandleSchedule","durationMs":273,"podCount":14,"result":"ok","roundId":"20","scheduled":3,"ts":"2026-05-06T16:10:54.423662974+01:00","unschedulable":11}
+2026/05/06 16:10:54 {"action":"HandleSchedule","completedIds":2,"nodeCount":5,"phase":"start","podCount":11,"roundId":"21","ts":"2026-05-06T16:10:54.429873998+01:00"}
+2026/05/06 16:10:54 {"action":"HandleSchedule","phase":"prep_done","podsCreated":11,"prepMs":0,"roundId":"21","staleDeleted":0,"ts":"2026-05-06T16:10:54.430241638+01:00"}
+2026/05/06 16:10:54 Scheduling round started: expecting 11 decisions
+2026/05/06 16:10:54 Parsed protobuf binding: pod=cspod-44 -> node=csnode-1
+2026/05/06 16:10:54 Binding: pod=cspod-44 -> node=csnode-1 (1/11 resolved)
+2026/05/06 16:10:54 Parsed protobuf binding: pod=cspod-45 -> node=csnode-0
+2026/05/06 16:10:54 Binding: pod=cspod-45 -> node=csnode-0 (2/11 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-46 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/11 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-47 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/11 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/11 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/11 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/11 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/11 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/11 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (10/11 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (11/11 resolved)
+2026/05/06 16:10:54 Round complete: 2 scheduled, 9 failed in 212.71444ms
+2026/05/06 16:10:54 {"action":"HandleSchedule","durationMs":214,"podCount":11,"result":"ok","roundId":"21","scheduled":2,"ts":"2026-05-06T16:10:54.643405014+01:00","unschedulable":9}
+2026/05/06 16:10:54 {"action":"HandleSchedule","completedIds":2,"nodeCount":5,"phase":"start","podCount":9,"roundId":"22","ts":"2026-05-06T16:10:54.648770707+01:00"}
+2026/05/06 16:10:54 {"action":"HandleSchedule","phase":"prep_done","podsCreated":9,"prepMs":0,"roundId":"22","staleDeleted":0,"ts":"2026-05-06T16:10:54.648886686+01:00"}
+2026/05/06 16:10:54 Scheduling round started: expecting 9 decisions
+2026/05/06 16:10:54 Parsed protobuf binding: pod=cspod-46 -> node=csnode-1
+2026/05/06 16:10:54 Binding: pod=cspod-46 -> node=csnode-1 (1/9 resolved)
+2026/05/06 16:10:54 Parsed protobuf binding: pod=cspod-47 -> node=csnode-0
+2026/05/06 16:10:54 Binding: pod=cspod-47 -> node=csnode-0 (2/9 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-48 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/9 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/9 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/9 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/9 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/9 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (8/9 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (9/9 resolved)
+2026/05/06 16:10:54 Round complete: 2 scheduled, 7 failed in 174.777805ms
+2026/05/06 16:10:54 {"action":"HandleSchedule","durationMs":175,"podCount":9,"result":"ok","roundId":"22","scheduled":2,"ts":"2026-05-06T16:10:54.823790031+01:00","unschedulable":7}
+2026/05/06 16:10:54 {"action":"HandleSchedule","completedIds":1,"nodeCount":5,"phase":"start","podCount":7,"roundId":"23","ts":"2026-05-06T16:10:54.82931064+01:00"}
+2026/05/06 16:10:54 {"action":"HandleSchedule","phase":"prep_done","podsCreated":7,"prepMs":0,"roundId":"23","staleDeleted":0,"ts":"2026-05-06T16:10:54.829509524+01:00"}
+2026/05/06 16:10:54 Scheduling round started: expecting 7 decisions
+2026/05/06 16:10:54 Parsed protobuf binding: pod=cspod-48 -> node=csnode-3
+2026/05/06 16:10:54 Binding: pod=cspod-48 -> node=csnode-3 (1/7 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-49 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (2/7 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-50 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (3/7 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-51 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (4/7 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-52 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/7 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/7 resolved)
+2026/05/06 16:10:54 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (7/7 resolved)
+2026/05/06 16:10:54 Round complete: 1 scheduled, 6 failed in 133.236813ms
+2026/05/06 16:10:54 {"action":"HandleSchedule","durationMs":133,"podCount":7,"result":"ok","roundId":"23","scheduled":1,"ts":"2026-05-06T16:10:54.962859286+01:00","unschedulable":6}
+2026/05/06 16:10:54 {"action":"HandleSchedule","completedIds":4,"nodeCount":5,"phase":"start","podCount":6,"roundId":"24","ts":"2026-05-06T16:10:54.968438906+01:00"}
+2026/05/06 16:10:54 {"action":"HandleSchedule","phase":"prep_done","podsCreated":6,"prepMs":0,"roundId":"24","staleDeleted":0,"ts":"2026-05-06T16:10:54.968544705+01:00"}
+2026/05/06 16:10:54 Scheduling round started: expecting 6 decisions
+2026/05/06 16:10:54 Parsed protobuf binding: pod=cspod-50 -> node=csnode-4
+2026/05/06 16:10:54 Binding: pod=cspod-50 -> node=csnode-4 (1/6 resolved)
+2026/05/06 16:10:55 Parsed protobuf binding: pod=cspod-49 -> node=csnode-4
+2026/05/06 16:10:55 Binding: pod=cspod-49 -> node=csnode-4 (2/6 resolved)
+2026/05/06 16:10:55 Parsed protobuf binding: pod=cspod-51 -> node=csnode-4
+2026/05/06 16:10:55 Binding: pod=cspod-51 -> node=csnode-4 (3/6 resolved)
+2026/05/06 16:10:55 Parsed protobuf binding: pod=cspod-52 -> node=csnode-4
+2026/05/06 16:10:55 Binding: pod=cspod-52 -> node=csnode-4 (4/6 resolved)
+2026/05/06 16:10:55 Failure: pod=cspod-53 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (5/6 resolved)
+2026/05/06 16:10:55 Failure: pod=cspod-54 reason="0/5 nodes are available: 5 Insufficient cpu. preemption: 0/5 nodes are available: 5 No preemption victims found for incoming pod." (6/6 resolved)
+2026/05/06 16:10:55 Round complete: 4 scheduled, 2 failed in 115.184344ms
+2026/05/06 16:10:55 {"action":"HandleSchedule","durationMs":115,"podCount":6,"result":"ok","roundId":"24","scheduled":4,"ts":"2026-05-06T16:10:55.083786238+01:00","unschedulable":2}
+2026/05/06 16:10:55 {"action":"HandleSchedule","completedIds":3,"nodeCount":5,"phase":"start","podCount":2,"roundId":"25","ts":"2026-05-06T16:10:55.089026889+01:00"}
+2026/05/06 16:10:55 {"action":"HandleSchedule","phase":"prep_done","podsCreated":2,"prepMs":0,"roundId":"25","staleDeleted":0,"ts":"2026-05-06T16:10:55.089128821+01:00"}
+2026/05/06 16:10:55 Scheduling round started: expecting 2 decisions
+2026/05/06 16:10:55 Parsed protobuf binding: pod=cspod-53 -> node=csnode-2
+2026/05/06 16:10:55 Binding: pod=cspod-53 -> node=csnode-2 (1/2 resolved)
+2026/05/06 16:10:55 Parsed protobuf binding: pod=cspod-54 -> node=csnode-2
+2026/05/06 16:10:55 Binding: pod=cspod-54 -> node=csnode-2 (2/2 resolved)
+2026/05/06 16:10:55 Round complete: 2 scheduled, 0 failed in 34.039546ms
+2026/05/06 16:10:55 {"action":"HandleSchedule","durationMs":34,"podCount":2,"result":"ok","roundId":"25","scheduled":2,"ts":"2026-05-06T16:10:55.123250986+01:00","unschedulable":0}
+2026/05/06 16:10:55 Scheduling round reset
+2026/05/06 16:10:55 {"action":"HandleReset","result":"ok","roundId":"25","ts":"2026-05-06T16:10:55.143961909+01:00"}

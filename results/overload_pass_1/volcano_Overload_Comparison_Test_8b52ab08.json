@@ -1,0 +1,11 @@
+{
+  "simulated_time_s": "868.01",
+  "wall_clock_ms": "47321",
+  "energy_wh": "451.34",
+  "consolidation_ratio": "2.057458669742422",
+  "effective_throughput_pods_per_s": "25.29405047390659",
+  "peak_throughput_pods_per_s": "13.682885085847952",
+  "cloudlets_completed": "70",
+  "high_priority_avg_turnaround_s": "253.37",
+  "batch_avg_turnaround_s": "501.09"
+}

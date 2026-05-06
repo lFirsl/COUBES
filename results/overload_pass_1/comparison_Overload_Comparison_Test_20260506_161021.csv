@@ -1,0 +1,10 @@
+metric,type,kube_scheduler,volcano,volcano_relative_score,note
+simulated_time_s,decision,772.01,868.01,0.8894,lower_is_better
+energy_wh,decision,453.02,451.34,1.0037,lower_is_better
+consolidation_ratio,decision,2.2717466493731266,2.057458669742422,0.9057,higher_is_better
+cloudlets_completed,decision,70,70,1.0000,higher_is_better
+hp_avg_turnaround_s,decision,355.61,253.37,1.4035,lower_is_better
+batch_avg_turnaround_s,decision,393.80,501.09,0.7859,lower_is_better
+wall_clock_ms,performance,16384,47321,0.3462,lower_is_better
+effective_throughput_pods_per_s,performance,96.57701711491443,25.29405047390659,0.2619,higher_is_better
+peak_throughput_pods_per_s,performance,77.60738575633816,13.682885085847952,0.1763,higher_is_better

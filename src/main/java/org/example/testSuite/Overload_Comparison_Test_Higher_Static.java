@@ -38,7 +38,7 @@ import java.util.*;
  *   - Volcano: proportion plugin guarantees batch access; gang plugin holds gangs atomically
  *   - kube-scheduler: greedy placement, batch starved, gang held by broker logic
  */
-public class Overload_Comparison_Test {
+public class Overload_Comparison_Test_Higher_Static {
 
     public static void main(String[] args) throws Exception {
         CloudSim.init(2, Calendar.getInstance(), false);
@@ -47,11 +47,11 @@ public class Overload_Comparison_Test {
         List<Host> hostList = new ArrayList<>();
         int[][] hostSpecs = {
             // {numPes, mips, maxWatts, staticPercent*100}
-            {4, 200, 300, 5},   // efficient-0
-            {4, 200, 300, 5},   // efficient-1
-            {4, 250, 500, 10},  // standard-0
-            {4, 250, 500, 10},  // standard-1
-            {8, 400, 800, 15},  // fast-0
+            {4, 200, 300, 30},   // efficient-0
+            {4, 200, 300, 30},   // efficient-1
+            {4, 250, 500, 30},  // standard-0
+            {4, 250, 500, 30},  // standard-1
+            {8, 400, 800, 30},  // fast-0
         };
 
         for (int i = 0; i < hostSpecs.length; i++) {
@@ -166,7 +166,7 @@ public class Overload_Comparison_Test {
 
         // === Results ===
         List<Cloudlet> results = broker.getCloudletReceivedList();
-        Log.printLine("========== Overload_Comparison_Test Results ==========");
+        Log.printLine("========== Overload_Comparison_Test_Higher_Static Results ==========");
 
         int succeeded = 0, failed = 0;
         for (Cloudlet cl : results) {
@@ -196,6 +196,6 @@ public class Overload_Comparison_Test {
         SimulationMetrics.printPerQueueMetrics(results, broker.getCloudletArrivalTimes());
 
         try { broker.sendResetRequestToControlPlane(); } catch (Exception ignored) {}
-        Log.printLine("\nOverload_Comparison_Test finished!");
+        Log.printLine("\nOverload_Comparison_Test_Higher_Static finished!");
     }
 }

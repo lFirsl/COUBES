@@ -108,7 +108,7 @@ public class Gang_Energy_Test {
         }
 
         Log.printLine("\n----- Energy Analysis -----");
-        metrics.printSummary(lastClock, broker.tpOverall());
+        metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
 
         try { broker.sendResetRequestToControlPlane(); } catch (Exception ignored) {}
         Log.printLine("\nGang_Energy_Test finished!");

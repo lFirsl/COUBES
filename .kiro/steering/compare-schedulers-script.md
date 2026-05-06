@@ -42,8 +42,17 @@ Intermediate logs: `/tmp/coubes-sim-kube-scheduler.log`, `/tmp/coubes-sim-volcan
 | `energy_wh` | Decision (SDS) | Lower is better |
 | `consolidation_ratio` | Decision (SDS) | Higher is better |
 | `cloudlets_completed` | Decision (SDS) | Higher is better |
+| `hp_avg_turnaround_s` | Decision (SDS) | Lower is better |
+| `batch_avg_turnaround_s` | Decision (SDS) | Lower is better |
 | `wall_clock_ms` | Performance (SPS) | Lower is better |
-| `throughput_pods_per_s` | Performance (SPS) | Higher is better |
+| `effective_throughput_pods_per_s` | Performance (SPS) | Higher is better |
+| `peak_throughput_pods_per_s` | Performance (SPS) | Higher is better |
+
+- **Effective throughput**: total pods / total scheduling time across all rounds. Reflects real-world throughput including per-round overhead on small batches.
+- **Peak throughput**: 1000 / average per-pod latency (each batch weighted equally). Represents scheduler capacity under saturation — "how many pods/sec with infinite supply?"
+
+HP and batch turnaround are only present when the test uses multi-queue (classType 1/2).
+They show `N/A` for tests that don't set classType.
 
 ---
 

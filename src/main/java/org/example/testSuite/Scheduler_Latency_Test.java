@@ -63,7 +63,7 @@ public class Scheduler_Latency_Test {
                 System.out.println("WARNING: Expected 120 cloudlets but got " + results.size());
             }
 
-            simMetrics.printSummary(lastClock, broker.tpOverall());
+            simMetrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
             broker.sendResetRequestToControlPlane();
             Log.println("Scheduler_Latency_Test finished!");
 

@@ -1,0 +1,356 @@
+2026/05/06 16:32:02 Running command:
+Command env: (log-file=, also-stdout=false, redirect-stderr=true)
+Run from directory: 
+Executable path: /usr/local/bin/kube-scheduler
+Args (comma-delimited): kube-scheduler,--config=/etc/kube-scheduler/my-scheduler.yaml,--secure-port=10260,--v=2
+2026/05/06 16:32:02 Now listening for interrupts
+I0506 16:32:02.988683      12 flags.go:64] FLAG: --allow-metric-labels="[]"
+I0506 16:32:02.988726      12 flags.go:64] FLAG: --allow-metric-labels-manifest=""
+I0506 16:32:02.988732      12 flags.go:64] FLAG: --authentication-kubeconfig=""
+I0506 16:32:02.988733      12 flags.go:64] FLAG: --authentication-skip-lookup="false"
+I0506 16:32:02.988735      12 flags.go:64] FLAG: --authentication-token-webhook-cache-ttl="10s"
+I0506 16:32:02.988738      12 flags.go:64] FLAG: --authentication-tolerate-lookup-failure="true"
+I0506 16:32:02.988739      12 flags.go:64] FLAG: --authorization-always-allow-paths="[/healthz,/readyz,/livez]"
+I0506 16:32:02.988743      12 flags.go:64] FLAG: --authorization-kubeconfig=""
+I0506 16:32:02.988744      12 flags.go:64] FLAG: --authorization-webhook-cache-authorized-ttl="10s"
+I0506 16:32:02.988745      12 flags.go:64] FLAG: --authorization-webhook-cache-unauthorized-ttl="10s"
+I0506 16:32:02.988746      12 flags.go:64] FLAG: --bind-address="0.0.0.0"
+I0506 16:32:02.988748      12 flags.go:64] FLAG: --cert-dir=""
+I0506 16:32:02.988749      12 flags.go:64] FLAG: --client-ca-file=""
+I0506 16:32:02.988750      12 flags.go:64] FLAG: --config="/etc/kube-scheduler/my-scheduler.yaml"
+I0506 16:32:02.988751      12 flags.go:64] FLAG: --contention-profiling="true"
+I0506 16:32:02.988752      12 flags.go:64] FLAG: --disable-http2-serving="false"
+I0506 16:32:02.988752      12 flags.go:64] FLAG: --disabled-metrics="[]"
+I0506 16:32:02.988754      12 flags.go:64] FLAG: --emulated-version="[]"
+I0506 16:32:02.988755      12 flags.go:64] FLAG: --feature-gates=""
+I0506 16:32:02.988757      12 flags.go:64] FLAG: --help="false"
+I0506 16:32:02.988759      12 flags.go:64] FLAG: --http2-max-streams-per-connection="0"
+I0506 16:32:02.988760      12 flags.go:64] FLAG: --kube-api-burst="100"
+I0506 16:32:02.988763      12 flags.go:64] FLAG: --kube-api-content-type="application/vnd.kubernetes.protobuf"
+I0506 16:32:02.988764      12 flags.go:64] FLAG: --kube-api-qps="50"
+I0506 16:32:02.988766      12 flags.go:64] FLAG: --kubeconfig=""
+I0506 16:32:02.988767      12 flags.go:64] FLAG: --leader-elect="true"
+I0506 16:32:02.988768      12 flags.go:64] FLAG: --leader-elect-lease-duration="15s"
+I0506 16:32:02.988778      12 flags.go:64] FLAG: --leader-elect-renew-deadline="10s"
+I0506 16:32:02.988779      12 flags.go:64] FLAG: --leader-elect-resource-lock="leases"
+I0506 16:32:02.988780      12 flags.go:64] FLAG: --leader-elect-resource-name="kube-scheduler"
+I0506 16:32:02.988781      12 flags.go:64] FLAG: --leader-elect-resource-namespace="kube-system"
+I0506 16:32:02.988782      12 flags.go:64] FLAG: --leader-elect-retry-period="2s"
+I0506 16:32:02.988783      12 flags.go:64] FLAG: --log-flush-frequency="5s"
+I0506 16:32:02.988784      12 flags.go:64] FLAG: --log-json-info-buffer-size="0"
+I0506 16:32:02.988789      12 flags.go:64] FLAG: --log-json-split-stream="false"
+I0506 16:32:02.988790      12 flags.go:64] FLAG: --log-text-info-buffer-size="0"
+I0506 16:32:02.988791      12 flags.go:64] FLAG: --log-text-split-stream="false"
+I0506 16:32:02.988792      12 flags.go:64] FLAG: --logging-format="text"
+I0506 16:32:02.988793      12 flags.go:64] FLAG: --master=""
+I0506 16:32:02.988793      12 flags.go:64] FLAG: --permit-address-sharing="false"
+I0506 16:32:02.988794      12 flags.go:64] FLAG: --permit-port-sharing="false"
+I0506 16:32:02.988795      12 flags.go:64] FLAG: --pod-max-in-unschedulable-pods-duration="5m0s"
+I0506 16:32:02.988796      12 flags.go:64] FLAG: --profiling="true"
+I0506 16:32:02.988797      12 flags.go:64] FLAG: --requestheader-allowed-names="[]"
+I0506 16:32:02.988799      12 flags.go:64] FLAG: --requestheader-client-ca-file=""
+I0506 16:32:02.988800      12 flags.go:64] FLAG: --requestheader-extra-headers-prefix="[x-remote-extra-]"
+I0506 16:32:02.988803      12 flags.go:64] FLAG: --requestheader-group-headers="[x-remote-group]"
+I0506 16:32:02.988807      12 flags.go:64] FLAG: --requestheader-uid-headers="[]"
+I0506 16:32:02.988808      12 flags.go:64] FLAG: --requestheader-username-headers="[x-remote-user]"
+I0506 16:32:02.988810      12 flags.go:64] FLAG: --secure-port="10260"
+I0506 16:32:02.988811      12 flags.go:64] FLAG: --show-hidden-metrics-for-version=""
+I0506 16:32:02.988812      12 flags.go:64] FLAG: --tls-cert-file=""
+I0506 16:32:02.988813      12 flags.go:64] FLAG: --tls-cipher-suites="[]"
+I0506 16:32:02.988815      12 flags.go:64] FLAG: --tls-min-version=""
+I0506 16:32:02.988816      12 flags.go:64] FLAG: --tls-private-key-file=""
+I0506 16:32:02.988817      12 flags.go:64] FLAG: --tls-sni-cert-key="[]"
+I0506 16:32:02.988819      12 flags.go:64] FLAG: --v="2"
+I0506 16:32:02.988820      12 flags.go:64] FLAG: --version="false"
+I0506 16:32:02.988822      12 flags.go:64] FLAG: --vmodule=""
+I0506 16:32:02.988824      12 flags.go:64] FLAG: --write-config-to=""
+I0506 16:32:03.131434      12 serving.go:386] Generated self-signed cert in-memory
+W0506 16:32:03.373983      12 authentication.go:368] No authentication-kubeconfig provided in order to lookup client-ca-file in configmap/extension-apiserver-authentication in kube-system, so client certificate authentication won't work.
+W0506 16:32:03.374015      12 authentication.go:392] No authentication-kubeconfig provided in order to lookup requestheader-client-ca-file in configmap/extension-apiserver-authentication in kube-system, so request-header client certificate authentication won't work.
+W0506 16:32:03.374025      12 authorization.go:193] No authorization-kubeconfig provided, so SubjectAccessReview of authorization tokens won't work.
+I0506 16:32:03.376679      12 framework.go:399] "the scheduler starts to work with those plugins" Plugins={"PreEnqueue":{"Enabled":[{"Name":"SchedulingGates","Weight":0},{"Name":"DefaultPreemption","Weight":0}],"Disabled":null},"QueueSort":{"Enabled":[{"Name":"PrioritySort","Weight":0}],"Disabled":null},"PreFilter":{"Enabled":[{"Name":"NodeAffinity","Weight":0},{"Name":"NodePorts","Weight":0},{"Name":"NodeResourcesFit","Weight":0},{"Name":"VolumeRestrictions","Weight":0},{"Name":"NodeVolumeLimits","Weight":0},{"Name":"VolumeBinding","Weight":0},{"Name":"VolumeZone","Weight":0},{"Name":"PodTopologySpread","Weight":0},{"Name":"InterPodAffinity","Weight":0}],"Disabled":null},"Filter":{"Enabled":[{"Name":"NodeUnschedulable","Weight":0},{"Name":"NodeName","Weight":0},{"Name":"TaintToleration","Weight":0},{"Name":"NodeAffinity","Weight":0},{"Name":"NodePorts","Weight":0},{"Name":"NodeResourcesFit","Weight":0},{"Name":"VolumeRestrictions","Weight":0},{"Name":"NodeVolumeLimits","Weight":0},{"Name":"VolumeBinding","Weight":0},{"Name":"VolumeZone","Weight":0},{"Name":"PodTopologySpread","Weight":0},{"Name":"InterPodAffinity","Weight":0}],"Disabled":null},"PostFilter":{"Enabled":[{"Name":"DefaultPreemption","Weight":0}],"Disabled":null},"PreScore":{"Enabled":[{"Name":"TaintToleration","Weight":0},{"Name":"NodeAffinity","Weight":0},{"Name":"NodeResourcesFit","Weight":0},{"Name":"VolumeBinding","Weight":0},{"Name":"PodTopologySpread","Weight":0},{"Name":"InterPodAffinity","Weight":0},{"Name":"NodeResourcesBalancedAllocation","Weight":0}],"Disabled":null},"Score":{"Enabled":[{"Name":"NodeResourcesFit","Weight":1}],"Disabled":null},"Reserve":{"Enabled":[{"Name":"VolumeBinding","Weight":0}],"Disabled":null},"Permit":{"Enabled":null,"Disabled":null},"PreBind":{"Enabled":[{"Name":"VolumeBinding","Weight":0}],"Disabled":null},"Bind":{"Enabled":[{"Name":"DefaultBinder","Weight":0}],"Disabled":null},"PostBind":{"Enabled":null,"Disabled":null},"MultiPoint":{"Enabled":null,"Disabled":null}}
+I0506 16:32:03.376852      12 framework.go:399] "the scheduler starts to work with those plugins" Plugins={"PreEnqueue":{"Enabled":[{"Name":"SchedulingGates","Weight":0},{"Name":"DefaultPreemption","Weight":0}],"Disabled":null},"QueueSort":{"Enabled":[{"Name":"PrioritySort","Weight":0}],"Disabled":null},"PreFilter":{"Enabled":[{"Name":"NodeAffinity","Weight":0},{"Name":"NodePorts","Weight":0},{"Name":"NodeResourcesFit","Weight":0},{"Name":"VolumeRestrictions","Weight":0},{"Name":"NodeVolumeLimits","Weight":0},{"Name":"VolumeBinding","Weight":0},{"Name":"VolumeZone","Weight":0},{"Name":"PodTopologySpread","Weight":0},{"Name":"InterPodAffinity","Weight":0}],"Disabled":null},"Filter":{"Enabled":[{"Name":"NodeUnschedulable","Weight":0},{"Name":"NodeName","Weight":0},{"Name":"TaintToleration","Weight":0},{"Name":"NodeAffinity","Weight":0},{"Name":"NodePorts","Weight":0},{"Name":"NodeResourcesFit","Weight":0},{"Name":"VolumeRestrictions","Weight":0},{"Name":"NodeVolumeLimits","Weight":0},{"Name":"VolumeBinding","Weight":0},{"Name":"VolumeZone","Weight":0},{"Name":"PodTopologySpread","Weight":0},{"Name":"InterPodAffinity","Weight":0}],"Disabled":null},"PostFilter":{"Enabled":[{"Name":"DefaultPreemption","Weight":0}],"Disabled":null},"PreScore":{"Enabled":[{"Name":"TaintToleration","Weight":0},{"Name":"NodeAffinity","Weight":0},{"Name":"NodeResourcesFit","Weight":0},{"Name":"VolumeBinding","Weight":0},{"Name":"PodTopologySpread","Weight":0},{"Name":"InterPodAffinity","Weight":0},{"Name":"NodeResourcesBalancedAllocation","Weight":0}],"Disabled":null},"Score":{"Enabled":[{"Name":"NodeResourcesFit","Weight":1}],"Disabled":null},"Reserve":{"Enabled":[{"Name":"VolumeBinding","Weight":0}],"Disabled":null},"Permit":{"Enabled":null,"Disabled":null},"PreBind":{"Enabled":[{"Name":"VolumeBinding","Weight":0}],"Disabled":null},"Bind":{"Enabled":[{"Name":"DefaultBinder","Weight":0}],"Disabled":null},"PostBind":{"Enabled":null,"Disabled":null},"MultiPoint":{"Enabled":null,"Disabled":null}}
+I0506 16:32:03.378074      12 configfile.go:94] "Using component config" config=<
+	apiVersion: kubescheduler.config.k8s.io/v1
+	clientConnection:
+	  acceptContentTypes: ""
+	  burst: 100
+	  contentType: application/vnd.kubernetes.protobuf
+	  kubeconfig: /etc/kube-scheduler/kubeconfig.yaml
+	  qps: 50
+	enableContentionProfiling: true
+	enableProfiling: true
+	kind: KubeSchedulerConfiguration
+	leaderElection:
+	  leaderElect: false
+	  leaseDuration: 15s
+	  renewDeadline: 10s
+	  resourceLock: leases
+	  resourceName: kube-scheduler
+	  resourceNamespace: kube-system
+	  retryPeriod: 2s
+	parallelism: 16
+	percentageOfNodesToScore: 0
+	podInitialBackoffSeconds: 1
+	podMaxBackoffSeconds: 10
+	profiles:
+	- pluginConfig:
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      kind: DefaultPreemptionArgs
+	      minCandidateNodesAbsolute: 100
+	      minCandidateNodesPercentage: 10
+	    name: DefaultPreemption
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      hardPodAffinityWeight: 1
+	      ignorePreferredTermsOfExistingPods: false
+	      kind: InterPodAffinityArgs
+	    name: InterPodAffinity
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      kind: NodeAffinityArgs
+	    name: NodeAffinity
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      kind: NodeResourcesBalancedAllocationArgs
+	      resources:
+	      - name: cpu
+	        weight: 1
+	      - name: memory
+	        weight: 1
+	    name: NodeResourcesBalancedAllocation
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      kind: NodeResourcesFitArgs
+	      scoringStrategy:
+	        resources:
+	        - name: cpu
+	          weight: 1
+	        - name: memory
+	          weight: 1
+	        type: LeastAllocated
+	    name: NodeResourcesFit
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      defaultingType: System
+	      kind: PodTopologySpreadArgs
+	    name: PodTopologySpread
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      bindTimeoutSeconds: 600
+	      kind: VolumeBindingArgs
+	    name: VolumeBinding
+	  plugins:
+	    bind: {}
+	    filter: {}
+	    multiPoint:
+	      enabled:
+	      - name: SchedulingGates
+	        weight: 0
+	      - name: PrioritySort
+	        weight: 0
+	      - name: NodeUnschedulable
+	        weight: 0
+	      - name: NodeName
+	        weight: 0
+	      - name: TaintToleration
+	        weight: 3
+	      - name: NodeAffinity
+	        weight: 2
+	      - name: NodePorts
+	        weight: 0
+	      - name: NodeResourcesFit
+	        weight: 1
+	      - name: VolumeRestrictions
+	        weight: 0
+	      - name: NodeVolumeLimits
+	        weight: 0
+	      - name: VolumeBinding
+	        weight: 0
+	      - name: VolumeZone
+	        weight: 0
+	      - name: PodTopologySpread
+	        weight: 2
+	      - name: InterPodAffinity
+	        weight: 2
+	      - name: DefaultPreemption
+	        weight: 0
+	      - name: NodeResourcesBalancedAllocation
+	        weight: 1
+	      - name: ImageLocality
+	        weight: 1
+	      - name: DefaultBinder
+	        weight: 0
+	    permit: {}
+	    postBind: {}
+	    postFilter: {}
+	    preBind: {}
+	    preEnqueue: {}
+	    preFilter: {}
+	    preScore: {}
+	    queueSort: {}
+	    reserve: {}
+	    score:
+	      disabled:
+	      - name: '*'
+	        weight: 0
+	      enabled:
+	      - name: NodeResourcesFit
+	        weight: 0
+	  schedulerName: default-scheduler
+	- pluginConfig:
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      kind: DefaultPreemptionArgs
+	      minCandidateNodesAbsolute: 100
+	      minCandidateNodesPercentage: 10
+	    name: DefaultPreemption
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      hardPodAffinityWeight: 1
+	      ignorePreferredTermsOfExistingPods: false
+	      kind: InterPodAffinityArgs
+	    name: InterPodAffinity
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      kind: NodeAffinityArgs
+	    name: NodeAffinity
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      kind: NodeResourcesBalancedAllocationArgs
+	      resources:
+	      - name: cpu
+	        weight: 1
+	      - name: memory
+	        weight: 1
+	    name: NodeResourcesBalancedAllocation
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      kind: NodeResourcesFitArgs
+	      scoringStrategy:
+	        resources:
+	        - name: cpu
+	          weight: 1
+	        - name: memory
+	          weight: 1
+	        type: MostAllocated
+	    name: NodeResourcesFit
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      defaultingType: System
+	      kind: PodTopologySpreadArgs
+	    name: PodTopologySpread
+	  - args:
+	      apiVersion: kubescheduler.config.k8s.io/v1
+	      bindTimeoutSeconds: 600
+	      kind: VolumeBindingArgs
+	    name: VolumeBinding
+	  plugins:
+	    bind: {}
+	    filter: {}
+	    multiPoint:
+	      enabled:
+	      - name: SchedulingGates
+	        weight: 0
+	      - name: PrioritySort
+	        weight: 0
+	      - name: NodeUnschedulable
+	        weight: 0
+	      - name: NodeName
+	        weight: 0
+	      - name: TaintToleration
+	        weight: 3
+	      - name: NodeAffinity
+	        weight: 2
+	      - name: NodePorts
+	        weight: 0
+	      - name: NodeResourcesFit
+	        weight: 1
+	      - name: VolumeRestrictions
+	        weight: 0
+	      - name: NodeVolumeLimits
+	        weight: 0
+	      - name: VolumeBinding
+	        weight: 0
+	      - name: VolumeZone
+	        weight: 0
+	      - name: PodTopologySpread
+	        weight: 2
+	      - name: InterPodAffinity
+	        weight: 2
+	      - name: DefaultPreemption
+	        weight: 0
+	      - name: NodeResourcesBalancedAllocation
+	        weight: 1
+	      - name: ImageLocality
+	        weight: 1
+	      - name: DefaultBinder
+	        weight: 0
+	    permit: {}
+	    postBind: {}
+	    postFilter: {}
+	    preBind: {}
+	    preEnqueue: {}
+	    preFilter: {}
+	    preScore: {}
+	    queueSort: {}
+	    reserve: {}
+	    score:
+	      disabled:
+	      - name: '*'
+	        weight: 0
+	      enabled:
+	      - name: NodeResourcesFit
+	        weight: 0
+	  schedulerName: my-scheduler
+ >
+I0506 16:32:03.378601      12 server.go:171] "Starting Kubernetes Scheduler" version="v1.33.0"
+I0506 16:32:03.378630      12 server.go:173] "Golang settings" GOGC="" GOMAXPROCS="" GOTRACEBACK=""
+I0506 16:32:03.379722      12 tlsconfig.go:203] "Loaded serving cert" certName="Generated self signed cert" certDetail="\"localhost@1778085123\" [serving] validServingFor=[127.0.0.1,localhost,localhost] issuer=\"localhost-ca@1778085123\" (2026-05-06 15:32:02 +0000 UTC to 2027-05-06 15:32:02 +0000 UTC (now=2026-05-06 16:32:03.379708229 +0000 UTC))"
+I0506 16:32:03.379825      12 named_certificates.go:53] "Loaded SNI cert" index=0 certName="self-signed loopback" certDetail="\"apiserver-loopback-client@1778085123\" [serving] validServingFor=[apiserver-loopback-client] issuer=\"apiserver-loopback-client-ca@1778085123\" (2026-05-06 15:32:03 +0000 UTC to 2029-05-06 15:32:03 +0000 UTC (now=2026-05-06 16:32:03.379814192 +0000 UTC))"
+I0506 16:32:03.379869      12 secure_serving.go:211] Serving securely on [::]:10260
+I0506 16:32:03.380609      12 tlsconfig.go:243] "Starting DynamicServingCertificateController"
+I0506 16:32:03.382073      12 reflector.go:430] "Caches populated" type="*v1.PodDisruptionBudget" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.382394      12 reflector.go:430] "Caches populated" type="*v1.CSIDriver" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.382402      12 reflector.go:430] "Caches populated" type="*v1.StorageClass" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.382451      12 reflector.go:430] "Caches populated" type="*v1.PersistentVolume" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.382468      12 reflector.go:430] "Caches populated" type="*v1.Namespace" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.382443      12 reflector.go:430] "Caches populated" type="*v1.PersistentVolumeClaim" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.382552      12 reflector.go:430] "Caches populated" type="*v1.VolumeAttachment" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.382634      12 reflector.go:430] "Caches populated" type="*v1.CSINode" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.383067      12 reflector.go:430] "Caches populated" type="*v1.StatefulSet" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.383387      12 reflector.go:430] "Caches populated" type="*v1.Service" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.383439      12 reflector.go:430] "Caches populated" type="*v1.CSIStorageCapacity" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.383455      12 reflector.go:430] "Caches populated" type="*v1.ReplicaSet" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.383490      12 reflector.go:430] "Caches populated" type="*v1.ReplicationController" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.384132      12 reflector.go:430] "Caches populated" type="*v1.Node" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:03.384522      12 reflector.go:430] "Caches populated" type="*v1.Pod" reflector="k8s.io/client-go/informers/factory.go:160"
+I0506 16:32:10.426077      12 node_tree.go:65] "Added node to NodeTree" node="csnode-1" zone=""
+I0506 16:32:10.426143      12 node_tree.go:65] "Added node to NodeTree" node="csnode-2" zone=""
+I0506 16:32:10.426182      12 node_tree.go:65] "Added node to NodeTree" node="csnode-0" zone=""
+I0506 16:32:10.455879      12 preemption.go:264] "No preemption candidate is found; preemption is not helpful for scheduling" pod="default/cspod-6"
+I0506 16:32:10.455944      12 schedule_one.go:1044] "Unable to schedule pod; no fit; waiting" pod="default/cspod-6" err="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod."
+I0506 16:32:10.458804      12 schedule_one.go:314] "Successfully bound pod to node" pod="default/cspod-0" node="csnode-1" evaluatedNodes=3 feasibleNodes=3
+I0506 16:32:10.458804      12 schedule_one.go:314] "Successfully bound pod to node" pod="default/cspod-4" node="csnode-0" evaluatedNodes=3 feasibleNodes=2
+I0506 16:32:10.458988      12 schedule_one.go:314] "Successfully bound pod to node" pod="default/cspod-2" node="csnode-0" evaluatedNodes=3 feasibleNodes=3
+I0506 16:32:10.459049      12 schedule_one.go:314] "Successfully bound pod to node" pod="default/cspod-3" node="csnode-1" evaluatedNodes=3 feasibleNodes=3
+I0506 16:32:10.458928      12 schedule_one.go:314] "Successfully bound pod to node" pod="default/cspod-5" node="csnode-2" evaluatedNodes=3 feasibleNodes=1
+I0506 16:32:10.459136      12 schedule_one.go:314] "Successfully bound pod to node" pod="default/cspod-1" node="csnode-2" evaluatedNodes=3 feasibleNodes=3
+E0506 16:32:10.459046      12 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/vnd.kubernetes.protobuf" event="&Event{ObjectMeta:{cspod-6.18ad0701653b7fae  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-6,UID:cspod-6-uid,APIVersion:v1,ResourceVersion:10,FieldPath:,},Reason:FailedScheduling,Message:0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod.,Source:EventSource{Component:default-scheduler,Host:,},FirstTimestamp:2026-05-06 16:32:10.455973806 +0000 UTC m=+7.496741996,LastTimestamp:2026-05-06 16:32:10.455973806 +0000 UTC m=+7.496741996,Count:1,Type:Warning,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:default-scheduler,ReportingInstance:,}"
+I0506 16:32:10.459555      12 preemption.go:264] "No preemption candidate is found; preemption is not helpful for scheduling" pod="default/cspod-7"
+I0506 16:32:10.459592      12 schedule_one.go:1044] "Unable to schedule pod; no fit; waiting" pod="default/cspod-7" err="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod."
+I0506 16:32:10.460186      12 preemption.go:264] "No preemption candidate is found; preemption is not helpful for scheduling" pod="default/cspod-8"
+I0506 16:32:10.460223      12 schedule_one.go:1044] "Unable to schedule pod; no fit; waiting" pod="default/cspod-8" err="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod."
+I0506 16:32:10.460749      12 preemption.go:264] "No preemption candidate is found; preemption is not helpful for scheduling" pod="default/cspod-9"
+I0506 16:32:10.460788      12 schedule_one.go:1044] "Unable to schedule pod; no fit; waiting" pod="default/cspod-9" err="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod."
+I0506 16:32:10.461521      12 preemption.go:264] "No preemption candidate is found; preemption is not helpful for scheduling" pod="default/cspod-10"
+I0506 16:32:10.461590      12 schedule_one.go:1044] "Unable to schedule pod; no fit; waiting" pod="default/cspod-10" err="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod."
+I0506 16:32:10.462356      12 preemption.go:264] "No preemption candidate is found; preemption is not helpful for scheduling" pod="default/cspod-11"
+I0506 16:32:10.462395      12 schedule_one.go:1044] "Unable to schedule pod; no fit; waiting" pod="default/cspod-11" err="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod."
+I0506 16:32:10.500914      12 node_tree.go:79] "Removed node from NodeTree" node="csnode-0" zone=""
+I0506 16:32:10.500956      12 node_tree.go:79] "Removed node from NodeTree" node="csnode-1" zone=""
+I0506 16:32:10.500969      12 node_tree.go:79] "Removed node from NodeTree" node="csnode-2" zone=""
+I0506 16:32:10.501055      12 schedule_one.go:1040] "Unable to schedule pod; no nodes are registered to the cluster; waiting" pod="default/cspod-7"
+I0506 16:32:10.501097      12 schedule_one.go:1053] "Pod doesn't exist in informer cache" pod="default/cspod-7" err="pod \"cspod-7\" not found"
+E0506 16:32:10.501893      12 schedule_one.go:1095] "Error updating pod" err="the server could not find the requested resource (patch pods cspod-7)" pod="default/cspod-7"

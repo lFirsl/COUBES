@@ -72,7 +72,8 @@ public class Queue_Priority_Test {
 
             List<Cloudlet> completed = broker.getCloudletReceivedList();
             printCloudletList(completed);
-            metrics.printSummary(lastClock, broker.tpOverall());
+            metrics.setCompletedCloudlets(completed, null);
+            metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
             SimulationMetrics.printPerQueueMetrics(completed);
 
             broker.sendResetRequestToControlPlane();

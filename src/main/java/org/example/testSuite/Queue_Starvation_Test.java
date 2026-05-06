@@ -128,7 +128,8 @@ public class Queue_Starvation_Test {
         Log.printlnConcat("Batch:         ", batchCount, " completed, avg wait = ",
                 String.format("%.1f", batchCount > 0 ? batchWaitSum / batchCount : 0), "s");
 
-        metrics.printSummary(lastClock, broker.tpOverall());
+        metrics.setCompletedCloudlets(results, broker.getCloudletArrivalTimes());
+        metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
         SimulationMetrics.printPerQueueMetrics(results, broker.getCloudletArrivalTimes());
 
         try { broker.sendResetRequestToControlPlane(); } catch (Exception ignored) {}

@@ -79,7 +79,7 @@ public class Heterogeneous_Node_Test {
             }
 
             printCloudletList(results);
-            metrics.printSummary(lastClock, broker.tpOverall());
+            metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
             broker.sendResetRequestToControlPlane();
             Log.println("Heterogeneous_Node_Test finished!");
 

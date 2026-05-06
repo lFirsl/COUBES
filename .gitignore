@@ -51,3 +51,7 @@ COUBES.7z
 
 # Debug logs from run_test.sh
 debug/
+
+# Results: ignore loose files (CSVs, JSONs) but keep analysis subfolders
+results/*.csv
+results/*.json

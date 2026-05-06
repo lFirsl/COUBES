@@ -113,7 +113,7 @@ public class Scheduler_Scalability_Test {
         }
 
         printCloudletList(results);
-        simMetrics.printSummary(lastClock, broker.tpOverall());
+        simMetrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
         broker.sendResetRequestToControlPlane();
 
         return perf;

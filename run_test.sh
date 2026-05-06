@@ -289,6 +289,10 @@ while [[ $# -gt 0 && "$1" == --* ]]; do
             HANG_TIMEOUT=60  # Volcano's scheduling round timeout is 30s; need margin for rescheduling
             shift
             ;;
+        --run-id=*)
+            RUN_ID="${1#--run-id=}"
+            shift
+            ;;
         --help)
             show_help
             ;;
@@ -320,6 +324,27 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Rename output files using run ID if provided
+rename_outputs() {
+    if [[ -z "${RUN_ID:-}" ]]; then return 0; fi
+    # Determine scheduler label
+    local sched_label
+    case "$ADAPTER_FLAGS" in
+        *volcano*) sched_label="volcano" ;;
+        *test-mode*) sched_label="test-mode" ;;
+        *) sched_label="kube-scheduler" ;;
+    esac
+    local base="${sched_label}_${LOG_SHORT}_${RUN_ID}"
+    # Rename JSON results
+    if [[ -f results/latest_run.json ]]; then
+        cp results/latest_run.json "results/${base}.json"
+    fi
+    # Rename logs
+    cp "$SIM_LOG" "debug/${base}_sim.log" 2>/dev/null || true
+    cp "$ADAPTER_LOG" "debug/${base}_adapter.log" 2>/dev/null || true
+    [[ $TEST_MODE -eq 0 ]] && cp "$SCHEDULER_LOG" "debug/${base}_scheduler.log" 2>/dev/null || true
+}
+
 check_prereqs
 if [[ $KEEP_INFRA -eq 0 ]]; then
     kill_stale_processes
@@ -333,6 +358,7 @@ run_sim "$TEST_CLASS" && RC=0 || RC=$?
 if [[ $RC -eq 0 ]]; then
     echo "✓ Test passed."
     show_results
+    rename_outputs
     exit 0
 elif [[ $RC -eq 2 ]]; then
     # Hung — recover and retry once
@@ -343,6 +369,7 @@ elif [[ $RC -eq 2 ]]; then
     if [[ $RC -eq 0 ]]; then
         echo "✓ Test passed (after recovery)."
         show_results
+        rename_outputs
         exit 0
     else
         echo "FAIL: Test failed after recovery." >&2

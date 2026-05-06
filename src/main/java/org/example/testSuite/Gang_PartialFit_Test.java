@@ -101,7 +101,7 @@ public class Gang_PartialFit_Test {
                     "    ", String.format("%.1f", cl.getFinishTime()));
         }
 
-        metrics.printSummary(lastClock, broker.tpOverall());
+        metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
 
         // Gang atomicity check
         double gangStart = results.stream()

@@ -97,7 +97,7 @@ public class Fragmentation_Test_5Wave {
             }
 
             printCloudletList(results);
-            metrics.printSummary(lastClock, broker.tpOverall());
+            metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
             broker.sendResetRequestToControlPlane();
             Log.println("Fragmentation_Test_5Wave finished!");
         } catch (Exception e) {

@@ -66,7 +66,7 @@ public class Empty_Wave_Test {
             }
 
             printCloudletList(results);
-            metrics.printSummary(lastClock, broker.tpOverall());
+            metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
             broker.sendResetRequestToControlPlane();
             Log.println("Empty_Wave_Test finished!");
 

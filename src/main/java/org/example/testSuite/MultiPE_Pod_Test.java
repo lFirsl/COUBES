@@ -60,7 +60,7 @@ public class MultiPE_Pod_Test {
             }
 
             printCloudletList(results);
-            metrics.printSummary(lastClock, broker.tpOverall());
+            metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
             broker.sendResetRequestToControlPlane();
             Log.println("MultiPE_Pod_Test finished!");
 

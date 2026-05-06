@@ -36,26 +36,30 @@ else
 fi
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+RUN_ID=$(head -c4 /dev/urandom | xxd -p)
 mkdir -p results
 OUTPUT_CSV="results/comparison_${TEST_SHORT}_${TIMESTAMP}.csv"
 PRETTY_CSV="results/comparison_${TEST_SHORT}_${TIMESTAMP}_pretty.csv"
 
-# ── parse metrics from sim log ────────────────────────────────────────────────
+# ── parse metrics from JSON results file ──────────────────────────────────────
 
 parse_metric() {
-    local pattern="$1"
-    local log="$2"
-    grep -oP "(?<=${pattern})[0-9]+(\.[0-9]+)?" "$log" | head -1
+    local key="$1"
+    local file="$2"
+    grep "\"${key}\"" "$file" | grep -oP '(?<=": ")[^"]+' | head -1
 }
 
 extract_metrics() {
-    local log="$1"
-    SIM_TIME=$(parse_metric "Simulated Time Elapsed: " "$log")
-    WALL_MS=$(parse_metric "Wall-clock Time Elapsed: " "$log")
-    ENERGY=$(parse_metric "Energy consumption: " "$log")
-    CONSOLIDATION=$(parse_metric "Time-weighted avg consolidation: " "$log")
-    THROUGHPUT=$(grep "Throughput:" "$log" | grep -oP "[0-9]+(\.[0-9]+)?" | head -1)
-    CLOUDLETS_COMPLETED=$(grep -oP "(?<=WARNING: Expected 20 cloudlets to complete but only received )[0-9]+" "$log" || echo "20")
+    local json="$1"
+    SIM_TIME=$(parse_metric "simulated_time_s" "$json")
+    WALL_MS=$(parse_metric "wall_clock_ms" "$json")
+    ENERGY=$(parse_metric "energy_wh" "$json")
+    CONSOLIDATION=$(parse_metric "consolidation_ratio" "$json")
+    EFF_THROUGHPUT=$(parse_metric "effective_throughput_pods_per_s" "$json")
+    PEAK_THROUGHPUT=$(parse_metric "peak_throughput_pods_per_s" "$json")
+    CLOUDLETS_COMPLETED=$(parse_metric "cloudlets_completed" "$json")
+    HP_AVG_TURNAROUND=$(parse_metric "high_priority_avg_turnaround_s" "$json")
+    BATCH_AVG_TURNAROUND=$(parse_metric "batch_avg_turnaround_s" "$json")
 }
 
 # ── run one scheduler ─────────────────────────────────────────────────────────
@@ -76,10 +80,9 @@ run_scheduler() {
     fi
 
     # shellcheck disable=SC2086
-    bash run_test.sh $flag $compile_flag "$TEST_CLASS"
+    bash run_test.sh $flag $compile_flag --run-id="$RUN_ID" "$TEST_CLASS"
 
-    cp "debug/sim.log" "/tmp/coubes-sim-${label}.log"
-    echo "  Log saved to /tmp/coubes-sim-${label}.log"
+    echo "  Results saved with run ID: $RUN_ID"
 }
 
 # ── relative score (volcano / baseline) ──────────────────────────────────────
@@ -104,22 +107,28 @@ relative() {
 # ── main ──────────────────────────────────────────────────────────────────────
 
 run_scheduler "kube-scheduler" ""
-extract_metrics "/tmp/coubes-sim-kube-scheduler.log"
+extract_metrics "results/kube-scheduler_${TEST_SHORT}_${RUN_ID}.json"
 K_SIM_TIME="$SIM_TIME"
 K_WALL_MS="$WALL_MS"
 K_ENERGY="$ENERGY"
 K_CONSOLIDATION="$CONSOLIDATION"
-K_THROUGHPUT="$THROUGHPUT"
+K_EFF_THROUGHPUT="$EFF_THROUGHPUT"
+K_PEAK_THROUGHPUT="$PEAK_THROUGHPUT"
 K_CLOUDLETS="$CLOUDLETS_COMPLETED"
+K_HP_TURNAROUND="$HP_AVG_TURNAROUND"
+K_BATCH_TURNAROUND="$BATCH_AVG_TURNAROUND"
 
 run_scheduler "volcano" "--volcano"
-extract_metrics "/tmp/coubes-sim-volcano.log"
+extract_metrics "results/volcano_${TEST_SHORT}_${RUN_ID}.json"
 V_SIM_TIME="$SIM_TIME"
 V_WALL_MS="$WALL_MS"
 V_ENERGY="$ENERGY"
 V_CONSOLIDATION="$CONSOLIDATION"
-V_THROUGHPUT="$THROUGHPUT"
+V_EFF_THROUGHPUT="$EFF_THROUGHPUT"
+V_PEAK_THROUGHPUT="$PEAK_THROUGHPUT"
 V_CLOUDLETS="$CLOUDLETS_COMPLETED"
+V_HP_TURNAROUND="$HP_AVG_TURNAROUND"
+V_BATCH_TURNAROUND="$BATCH_AVG_TURNAROUND"
 
 # ── write CSV ─────────────────────────────────────────────────────────────────
 
@@ -130,8 +139,11 @@ V_CLOUDLETS="$CLOUDLETS_COMPLETED"
     echo "energy_wh,decision,${K_ENERGY},${V_ENERGY},$(relative "$K_ENERGY" "$V_ENERGY" 0),lower_is_better"
     echo "consolidation_ratio,decision,${K_CONSOLIDATION},${V_CONSOLIDATION},$(relative "$K_CONSOLIDATION" "$V_CONSOLIDATION" 1),higher_is_better"
     echo "cloudlets_completed,decision,${K_CLOUDLETS},${V_CLOUDLETS},$(relative "$K_CLOUDLETS" "$V_CLOUDLETS" 1),higher_is_better"
+    echo "hp_avg_turnaround_s,decision,${K_HP_TURNAROUND:-N/A},${V_HP_TURNAROUND:-N/A},$(relative "$K_HP_TURNAROUND" "$V_HP_TURNAROUND" 0),lower_is_better"
+    echo "batch_avg_turnaround_s,decision,${K_BATCH_TURNAROUND:-N/A},${V_BATCH_TURNAROUND:-N/A},$(relative "$K_BATCH_TURNAROUND" "$V_BATCH_TURNAROUND" 0),lower_is_better"
     echo "wall_clock_ms,performance,${K_WALL_MS},${V_WALL_MS},$(relative "$K_WALL_MS" "$V_WALL_MS" 0),lower_is_better"
-    echo "throughput_pods_per_s,performance,${K_THROUGHPUT},${V_THROUGHPUT},$(relative "$K_THROUGHPUT" "$V_THROUGHPUT" 1),higher_is_better"
+    echo "effective_throughput_pods_per_s,performance,${K_EFF_THROUGHPUT},${V_EFF_THROUGHPUT},$(relative "$K_EFF_THROUGHPUT" "$V_EFF_THROUGHPUT" 1),higher_is_better"
+    echo "peak_throughput_pods_per_s,performance,${K_PEAK_THROUGHPUT},${V_PEAK_THROUGHPUT},$(relative "$K_PEAK_THROUGHPUT" "$V_PEAK_THROUGHPUT" 1),higher_is_better"
 
 } > "$OUTPUT_CSV"
 

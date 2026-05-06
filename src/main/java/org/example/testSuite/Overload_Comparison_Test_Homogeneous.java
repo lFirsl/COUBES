@@ -13,53 +13,31 @@ import org.example.metrics.SimulationMetrics;
 import java.util.*;
 
 /**
- * Overload Comparison Test — large heterogeneous workload with mixed scheduling demands.
+ * Overload Comparison Test (Homogeneous) — identical to Overload_Comparison_Test except
+ * all nodes are homogeneous: 5 × 5 PEs @ 250 MIPS, PowerModel(500W, 10% static).
  *
- * Infrastructure: 5 heterogeneous VMs
- *   - 2 power-efficient: 4 PEs @ 200 MIPS, PowerModel(300W, 5% static)
- *   - 2 standard:        4 PEs @ 250 MIPS, PowerModel(500W, 10% static)
- *   - 1 fast/expensive:  8 PEs @ 400 MIPS, PowerModel(800W, 15% static)
- *   Total: 24 PE slots
+ * Purpose: isolate the effect of node heterogeneity on gang scheduling TTC.
+ * With homogeneous nodes, Volcano's gang placement cannot be penalised by landing
+ * on a slow node — all nodes have the same speed.
  *
- * Workload: 71 pods across 3 waves
- *   Wave 1 (t=0):   37 pods
- *     - 20 high-priority individual (2 PEs, length=30000)
- *     - 10 batch individual (2 PEs, length=50000)
- *     - Gang "compute-A": 3 pods × 2 PEs, high-priority (length=40000)
- *     - Gang "batch-job": 4 pods × 2 PEs, batch (length=60000)
- *   Wave 2 (t=50):  18 pods
- *     - 15 high-priority individual (2 PEs, length=20000)
- *     - Gang "compute-B": 3 pods × 2 PEs, high-priority (length=30000)
- *   Wave 3 (t=100): 15 pods
- *     - 5 high-priority individual (1 PE, length=10000)
- *     - 10 batch individual (2 PEs, length=40000)
+ * Total: 25 PE slots (vs 24 in heterogeneous version)
  *
- * Key observations:
- *   - Volcano: proportion plugin guarantees batch access; gang plugin holds gangs atomically
- *   - kube-scheduler: greedy placement, batch starved, gang held by broker logic
+ * Workload: identical to Overload_Comparison_Test (71 pods, 3 waves, same gangs/queues).
  */
-public class Overload_Comparison_Test {
+public class Overload_Comparison_Test_Homogeneous {
 
     public static void main(String[] args) throws Exception {
         CloudSim.init(2, Calendar.getInstance(), false);
 
-        // 5 hosts (one VM per host)
+        // 5 identical hosts
+        int numHosts = 5;
+        int pes = 5;
+        int mips = 250;
+        int maxWatts = 500;
+        double staticFrac = 0.30;
+
         List<Host> hostList = new ArrayList<>();
-        int[][] hostSpecs = {
-            // {numPes, mips, maxWatts, staticPercent*100}
-            {4, 200, 300, 5},   // efficient-0
-            {4, 200, 300, 5},   // efficient-1
-            {4, 250, 500, 10},  // standard-0
-            {4, 250, 500, 10},  // standard-1
-            {8, 400, 800, 15},  // fast-0
-        };
-
-        for (int i = 0; i < hostSpecs.length; i++) {
-            int pes = hostSpecs[i][0];
-            int mips = hostSpecs[i][1];
-            int watts = hostSpecs[i][2];
-            double staticFrac = hostSpecs[i][3] / 100.0;
-
+        for (int i = 0; i < numHosts; i++) {
             List<Pe> peList = new ArrayList<>();
             for (int p = 0; p < pes; p++) {
                 peList.add(new Pe(p, new PeProvisionerSimple(mips)));
@@ -67,7 +45,7 @@ public class Overload_Comparison_Test {
             hostList.add(new PowerHost(i,
                     new RamProvisionerSimple(4096), new BwProvisionerSimple(10000),
                     100000, peList, new VmSchedulerTimeShared(peList),
-                    new PowerModelLinear(watts, staticFrac)));
+                    new PowerModelLinear(maxWatts, staticFrac)));
         }
 
         DatacenterCharacteristics chars = new DatacenterCharacteristics(
@@ -82,8 +60,8 @@ public class Overload_Comparison_Test {
 
         // Create VMs matching hosts
         List<Vm> vmList = new ArrayList<>();
-        for (int i = 0; i < hostSpecs.length; i++) {
-            vmList.add(new PowerVmCustom(i, brokerId, hostSpecs[i][1], hostSpecs[i][0],
+        for (int i = 0; i < numHosts; i++) {
+            vmList.add(new PowerVmCustom(i, brokerId, mips, pes,
                     4096, 10000, 100000, 0, "Xen",
                     new CloudletSchedulerTimeShared(), 1, i));
         }
@@ -166,7 +144,7 @@ public class Overload_Comparison_Test {
 
         // === Results ===
         List<Cloudlet> results = broker.getCloudletReceivedList();
-        Log.printLine("========== Overload_Comparison_Test Results ==========");
+        Log.printLine("========== Overload_Comparison_Test_Homogeneous Results ==========");
 
         int succeeded = 0, failed = 0;
         for (Cloudlet cl : results) {
@@ -196,6 +174,6 @@ public class Overload_Comparison_Test {
         SimulationMetrics.printPerQueueMetrics(results, broker.getCloudletArrivalTimes());
 
         try { broker.sendResetRequestToControlPlane(); } catch (Exception ignored) {}
-        Log.printLine("\nOverload_Comparison_Test finished!");
+        Log.printLine("\nOverload_Comparison_Test_Homogeneous finished!");
     }
 }

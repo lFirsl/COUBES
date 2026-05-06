@@ -66,6 +66,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
     private long tpTotalPods = 0L;
     private long tpTotalNanos = 0L;
     private long tpBatches = 0L;
+    private double tpPerPodLatencySumMs = 0.0; // sum of (durationMs / podsInBatch) across batches
 
     // EWMA (exponentially-weighted moving average) of instantaneous batch throughput
     private double tpEwma = 0.0;
@@ -724,6 +725,7 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
         tpTotalPods  += pods;
         tpTotalNanos += durationNanos;
         tpBatches++;
+        tpPerPodLatencySumMs += (durationNanos / 1_000_000.0) / pods;
 
         final double instRate = pods / (durationNanos / 1_000_000_000.0);
         tpEwma = (tpBatches == 1) ? instRate : (TP_ALPHA * instRate + (1 - TP_ALPHA) * tpEwma);
@@ -741,6 +743,13 @@ public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
 
     public synchronized double tpOverall() {
         return tpTotalNanos == 0 ? 0.0 : tpTotalPods / (tpTotalNanos / 1e9);
+    }
+
+    /** Peak throughput: 1000 / average per-pod latency (ms). Each batch weighted equally. */
+    public synchronized double tpPeak() {
+        if (tpBatches == 0) return 0.0;
+        double avgPerPodMs = tpPerPodLatencySumMs / tpBatches;
+        return avgPerPodMs <= 0 ? 0.0 : 1000.0 / avgPerPodMs;
     }
 
     public synchronized double tpWindowAvg() {

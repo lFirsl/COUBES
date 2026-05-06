@@ -146,7 +146,7 @@ public class Mixed_Workload_Test {
 
             Log.println("Completed: " + results.size() + " / 13 cloudlets");
             printCloudletList(results);
-            metrics.printSummary(lastClock, broker.tpOverall());
+            metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
 
             // ── SDS ──
             double actualEnergy = dc.getPower() / 3600.0;

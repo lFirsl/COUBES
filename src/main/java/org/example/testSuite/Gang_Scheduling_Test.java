@@ -121,7 +121,7 @@ public class Gang_Scheduling_Test {
         }
 
         metrics.stopWallClock();
-        metrics.printSummary(lastClock, broker.tpOverall());
+        metrics.printSummary(lastClock, broker.tpOverall(), broker.tpPeak());
 
         // Verify gang atomicity: all members of each gang should have the same start time
         Map<String, List<Double>> gangStartTimes = new HashMap<>();
