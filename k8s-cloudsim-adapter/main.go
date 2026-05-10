@@ -15,16 +15,15 @@ import (
 )
 
 func main() {
-	// Config
-	port := ":8080"
-
-	log.Printf("Starting K8s Sim Control Plane with Fake API Server on port %s\n", port)
-
 	// Parse command line flags
 	var schedulerName = flag.String("scheduler", "default-scheduler", "Name of the Kubernetes scheduler to use")
 	var kubeconfig = flag.String("kubeconfig", "", "(ignored) absolute path to the kubeconfig file")
+	var portFlag = flag.String("port", "8080", "Port to listen on")
 	var testMode = flag.Bool("test-mode", false, "Run in standalone test mode (no kube-scheduler required)")
 	flag.Parse()
+
+	port := ":" + *portFlag
+	log.Printf("Starting K8s Sim Control Plane with Fake API Server on port %s\n", port)
 
 	// Log test mode status
 	if *testMode {

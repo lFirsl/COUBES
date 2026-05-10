@@ -23,7 +23,7 @@ import java.util.Map;
 
 public class Live_Kubernetes_Broker_Ex extends DatacenterBrokerEX {
 
-    private static final String CONTROL_PLANE_URL = "http://localhost:8080";
+    private static final String CONTROL_PLANE_URL = "http://localhost:" + System.getProperty("adapter.port", "8080");
 
     /**
      * Maps Cloudlet classType values to Volcano queue names.
