@@ -7,7 +7,7 @@ set -e
 PARALLEL=4
 SCHEDULER="least-allocated"
 VOLCANO=false
-BASE_PORT=8080
+BASE_PORT=9000
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -95,7 +95,7 @@ EOF
       -v "$(pwd)/second-scheduler/scheduler-config.yaml:/etc/kubernetes/scheduler-config.yaml" \
       registry.k8s.io/kube-scheduler:v1.33.0 \
       kube-scheduler --config=/etc/kubernetes/scheduler-config.yaml \
-      --leader-elect=false --secure-port=$((10260 + SLOT)) -v 0 >/dev/null 2>&1
+      --leader-elect=false --secure-port=$((11260 + SLOT)) -v 0 >/dev/null 2>&1
   fi
 done
 
