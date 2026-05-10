@@ -1,0 +1,74 @@
+2026/05/09 14:10:09 maxprocs: Leaving GOMAXPROCS=32: CPU quota undefined
+E0509 14:10:10.008536       1 utils.go:43] init kubeclient in hamivgpu failed: stat /root/.kube/config: no such file or directory
+I0509 14:10:10.009150       1 flags.go:57] FLAG: --add-dir-header="false"
+I0509 14:10:10.009176       1 flags.go:57] FLAG: --alsologtostderr="false"
+I0509 14:10:10.009180       1 flags.go:57] FLAG: --ca-cert-file=""
+I0509 14:10:10.009183       1 flags.go:57] FLAG: --cache-dump-dir="/tmp"
+I0509 14:10:10.009184       1 flags.go:57] FLAG: --cache-dumper="false"
+I0509 14:10:10.009186       1 flags.go:57] FLAG: --csi-storage="false"
+I0509 14:10:10.009187       1 flags.go:57] FLAG: --default-queue="default"
+I0509 14:10:10.009188       1 flags.go:57] FLAG: --enable-healthz="false"
+I0509 14:10:10.009189       1 flags.go:57] FLAG: --enable-metrics="false"
+I0509 14:10:10.009190       1 flags.go:57] FLAG: --feature-gates=""
+I0509 14:10:10.009192       1 flags.go:57] FLAG: --healthz-address=":11251"
+I0509 14:10:10.009193       1 flags.go:57] FLAG: --ignored-provisioners="[]"
+I0509 14:10:10.009200       1 flags.go:57] FLAG: --kube-api-burst="2000"
+I0509 14:10:10.009202       1 flags.go:57] FLAG: --kube-api-qps="2000"
+I0509 14:10:10.009204       1 flags.go:57] FLAG: --kubeconfig="/etc/volcano/kubeconfig.yaml"
+I0509 14:10:10.009205       1 flags.go:57] FLAG: --leader-elect="false"
+I0509 14:10:10.009206       1 flags.go:57] FLAG: --leader-elect-lease-duration="15s"
+I0509 14:10:10.009208       1 flags.go:57] FLAG: --leader-elect-renew-deadline="10s"
+I0509 14:10:10.009209       1 flags.go:57] FLAG: --leader-elect-resource-lock="leases"
+I0509 14:10:10.009210       1 flags.go:57] FLAG: --leader-elect-resource-name="volcano"
+I0509 14:10:10.009211       1 flags.go:57] FLAG: --leader-elect-resource-namespace="volcano-system"
+I0509 14:10:10.009211       1 flags.go:57] FLAG: --leader-elect-retry-period="2s"
+I0509 14:10:10.009212       1 flags.go:57] FLAG: --listen-address=":8080"
+I0509 14:10:10.009213       1 flags.go:57] FLAG: --lock-object-namespace="volcano-system"
+I0509 14:10:10.009214       1 flags.go:57] FLAG: --log-backtrace-at=":0"
+I0509 14:10:10.009216       1 flags.go:57] FLAG: --log-dir=""
+I0509 14:10:10.009217       1 flags.go:57] FLAG: --log-file=""
+I0509 14:10:10.009218       1 flags.go:57] FLAG: --log-file-max-size="1800"
+I0509 14:10:10.009219       1 flags.go:57] FLAG: --log-flush-frequency="5s"
+I0509 14:10:10.009220       1 flags.go:57] FLAG: --logtostderr="true"
+I0509 14:10:10.009221       1 flags.go:57] FLAG: --master=""
+I0509 14:10:10.009221       1 flags.go:57] FLAG: --minimum-feasible-nodes="100"
+I0509 14:10:10.009223       1 flags.go:57] FLAG: --minimum-percentage-nodes-to-find="5"
+I0509 14:10:10.009224       1 flags.go:57] FLAG: --node-selector="[]"
+I0509 14:10:10.009230       1 flags.go:57] FLAG: --node-worker-threads="20"
+I0509 14:10:10.009235       1 flags.go:57] FLAG: --one-output="false"
+I0509 14:10:10.009236       1 flags.go:57] FLAG: --percentage-nodes-to-find="0"
+I0509 14:10:10.009236       1 flags.go:57] FLAG: --plugins-dir=""
+I0509 14:10:10.009237       1 flags.go:57] FLAG: --priority-class="true"
+I0509 14:10:10.009238       1 flags.go:57] FLAG: --schedule-period="1s"
+I0509 14:10:10.009239       1 flags.go:57] FLAG: --scheduler-conf="/etc/volcano/volcano-scheduler.conf"
+I0509 14:10:10.009240       1 flags.go:57] FLAG: --scheduler-name="[volcano]"
+I0509 14:10:10.009243       1 flags.go:57] FLAG: --skip-headers="false"
+I0509 14:10:10.009244       1 flags.go:57] FLAG: --skip-log-headers="false"
+I0509 14:10:10.009245       1 flags.go:57] FLAG: --stderrthreshold="2"
+I0509 14:10:10.009245       1 flags.go:57] FLAG: --tls-cert-file=""
+I0509 14:10:10.009246       1 flags.go:57] FLAG: --tls-private-key-file=""
+I0509 14:10:10.009247       1 flags.go:57] FLAG: --v="2"
+I0509 14:10:10.009248       1 flags.go:57] FLAG: --version="false"
+I0509 14:10:10.009249       1 flags.go:57] FLAG: --vmodule=""
+I0509 14:10:10.017651       1 cache.go:533] Create init queue named default
+I0509 14:10:10.021171       1 scheduler.go:134] Successfully loaded Scheduler conf, actions: [enqueue allocate backfill], plugins: [priority gang proportion predicates nodeorder]
+I0509 14:10:10.022989       1 reflector.go:359] Caches populated for *v1.PriorityClass from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.023087       1 reflector.go:359] Caches populated for *v1alpha1.Numatopology from volcano.sh/apis/pkg/client/informers/externalversions/factory.go:144
+I0509 14:10:10.023117       1 reflector.go:359] Caches populated for *v1beta1.PodGroup from volcano.sh/apis/pkg/client/informers/externalversions/factory.go:144
+I0509 14:10:10.024368       1 reflector.go:359] Caches populated for *v1.ResourceQuota from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.024551       1 reflector.go:359] Caches populated for *v1.Namespace from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.024654       1 reflector.go:359] Caches populated for *v1beta1.Queue from volcano.sh/apis/pkg/client/informers/externalversions/factory.go:144
+I0509 14:10:10.024758       1 reflector.go:359] Caches populated for *v1.PersistentVolumeClaim from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.025595       1 reflector.go:359] Caches populated for *v1.StorageClass from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.025616       1 reflector.go:359] Caches populated for *v1.PodDisruptionBudget from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.025665       1 reflector.go:359] Caches populated for *v1.CSINode from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.025713       1 reflector.go:359] Caches populated for *v1.ReplicationController from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.025766       1 reflector.go:359] Caches populated for *v1.Service from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.025819       1 reflector.go:359] Caches populated for *v1.StatefulSet from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.025840       1 reflector.go:359] Caches populated for *v1.Pod from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.025903       1 reflector.go:359] Caches populated for *v1.Node from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.026310       1 reflector.go:359] Caches populated for *v1.PersistentVolume from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.026510       1 reflector.go:359] Caches populated for *v1.ReplicaSet from k8s.io/client-go/informers/factory.go:160
+I0509 14:10:10.121447       1 scheduler.go:90] Scheduler completes Initialization and start to run
+E0509 14:10:17.132427       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-0.18adeb00ef779971  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-0,UID:cspod-0-uid,APIVersion:v1,ResourceVersion:6,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-0 to csnode-0,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-09 14:10:17.131334001 +0000 UTC m=+7.197566501,LastTimestamp:2026-05-09 14:10:17.131334001 +0000 UTC m=+7.197566501,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+E0509 14:10:20.638191       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-0.18adeb00ef779971  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-0,UID:cspod-0-uid,APIVersion:v1,ResourceVersion:6,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-0 to csnode-0,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-09 14:10:17.131334001 +0000 UTC m=+7.197566501,LastTimestamp:2026-05-09 14:10:17.131334001 +0000 UTC m=+7.197566501,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"

@@ -1,0 +1,80 @@
+2026/05/10 09:06:39 maxprocs: Leaving GOMAXPROCS=32: CPU quota undefined
+E0510 09:06:39.914703       1 utils.go:43] init kubeclient in hamivgpu failed: stat /root/.kube/config: no such file or directory
+I0510 09:06:39.914927       1 flags.go:57] FLAG: --add-dir-header="false"
+I0510 09:06:39.914951       1 flags.go:57] FLAG: --alsologtostderr="false"
+I0510 09:06:39.914955       1 flags.go:57] FLAG: --ca-cert-file=""
+I0510 09:06:39.914958       1 flags.go:57] FLAG: --cache-dump-dir="/tmp"
+I0510 09:06:39.914960       1 flags.go:57] FLAG: --cache-dumper="false"
+I0510 09:06:39.914961       1 flags.go:57] FLAG: --csi-storage="false"
+I0510 09:06:39.914962       1 flags.go:57] FLAG: --default-queue="default"
+I0510 09:06:39.914963       1 flags.go:57] FLAG: --enable-healthz="false"
+I0510 09:06:39.914964       1 flags.go:57] FLAG: --enable-metrics="false"
+I0510 09:06:39.914965       1 flags.go:57] FLAG: --feature-gates=""
+I0510 09:06:39.914967       1 flags.go:57] FLAG: --healthz-address=":11251"
+I0510 09:06:39.914967       1 flags.go:57] FLAG: --ignored-provisioners="[]"
+I0510 09:06:39.914973       1 flags.go:57] FLAG: --kube-api-burst="2000"
+I0510 09:06:39.914974       1 flags.go:57] FLAG: --kube-api-qps="2000"
+I0510 09:06:39.914976       1 flags.go:57] FLAG: --kubeconfig="/etc/volcano/kubeconfig.yaml"
+I0510 09:06:39.914977       1 flags.go:57] FLAG: --leader-elect="false"
+I0510 09:06:39.914978       1 flags.go:57] FLAG: --leader-elect-lease-duration="15s"
+I0510 09:06:39.914979       1 flags.go:57] FLAG: --leader-elect-renew-deadline="10s"
+I0510 09:06:39.914980       1 flags.go:57] FLAG: --leader-elect-resource-lock="leases"
+I0510 09:06:39.914981       1 flags.go:57] FLAG: --leader-elect-resource-name="volcano"
+I0510 09:06:39.914982       1 flags.go:57] FLAG: --leader-elect-resource-namespace="volcano-system"
+I0510 09:06:39.914983       1 flags.go:57] FLAG: --leader-elect-retry-period="2s"
+I0510 09:06:39.914983       1 flags.go:57] FLAG: --listen-address=":8080"
+I0510 09:06:39.914984       1 flags.go:57] FLAG: --lock-object-namespace="volcano-system"
+I0510 09:06:39.914985       1 flags.go:57] FLAG: --log-backtrace-at=":0"
+I0510 09:06:39.914992       1 flags.go:57] FLAG: --log-dir=""
+I0510 09:06:39.914994       1 flags.go:57] FLAG: --log-file=""
+I0510 09:06:39.914995       1 flags.go:57] FLAG: --log-file-max-size="1800"
+I0510 09:06:39.914996       1 flags.go:57] FLAG: --log-flush-frequency="5s"
+I0510 09:06:39.914997       1 flags.go:57] FLAG: --logtostderr="true"
+I0510 09:06:39.914998       1 flags.go:57] FLAG: --master=""
+I0510 09:06:39.914999       1 flags.go:57] FLAG: --minimum-feasible-nodes="100"
+I0510 09:06:39.915006       1 flags.go:57] FLAG: --minimum-percentage-nodes-to-find="5"
+I0510 09:06:39.915007       1 flags.go:57] FLAG: --node-selector="[]"
+I0510 09:06:39.915009       1 flags.go:57] FLAG: --node-worker-threads="20"
+I0510 09:06:39.915011       1 flags.go:57] FLAG: --one-output="false"
+I0510 09:06:39.915012       1 flags.go:57] FLAG: --percentage-nodes-to-find="0"
+I0510 09:06:39.915013       1 flags.go:57] FLAG: --plugins-dir=""
+I0510 09:06:39.915014       1 flags.go:57] FLAG: --priority-class="true"
+I0510 09:06:39.915014       1 flags.go:57] FLAG: --schedule-period="1s"
+I0510 09:06:39.915015       1 flags.go:57] FLAG: --scheduler-conf="/etc/volcano/volcano-scheduler.conf"
+I0510 09:06:39.915016       1 flags.go:57] FLAG: --scheduler-name="[volcano]"
+I0510 09:06:39.915035       1 flags.go:57] FLAG: --skip-headers="false"
+I0510 09:06:39.915039       1 flags.go:57] FLAG: --skip-log-headers="false"
+I0510 09:06:39.915040       1 flags.go:57] FLAG: --stderrthreshold="2"
+I0510 09:06:39.915041       1 flags.go:57] FLAG: --tls-cert-file=""
+I0510 09:06:39.915042       1 flags.go:57] FLAG: --tls-private-key-file=""
+I0510 09:06:39.915043       1 flags.go:57] FLAG: --v="2"
+I0510 09:06:39.915044       1 flags.go:57] FLAG: --version="false"
+I0510 09:06:39.915045       1 flags.go:57] FLAG: --vmodule=""
+I0510 09:06:39.917309       1 cache.go:533] Create init queue named default
+I0510 09:06:39.917892       1 scheduler.go:134] Successfully loaded Scheduler conf, actions: [enqueue allocate backfill], plugins: [priority gang proportion predicates nodeorder]
+I0510 09:06:39.919825       1 reflector.go:359] Caches populated for *v1.CSINode from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.919939       1 reflector.go:359] Caches populated for *v1alpha1.Numatopology from volcano.sh/apis/pkg/client/informers/externalversions/factory.go:144
+I0510 09:06:39.920131       1 reflector.go:359] Caches populated for *v1beta1.Queue from volcano.sh/apis/pkg/client/informers/externalversions/factory.go:144
+I0510 09:06:39.920220       1 reflector.go:359] Caches populated for *v1.ReplicationController from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.920255       1 reflector.go:359] Caches populated for *v1.PodDisruptionBudget from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.920322       1 reflector.go:359] Caches populated for *v1.PriorityClass from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.920871       1 reflector.go:359] Caches populated for *v1.Service from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.921076       1 reflector.go:359] Caches populated for *v1.PersistentVolumeClaim from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.921076       1 reflector.go:359] Caches populated for *v1.PersistentVolume from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.920196       1 reflector.go:359] Caches populated for *v1.StatefulSet from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.921204       1 reflector.go:359] Caches populated for *v1.Namespace from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.921229       1 reflector.go:359] Caches populated for *v1.ResourceQuota from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.921320       1 reflector.go:359] Caches populated for *v1.StorageClass from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.921331       1 reflector.go:359] Caches populated for *v1beta1.PodGroup from volcano.sh/apis/pkg/client/informers/externalversions/factory.go:144
+I0510 09:06:39.921630       1 reflector.go:359] Caches populated for *v1.Node from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.921748       1 reflector.go:359] Caches populated for *v1.ReplicaSet from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:39.922530       1 reflector.go:359] Caches populated for *v1.Pod from k8s.io/client-go/informers/factory.go:160
+I0510 09:06:40.018222       1 scheduler.go:90] Scheduler completes Initialization and start to run
+E0510 09:06:47.055815       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-103.18ae2905a39c65f1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-103,UID:cspod-103-uid,APIVersion:v1,ResourceVersion:307,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-103 to csnode-78,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,LastTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+E0510 09:06:50.291550       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-103.18ae2905a39c65f1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-103,UID:cspod-103-uid,APIVersion:v1,ResourceVersion:307,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-103 to csnode-78,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,LastTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+E0510 09:07:00.291914       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-103.18ae2905a39c65f1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-103,UID:cspod-103-uid,APIVersion:v1,ResourceVersion:307,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-103 to csnode-78,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,LastTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+E0510 09:07:10.292506       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-103.18ae2905a39c65f1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-103,UID:cspod-103-uid,APIVersion:v1,ResourceVersion:307,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-103 to csnode-78,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,LastTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+E0510 09:07:20.293678       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-103.18ae2905a39c65f1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-103,UID:cspod-103-uid,APIVersion:v1,ResourceVersion:307,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-103 to csnode-78,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,LastTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+E0510 09:07:30.295139       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-103.18ae2905a39c65f1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-103,UID:cspod-103-uid,APIVersion:v1,ResourceVersion:307,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-103 to csnode-78,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,LastTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+E0510 09:07:40.296063       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-103.18ae2905a39c65f1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-103,UID:cspod-103-uid,APIVersion:v1,ResourceVersion:307,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-103 to csnode-78,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,LastTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+E0510 09:07:50.296860       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-103.18ae2905a39c65f1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-103,UID:cspod-103-uid,APIVersion:v1,ResourceVersion:307,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-103 to csnode-78,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,LastTimestamp:2026-05-10 09:06:47.054435825 +0000 UTC m=+7.156358221,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"

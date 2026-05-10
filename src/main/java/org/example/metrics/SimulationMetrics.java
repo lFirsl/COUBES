@@ -181,6 +181,15 @@ public class SimulationMetrics {
      */
     public void writeResultsFile(double simTime, double effectiveThroughput, double peakThroughput, List<Cloudlet> completedCloudlets, Map<Integer, Double> arrivalTimes) {
         Map<String, String> metrics = new LinkedHashMap<>();
+        // scenario_passed: true if at least one cloudlet succeeded, or if sim ran meaningfully
+        boolean passed;
+        if (completedCloudlets != null) {
+            passed = completedCloudlets.stream()
+                    .anyMatch(c -> c.getStatus() == Cloudlet.CloudletStatus.SUCCESS);
+        } else {
+            passed = simTime > 1.0; // simulation ran for more than 1 second
+        }
+        metrics.put("scenario_passed", String.valueOf(passed));
         metrics.put("simulated_time_s", String.format("%.2f", simTime));
         metrics.put("wall_clock_ms", String.valueOf(getWallClockMillis()));
         if (powerDatacenter != null) {

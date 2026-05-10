@@ -1,0 +1,43 @@
+2026/05/09 15:12:52 Starting K8s Sim Control Plane with Fake API Server on port :8080
+Using scheduler: volcano
+2026/05/09 15:12:52 Serving HTTP API on :8080
+2026/05/09 15:12:52 Fake Kubernetes API server ready for kube-scheduler connections
+2026/05/09 15:12:52 Start kube-scheduler with: --master http://localhost:8080 --leader-elect=false
+2026/05/09 15:12:53 Scheduling round reset
+2026/05/09 15:12:53 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-09T15:12:53.871002089+01:00"}
+2026/05/09 15:12:54 Volcano queue created: default
+2026/05/09 15:12:56 Scheduling round reset
+2026/05/09 15:12:56 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-09T15:12:56.988734468+01:00"}
+2026/05/09 15:12:56 Scheduling round reset
+2026/05/09 15:12:56 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-09T15:12:56.992345922+01:00"}
+2026/05/09 15:13:01 {"action":"HandleNodes","durationMs":1,"nodeCount":3,"result":"ok","roundId":"0","ts":"2026-05-09T15:13:01.651813033+01:00"}
+2026/05/09 15:13:01 {"action":"HandleSchedule","completedIds":0,"nodeCount":3,"phase":"start","podCount":12,"roundId":"1","ts":"2026-05-09T15:13:01.671331828+01:00"}
+2026/05/09 15:13:01 {"action":"HandleSchedule","phase":"prep_done","podsCreated":12,"prepMs":0,"roundId":"1","staleDeleted":0,"ts":"2026-05-09T15:13:01.671516257+01:00"}
+2026/05/09 15:13:01 Scheduling round started: expecting 12 decisions
+2026/05/09 15:13:02 Failure: pod=cspod-2 reason="pod group is not ready, 3 Pending, 3 minAvailable; Pending: 3 Unschedulable" (1/12 resolved)
+2026/05/09 15:13:02 Failure: pod=cspod-11 reason="pod group is not ready, 3 Pending, 3 minAvailable; Pending: 3 Unschedulable" (2/12 resolved)
+2026/05/09 15:13:02 Failure: pod=cspod-3 reason="pod group is not ready, 3 Pending, 3 minAvailable; Pending: 3 Unschedulable" (3/12 resolved)
+2026/05/09 15:13:02 Failure: pod=cspod-6 reason="pod group is not ready, 3 Pending, 3 minAvailable; Pending: 3 Unschedulable" (4/12 resolved)
+2026/05/09 15:13:02 Failure: pod=cspod-7 reason="pod group is not ready, 3 Pending, 3 minAvailable; Pending: 3 Unschedulable" (5/12 resolved)
+2026/05/09 15:13:02 Failure: pod=cspod-10 reason="pod group is not ready, 3 Pending, 3 minAvailable; Pending: 3 Unschedulable" (6/12 resolved)
+2026/05/09 15:13:02 Binding: pod=cspod-9 -> node=csnode-2 (7/12 resolved)
+2026/05/09 15:13:02 Binding: pod=cspod-1 -> node=csnode-0 (8/12 resolved)
+2026/05/09 15:13:02 Binding: pod=cspod-0 -> node=csnode-1 (9/12 resolved)
+2026/05/09 15:13:02 Binding: pod=cspod-5 -> node=csnode-2 (10/12 resolved)
+2026/05/09 15:13:02 Binding: pod=cspod-8 -> node=csnode-0 (11/12 resolved)
+2026/05/09 15:13:02 Binding: pod=cspod-4 -> node=csnode-1 (12/12 resolved)
+2026/05/09 15:13:02 Round complete: 6 scheduled, 6 failed in 343.971507ms
+2026/05/09 15:13:02 {"action":"HandleSchedule","durationMs":344,"podCount":12,"result":"ok","roundId":"1","scheduled":6,"ts":"2026-05-09T15:13:02.015548303+01:00","unschedulable":6}
+2026/05/09 15:13:02 {"action":"HandleSchedule","completedIds":6,"nodeCount":3,"phase":"start","podCount":6,"roundId":"2","ts":"2026-05-09T15:13:02.103451307+01:00"}
+2026/05/09 15:13:02 {"action":"HandleSchedule","phase":"prep_done","podsCreated":6,"prepMs":0,"roundId":"2","staleDeleted":0,"ts":"2026-05-09T15:13:02.103597736+01:00"}
+2026/05/09 15:13:02 Scheduling round started: expecting 6 decisions
+2026/05/09 15:13:03 Binding: pod=cspod-6 -> node=csnode-2 (1/6 resolved)
+2026/05/09 15:13:03 Binding: pod=cspod-7 -> node=csnode-0 (2/6 resolved)
+2026/05/09 15:13:03 Binding: pod=cspod-11 -> node=csnode-2 (3/6 resolved)
+2026/05/09 15:13:03 Binding: pod=cspod-2 -> node=csnode-1 (4/6 resolved)
+2026/05/09 15:13:03 Binding: pod=cspod-3 -> node=csnode-0 (5/6 resolved)
+2026/05/09 15:13:03 Binding: pod=cspod-10 -> node=csnode-1 (6/6 resolved)
+2026/05/09 15:13:03 Round complete: 6 scheduled, 0 failed in 905.32283ms
+2026/05/09 15:13:03 {"action":"HandleSchedule","durationMs":905,"podCount":6,"result":"ok","roundId":"2","scheduled":6,"ts":"2026-05-09T15:13:03.009013376+01:00","unschedulable":0}
+2026/05/09 15:13:03 Scheduling round reset
+2026/05/09 15:13:03 {"action":"HandleReset","result":"ok","roundId":"2","ts":"2026-05-09T15:13:03.034201417+01:00"}

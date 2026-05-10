@@ -1,0 +1,127 @@
+2026/05/09 14:11:20 maxprocs: Leaving GOMAXPROCS=32: CPU quota undefined
+E0509 14:11:20.644597       1 utils.go:43] init kubeclient in hamivgpu failed: stat /root/.kube/config: no such file or directory
+I0509 14:11:20.644790       1 flags.go:57] FLAG: --add-dir-header="false"
+I0509 14:11:20.644814       1 flags.go:57] FLAG: --alsologtostderr="false"
+I0509 14:11:20.644818       1 flags.go:57] FLAG: --ca-cert-file=""
+I0509 14:11:20.644821       1 flags.go:57] FLAG: --cache-dump-dir="/tmp"
+I0509 14:11:20.644822       1 flags.go:57] FLAG: --cache-dumper="false"
+I0509 14:11:20.644824       1 flags.go:57] FLAG: --csi-storage="false"
+I0509 14:11:20.644825       1 flags.go:57] FLAG: --default-queue="default"
+I0509 14:11:20.644826       1 flags.go:57] FLAG: --enable-healthz="false"
+I0509 14:11:20.644827       1 flags.go:57] FLAG: --enable-metrics="false"
+I0509 14:11:20.644828       1 flags.go:57] FLAG: --feature-gates=""
+I0509 14:11:20.644829       1 flags.go:57] FLAG: --healthz-address=":11251"
+I0509 14:11:20.644830       1 flags.go:57] FLAG: --ignored-provisioners="[]"
+I0509 14:11:20.644832       1 flags.go:57] FLAG: --kube-api-burst="2000"
+I0509 14:11:20.644834       1 flags.go:57] FLAG: --kube-api-qps="2000"
+I0509 14:11:20.644836       1 flags.go:57] FLAG: --kubeconfig="/etc/volcano/kubeconfig.yaml"
+I0509 14:11:20.644836       1 flags.go:57] FLAG: --leader-elect="false"
+I0509 14:11:20.644837       1 flags.go:57] FLAG: --leader-elect-lease-duration="15s"
+I0509 14:11:20.644839       1 flags.go:57] FLAG: --leader-elect-renew-deadline="10s"
+I0509 14:11:20.644840       1 flags.go:57] FLAG: --leader-elect-resource-lock="leases"
+I0509 14:11:20.644840       1 flags.go:57] FLAG: --leader-elect-resource-name="volcano"
+I0509 14:11:20.644841       1 flags.go:57] FLAG: --leader-elect-resource-namespace="volcano-system"
+I0509 14:11:20.644842       1 flags.go:57] FLAG: --leader-elect-retry-period="2s"
+I0509 14:11:20.644843       1 flags.go:57] FLAG: --listen-address=":8080"
+I0509 14:11:20.644844       1 flags.go:57] FLAG: --lock-object-namespace="volcano-system"
+I0509 14:11:20.644845       1 flags.go:57] FLAG: --log-backtrace-at=":0"
+I0509 14:11:20.644847       1 flags.go:57] FLAG: --log-dir=""
+I0509 14:11:20.644848       1 flags.go:57] FLAG: --log-file=""
+I0509 14:11:20.644849       1 flags.go:57] FLAG: --log-file-max-size="1800"
+I0509 14:11:20.644850       1 flags.go:57] FLAG: --log-flush-frequency="5s"
+I0509 14:11:20.644850       1 flags.go:57] FLAG: --logtostderr="true"
+I0509 14:11:20.644851       1 flags.go:57] FLAG: --master=""
+I0509 14:11:20.644852       1 flags.go:57] FLAG: --minimum-feasible-nodes="100"
+I0509 14:11:20.644853       1 flags.go:57] FLAG: --minimum-percentage-nodes-to-find="5"
+I0509 14:11:20.644854       1 flags.go:57] FLAG: --node-selector="[]"
+I0509 14:11:20.644860       1 flags.go:57] FLAG: --node-worker-threads="20"
+I0509 14:11:20.644883       1 flags.go:57] FLAG: --one-output="false"
+I0509 14:11:20.644887       1 flags.go:57] FLAG: --percentage-nodes-to-find="0"
+I0509 14:11:20.644888       1 flags.go:57] FLAG: --plugins-dir=""
+I0509 14:11:20.644889       1 flags.go:57] FLAG: --priority-class="true"
+I0509 14:11:20.644890       1 flags.go:57] FLAG: --schedule-period="1s"
+I0509 14:11:20.644891       1 flags.go:57] FLAG: --scheduler-conf="/etc/volcano/volcano-scheduler.conf"
+I0509 14:11:20.644892       1 flags.go:57] FLAG: --scheduler-name="[volcano]"
+I0509 14:11:20.644902       1 flags.go:57] FLAG: --skip-headers="false"
+I0509 14:11:20.644903       1 flags.go:57] FLAG: --skip-log-headers="false"
+I0509 14:11:20.644904       1 flags.go:57] FLAG: --stderrthreshold="2"
+I0509 14:11:20.644904       1 flags.go:57] FLAG: --tls-cert-file=""
+I0509 14:11:20.644905       1 flags.go:57] FLAG: --tls-private-key-file=""
+I0509 14:11:20.644906       1 flags.go:57] FLAG: --v="2"
+I0509 14:11:20.644907       1 flags.go:57] FLAG: --version="false"
+I0509 14:11:20.644908       1 flags.go:57] FLAG: --vmodule=""
+I0509 14:11:20.646437       1 cache.go:533] Create init queue named default
+I0509 14:11:20.646953       1 scheduler.go:134] Successfully loaded Scheduler conf, actions: [enqueue allocate backfill], plugins: [priority gang proportion predicates nodeorder]
+I0509 14:11:20.648388       1 reflector.go:359] Caches populated for *v1.PriorityClass from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.648718       1 reflector.go:359] Caches populated for *v1.StorageClass from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.648917       1 reflector.go:359] Caches populated for *v1.Namespace from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.648947       1 reflector.go:359] Caches populated for *v1.CSINode from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.649031       1 reflector.go:359] Caches populated for *v1.ReplicaSet from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.649112       1 reflector.go:359] Caches populated for *v1.ReplicationController from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.649339       1 reflector.go:359] Caches populated for *v1.ResourceQuota from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.649399       1 reflector.go:359] Caches populated for *v1.Node from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.649403       1 reflector.go:359] Caches populated for *v1.PersistentVolume from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.649812       1 reflector.go:359] Caches populated for *v1beta1.PodGroup from volcano.sh/apis/pkg/client/informers/externalversions/factory.go:144
+I0509 14:11:20.649887       1 reflector.go:359] Caches populated for *v1beta1.Queue from volcano.sh/apis/pkg/client/informers/externalversions/factory.go:144
+I0509 14:11:20.649825       1 reflector.go:359] Caches populated for *v1.PodDisruptionBudget from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.650443       1 reflector.go:359] Caches populated for *v1.PersistentVolumeClaim from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.650449       1 reflector.go:359] Caches populated for *v1.StatefulSet from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.650713       1 reflector.go:359] Caches populated for *v1alpha1.Numatopology from volcano.sh/apis/pkg/client/informers/externalversions/factory.go:144
+I0509 14:11:20.650873       1 reflector.go:359] Caches populated for *v1.Service from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.651570       1 reflector.go:359] Caches populated for *v1.Pod from k8s.io/client-go/informers/factory.go:160
+I0509 14:11:20.747208       1 scheduler.go:90] Scheduler completes Initialization and start to run
+E0509 14:11:27.758650       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-21.18adeb11611f8fd1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-21,UID:cspod-21-uid,APIVersion:v1,ResourceVersion:52,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-21 to csnode-0,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-09 14:11:27.757643729 +0000 UTC m=+7.129181268,LastTimestamp:2026-05-09 14:11:27.757643729 +0000 UTC m=+7.129181268,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+E0509 14:11:34.069179       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-21.18adeb11611f8fd1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-21,UID:cspod-21-uid,APIVersion:v1,ResourceVersion:52,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-21 to csnode-0,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-09 14:11:27.757643729 +0000 UTC m=+7.129181268,LastTimestamp:2026-05-09 14:11:27.757643729 +0000 UTC m=+7.129181268,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+I0509 14:11:43.912889       1 cache.go:350] Revert assumed volumes for task default/cspod-31 on node csnode-3
+I0509 14:11:43.912927       1 cache.go:350] Revert assumed volumes for task default/cspod-30 on node csnode-1
+I0509 14:11:43.913187       1 cache.go:350] Revert assumed volumes for task default/cspod-53 on node csnode-3
+I0509 14:11:43.913216       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-1
+E0509 14:11:44.070535       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-21.18adeb11611f8fd1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-21,UID:cspod-21-uid,APIVersion:v1,ResourceVersion:52,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-21 to csnode-0,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-09 14:11:27.757643729 +0000 UTC m=+7.129181268,LastTimestamp:2026-05-09 14:11:27.757643729 +0000 UTC m=+7.129181268,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+I0509 14:11:44.920069       1 cache.go:350] Revert assumed volumes for task default/cspod-31 on node csnode-1
+I0509 14:11:44.920107       1 cache.go:350] Revert assumed volumes for task default/cspod-30 on node csnode-3
+I0509 14:11:44.920287       1 cache.go:350] Revert assumed volumes for task default/cspod-53 on node csnode-1
+I0509 14:11:44.920318       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-3
+I0509 14:11:45.923390       1 cache.go:350] Revert assumed volumes for task default/cspod-31 on node csnode-1
+I0509 14:11:45.923424       1 cache.go:350] Revert assumed volumes for task default/cspod-30 on node csnode-3
+I0509 14:11:45.923685       1 cache.go:350] Revert assumed volumes for task default/cspod-53 on node csnode-1
+I0509 14:11:45.923715       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-3
+I0509 14:11:46.925751       1 cache.go:350] Revert assumed volumes for task default/cspod-31 on node csnode-1
+I0509 14:11:46.925790       1 cache.go:350] Revert assumed volumes for task default/cspod-30 on node csnode-3
+I0509 14:11:46.926021       1 cache.go:350] Revert assumed volumes for task default/cspod-53 on node csnode-1
+I0509 14:11:46.926087       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-3
+I0509 14:11:47.927444       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-1
+I0509 14:11:48.933175       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-1
+I0509 14:11:49.935286       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-1
+I0509 14:11:50.936478       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-1
+I0509 14:11:51.938679       1 cache.go:350] Revert assumed volumes for task default/cspod-53 on node csnode-0
+I0509 14:11:51.938718       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-2
+I0509 14:11:52.944534       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-2
+I0509 14:11:53.947701       1 cache.go:350] Revert assumed volumes for task default/cspod-53 on node csnode-3
+I0509 14:11:53.947742       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-2
+E0509 14:11:54.072221       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-21.18adeb11611f8fd1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-21,UID:cspod-21-uid,APIVersion:v1,ResourceVersion:52,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-21 to csnode-0,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-09 14:11:27.757643729 +0000 UTC m=+7.129181268,LastTimestamp:2026-05-09 14:11:27.757643729 +0000 UTC m=+7.129181268,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+I0509 14:11:54.952445       1 cache.go:350] Revert assumed volumes for task default/cspod-52 on node csnode-3
+I0509 14:11:59.977795       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-1
+I0509 14:12:00.981730       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-1
+I0509 14:12:01.983532       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-1
+I0509 14:12:02.984511       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-1
+I0509 14:12:03.986158       1 cache.go:350] Revert assumed volumes for task default/cspod-34 on node csnode-1
+I0509 14:12:03.986198       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-2
+E0509 14:12:04.073468       1 event.go:368] "Unable to write event (may retry after sleeping)" err="0-length response with status code: 201 and content type: application/json" event="&Event{ObjectMeta:{cspod-21.18adeb11611f8fd1  default    0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[] map[] [] [] []},InvolvedObject:ObjectReference{Kind:Pod,Namespace:default,Name:cspod-21,UID:cspod-21-uid,APIVersion:v1,ResourceVersion:52,FieldPath:,},Reason:Scheduled,Message:Successfully assigned default/cspod-21 to csnode-0,Source:EventSource{Component:volcano,Host:,},FirstTimestamp:2026-05-09 14:11:27.757643729 +0000 UTC m=+7.129181268,LastTimestamp:2026-05-09 14:11:27.757643729 +0000 UTC m=+7.129181268,Count:1,Type:Normal,EventTime:0001-01-01 00:00:00 +0000 UTC,Series:nil,Action:,Related:nil,ReportingController:volcano,ReportingInstance:,}"
+I0509 14:12:04.990612       1 cache.go:350] Revert assumed volumes for task default/cspod-34 on node csnode-1
+I0509 14:12:04.990654       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-2
+I0509 14:12:05.991901       1 cache.go:350] Revert assumed volumes for task default/cspod-34 on node csnode-1
+I0509 14:12:05.991938       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-2
+I0509 14:12:06.993551       1 cache.go:350] Revert assumed volumes for task default/cspod-34 on node csnode-2
+I0509 14:12:06.993587       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-1
+I0509 14:12:07.996608       1 cache.go:350] Revert assumed volumes for task default/cspod-35 on node csnode-2
+I0509 14:12:07.996644       1 cache.go:350] Revert assumed volumes for task default/cspod-34 on node csnode-3
+I0509 14:12:07.996651       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-1
+I0509 14:12:09.000942       1 cache.go:350] Revert assumed volumes for task default/cspod-35 on node csnode-2
+I0509 14:12:09.000978       1 cache.go:350] Revert assumed volumes for task default/cspod-34 on node csnode-3
+I0509 14:12:09.000985       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-1
+I0509 14:12:10.003248       1 cache.go:350] Revert assumed volumes for task default/cspod-35 on node csnode-3
+I0509 14:12:10.003288       1 cache.go:350] Revert assumed volumes for task default/cspod-34 on node csnode-1
+I0509 14:12:10.003297       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-2
+I0509 14:12:11.005698       1 cache.go:350] Revert assumed volumes for task default/cspod-35 on node csnode-1
+I0509 14:12:11.005735       1 cache.go:350] Revert assumed volumes for task default/cspod-34 on node csnode-3
+I0509 14:12:11.005743       1 cache.go:350] Revert assumed volumes for task default/cspod-33 on node csnode-2

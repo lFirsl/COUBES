@@ -46,11 +46,12 @@ PRETTY_CSV="results/comparison_${TEST_SHORT}_${TIMESTAMP}_pretty.csv"
 parse_metric() {
     local key="$1"
     local file="$2"
-    grep "\"${key}\"" "$file" | grep -oP '(?<=": ")[^"]+' | head -1
+    grep "\"${key}\"" "$file" 2>/dev/null | grep -oP '(?<=": ")[^"]+' | head -1 || true
 }
 
 extract_metrics() {
     local json="$1"
+    SCENARIO_PASSED=$(parse_metric "scenario_passed" "$json")
     SIM_TIME=$(parse_metric "simulated_time_s" "$json")
     WALL_MS=$(parse_metric "wall_clock_ms" "$json")
     ENERGY=$(parse_metric "energy_wh" "$json")
@@ -108,6 +109,7 @@ relative() {
 
 run_scheduler "kube-scheduler" ""
 extract_metrics "results/kube-scheduler_${TEST_SHORT}_${RUN_ID}.json"
+K_PASSED="$SCENARIO_PASSED"
 K_SIM_TIME="$SIM_TIME"
 K_WALL_MS="$WALL_MS"
 K_ENERGY="$ENERGY"
@@ -120,6 +122,7 @@ K_BATCH_TURNAROUND="$BATCH_AVG_TURNAROUND"
 
 run_scheduler "volcano" "--volcano"
 extract_metrics "results/volcano_${TEST_SHORT}_${RUN_ID}.json"
+V_PASSED="$SCENARIO_PASSED"
 V_SIM_TIME="$SIM_TIME"
 V_WALL_MS="$WALL_MS"
 V_ENERGY="$ENERGY"
@@ -130,20 +133,36 @@ V_CLOUDLETS="$CLOUDLETS_COMPLETED"
 V_HP_TURNAROUND="$HP_AVG_TURNAROUND"
 V_BATCH_TURNAROUND="$BATCH_AVG_TURNAROUND"
 
+# ── relative score (with scenario_passed guard) ───────────────────────────────
+# If either scheduler failed the scenario, relative scores are N/A for the failed one.
+
+score() {
+    local baseline="$1"
+    local value="$2"
+    local higher_is_better="$3"
+    # If either scheduler failed, show N/A
+    if [[ "$K_PASSED" != "true" || "$V_PASSED" != "true" ]]; then
+        echo "N/A"
+        return
+    fi
+    relative "$baseline" "$value" "$higher_is_better"
+}
+
 # ── write CSV ─────────────────────────────────────────────────────────────────
 
 {
     echo "metric,type,kube_scheduler,volcano,volcano_relative_score,note"
 
-    echo "simulated_time_s,decision,${K_SIM_TIME},${V_SIM_TIME},$(relative "$K_SIM_TIME" "$V_SIM_TIME" 0),lower_is_better"
-    echo "energy_wh,decision,${K_ENERGY},${V_ENERGY},$(relative "$K_ENERGY" "$V_ENERGY" 0),lower_is_better"
-    echo "consolidation_ratio,decision,${K_CONSOLIDATION},${V_CONSOLIDATION},$(relative "$K_CONSOLIDATION" "$V_CONSOLIDATION" 1),higher_is_better"
-    echo "cloudlets_completed,decision,${K_CLOUDLETS},${V_CLOUDLETS},$(relative "$K_CLOUDLETS" "$V_CLOUDLETS" 1),higher_is_better"
-    echo "hp_avg_turnaround_s,decision,${K_HP_TURNAROUND:-N/A},${V_HP_TURNAROUND:-N/A},$(relative "$K_HP_TURNAROUND" "$V_HP_TURNAROUND" 0),lower_is_better"
-    echo "batch_avg_turnaround_s,decision,${K_BATCH_TURNAROUND:-N/A},${V_BATCH_TURNAROUND:-N/A},$(relative "$K_BATCH_TURNAROUND" "$V_BATCH_TURNAROUND" 0),lower_is_better"
-    echo "wall_clock_ms,performance,${K_WALL_MS},${V_WALL_MS},$(relative "$K_WALL_MS" "$V_WALL_MS" 0),lower_is_better"
-    echo "effective_throughput_pods_per_s,performance,${K_EFF_THROUGHPUT},${V_EFF_THROUGHPUT},$(relative "$K_EFF_THROUGHPUT" "$V_EFF_THROUGHPUT" 1),higher_is_better"
-    echo "peak_throughput_pods_per_s,performance,${K_PEAK_THROUGHPUT},${V_PEAK_THROUGHPUT},$(relative "$K_PEAK_THROUGHPUT" "$V_PEAK_THROUGHPUT" 1),higher_is_better"
+    echo "scenario_passed,status,${K_PASSED},${V_PASSED},,binary"
+    echo "simulated_time_s,decision,${K_SIM_TIME},${V_SIM_TIME},$(score "$K_SIM_TIME" "$V_SIM_TIME" 0),lower_is_better"
+    echo "energy_wh,decision,${K_ENERGY},${V_ENERGY},$(score "$K_ENERGY" "$V_ENERGY" 0),lower_is_better"
+    echo "consolidation_ratio,decision,${K_CONSOLIDATION},${V_CONSOLIDATION},$(score "$K_CONSOLIDATION" "$V_CONSOLIDATION" 1),higher_is_better"
+    echo "cloudlets_completed,decision,${K_CLOUDLETS},${V_CLOUDLETS},$(score "$K_CLOUDLETS" "$V_CLOUDLETS" 1),higher_is_better"
+    echo "hp_avg_turnaround_s,decision,${K_HP_TURNAROUND:-N/A},${V_HP_TURNAROUND:-N/A},$(score "$K_HP_TURNAROUND" "$V_HP_TURNAROUND" 0),lower_is_better"
+    echo "batch_avg_turnaround_s,decision,${K_BATCH_TURNAROUND:-N/A},${V_BATCH_TURNAROUND:-N/A},$(score "$K_BATCH_TURNAROUND" "$V_BATCH_TURNAROUND" 0),lower_is_better"
+    echo "wall_clock_ms,performance,${K_WALL_MS},${V_WALL_MS},$(score "$K_WALL_MS" "$V_WALL_MS" 0),lower_is_better"
+    echo "effective_throughput_pods_per_s,performance,${K_EFF_THROUGHPUT},${V_EFF_THROUGHPUT},$(score "$K_EFF_THROUGHPUT" "$V_EFF_THROUGHPUT" 1),higher_is_better"
+    echo "peak_throughput_pods_per_s,performance,${K_PEAK_THROUGHPUT},${V_PEAK_THROUGHPUT},$(score "$K_PEAK_THROUGHPUT" "$V_PEAK_THROUGHPUT" 1),higher_is_better"
 
 } > "$OUTPUT_CSV"
 

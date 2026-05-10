@@ -1,0 +1,9 @@
+{
+  "scenario_passed": "true",
+  "simulated_time_s": "1762.00",
+  "wall_clock_ms": "2709",
+  "energy_wh": "532.56",
+  "consolidation_ratio": "1.853095891136957",
+  "effective_throughput_pods_per_s": "8.860759493670885",
+  "peak_throughput_pods_per_s": "2.5249691392660756"
+}

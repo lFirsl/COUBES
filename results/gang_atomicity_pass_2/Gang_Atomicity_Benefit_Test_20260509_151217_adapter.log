@@ -1,0 +1,37 @@
+2026/05/09 15:12:19 Starting K8s Sim Control Plane with Fake API Server on port :8080
+Using scheduler: least-allocated
+2026/05/09 15:12:19 Serving HTTP API on :8080
+2026/05/09 15:12:19 Fake Kubernetes API server ready for kube-scheduler connections
+2026/05/09 15:12:19 Start kube-scheduler with: --master http://localhost:8080 --leader-elect=false
+2026/05/09 15:12:20 Scheduling round reset
+2026/05/09 15:12:20 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-09T15:12:20.520994561+01:00"}
+2026/05/09 15:12:23 Scheduling round reset
+2026/05/09 15:12:23 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-09T15:12:23.696615876+01:00"}
+2026/05/09 15:12:23 Scheduling round reset
+2026/05/09 15:12:23 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-09T15:12:23.70019264+01:00"}
+2026/05/09 15:12:28 {"action":"HandleNodes","durationMs":0,"nodeCount":3,"result":"ok","roundId":"0","ts":"2026-05-09T15:12:28.633349115+01:00"}
+2026/05/09 15:12:28 {"action":"HandleSchedule","completedIds":0,"nodeCount":3,"phase":"start","podCount":12,"roundId":"1","ts":"2026-05-09T15:12:28.658044507+01:00"}
+2026/05/09 15:12:28 {"action":"HandleSchedule","phase":"prep_done","podsCreated":12,"prepMs":0,"roundId":"1","staleDeleted":0,"ts":"2026-05-09T15:12:28.65846715+01:00"}
+2026/05/09 15:12:28 Scheduling round started: expecting 12 decisions
+2026/05/09 15:12:28 Parsed protobuf binding: pod=cspod-0 -> node=csnode-1
+2026/05/09 15:12:28 Parsed protobuf binding: pod=cspod-1 -> node=csnode-0
+2026/05/09 15:12:28 Parsed protobuf binding: pod=cspod-2 -> node=csnode-2
+2026/05/09 15:12:28 Binding: pod=cspod-1 -> node=csnode-0 (1/12 resolved)
+2026/05/09 15:12:28 Binding: pod=cspod-2 -> node=csnode-2 (2/12 resolved)
+2026/05/09 15:12:28 Binding: pod=cspod-0 -> node=csnode-1 (3/12 resolved)
+2026/05/09 15:12:28 Parsed protobuf binding: pod=cspod-3 -> node=csnode-0
+2026/05/09 15:12:28 Binding: pod=cspod-3 -> node=csnode-0 (4/12 resolved)
+2026/05/09 15:12:28 Parsed protobuf binding: pod=cspod-4 -> node=csnode-2
+2026/05/09 15:12:28 Binding: pod=cspod-4 -> node=csnode-2 (5/12 resolved)
+2026/05/09 15:12:28 Parsed protobuf binding: pod=cspod-5 -> node=csnode-1
+2026/05/09 15:12:28 Binding: pod=cspod-5 -> node=csnode-1 (6/12 resolved)
+2026/05/09 15:12:28 Failure: pod=cspod-6 reason="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod." (7/12 resolved)
+2026/05/09 15:12:28 Failure: pod=cspod-7 reason="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod." (8/12 resolved)
+2026/05/09 15:12:28 Failure: pod=cspod-8 reason="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod." (9/12 resolved)
+2026/05/09 15:12:28 Failure: pod=cspod-9 reason="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod." (10/12 resolved)
+2026/05/09 15:12:28 Failure: pod=cspod-10 reason="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod." (11/12 resolved)
+2026/05/09 15:12:28 Failure: pod=cspod-11 reason="0/3 nodes are available: 3 Insufficient cpu. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod." (12/12 resolved)
+2026/05/09 15:12:28 Round complete: 6 scheduled, 6 failed in 7.361034ms
+2026/05/09 15:12:28 {"action":"HandleSchedule","durationMs":8,"podCount":12,"result":"ok","roundId":"1","scheduled":6,"ts":"2026-05-09T15:12:28.66594762+01:00","unschedulable":6}
+2026/05/09 15:12:28 Scheduling round reset
+2026/05/09 15:12:28 {"action":"HandleReset","result":"ok","roundId":"1","ts":"2026-05-09T15:12:28.703330372+01:00"}

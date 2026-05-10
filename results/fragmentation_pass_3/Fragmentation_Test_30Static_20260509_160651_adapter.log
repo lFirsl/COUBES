@@ -1,0 +1,64 @@
+2026/05/09 16:06:53 Starting K8s Sim Control Plane with Fake API Server on port :8080
+Using scheduler: least-allocated
+2026/05/09 16:06:53 Serving HTTP API on :8080
+2026/05/09 16:06:53 Fake Kubernetes API server ready for kube-scheduler connections
+2026/05/09 16:06:53 Start kube-scheduler with: --master http://localhost:8080 --leader-elect=false
+2026/05/09 16:06:54 Scheduling round reset
+2026/05/09 16:06:54 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-09T16:06:54.21079446+01:00"}
+2026/05/09 16:06:57 Scheduling round reset
+2026/05/09 16:06:57 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-09T16:06:57.400758897+01:00"}
+2026/05/09 16:06:57 Scheduling round reset
+2026/05/09 16:06:57 {"action":"HandleReset","result":"ok","roundId":"-","ts":"2026-05-09T16:06:57.404586297+01:00"}
+2026/05/09 16:07:02 {"action":"HandleNodes","durationMs":1,"nodeCount":5,"result":"ok","roundId":"0","ts":"2026-05-09T16:07:02.657713247+01:00"}
+2026/05/09 16:07:02 {"action":"HandleSchedule","completedIds":0,"nodeCount":5,"phase":"start","podCount":15,"roundId":"1","ts":"2026-05-09T16:07:02.688731285+01:00"}
+2026/05/09 16:07:02 {"action":"HandleSchedule","phase":"prep_done","podsCreated":15,"prepMs":0,"roundId":"1","staleDeleted":0,"ts":"2026-05-09T16:07:02.689021291+01:00"}
+2026/05/09 16:07:02 Scheduling round started: expecting 15 decisions
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-0 -> node=csnode-1
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-1 -> node=csnode-3
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-3 -> node=csnode-2
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-2 -> node=csnode-4
+2026/05/09 16:07:02 Binding: pod=cspod-1 -> node=csnode-3 (1/15 resolved)
+2026/05/09 16:07:02 Binding: pod=cspod-2 -> node=csnode-4 (2/15 resolved)
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-4 -> node=csnode-0
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-5 -> node=csnode-2
+2026/05/09 16:07:02 Binding: pod=cspod-3 -> node=csnode-2 (3/15 resolved)
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-6 -> node=csnode-0
+2026/05/09 16:07:02 Binding: pod=cspod-0 -> node=csnode-1 (4/15 resolved)
+2026/05/09 16:07:02 Binding: pod=cspod-6 -> node=csnode-0 (5/15 resolved)
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-7 -> node=csnode-3
+2026/05/09 16:07:02 Binding: pod=cspod-4 -> node=csnode-0 (6/15 resolved)
+2026/05/09 16:07:02 Binding: pod=cspod-5 -> node=csnode-2 (7/15 resolved)
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-8 -> node=csnode-4
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-9 -> node=csnode-1
+2026/05/09 16:07:02 Binding: pod=cspod-7 -> node=csnode-3 (8/15 resolved)
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-10 -> node=csnode-2
+2026/05/09 16:07:02 Binding: pod=cspod-8 -> node=csnode-4 (9/15 resolved)
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-11 -> node=csnode-4
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-12 -> node=csnode-3
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-14 -> node=csnode-0
+2026/05/09 16:07:02 Binding: pod=cspod-9 -> node=csnode-1 (10/15 resolved)
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-13 -> node=csnode-1
+2026/05/09 16:07:02 Binding: pod=cspod-13 -> node=csnode-1 (11/15 resolved)
+2026/05/09 16:07:02 Binding: pod=cspod-10 -> node=csnode-2 (12/15 resolved)
+2026/05/09 16:07:02 Binding: pod=cspod-11 -> node=csnode-4 (13/15 resolved)
+2026/05/09 16:07:02 Binding: pod=cspod-12 -> node=csnode-3 (14/15 resolved)
+2026/05/09 16:07:02 Binding: pod=cspod-14 -> node=csnode-0 (15/15 resolved)
+2026/05/09 16:07:02 Round complete: 15 scheduled, 0 failed in 3.708242ms
+2026/05/09 16:07:02 {"action":"HandleSchedule","durationMs":4,"podCount":15,"result":"ok","roundId":"1","scheduled":15,"ts":"2026-05-09T16:07:02.692838304+01:00","unschedulable":0}
+2026/05/09 16:07:02 {"action":"HandleSchedule","completedIds":0,"nodeCount":5,"phase":"start","podCount":5,"roundId":"2","ts":"2026-05-09T16:07:02.790231809+01:00"}
+2026/05/09 16:07:02 {"action":"HandleSchedule","phase":"prep_done","podsCreated":5,"prepMs":0,"roundId":"2","staleDeleted":0,"ts":"2026-05-09T16:07:02.790422577+01:00"}
+2026/05/09 16:07:02 Scheduling round started: expecting 5 decisions
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-100 -> node=csnode-0
+2026/05/09 16:07:02 Binding: pod=cspod-100 -> node=csnode-0 (1/5 resolved)
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-101 -> node=csnode-2
+2026/05/09 16:07:02 Binding: pod=cspod-101 -> node=csnode-2 (2/5 resolved)
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-103 -> node=csnode-3
+2026/05/09 16:07:02 Binding: pod=cspod-103 -> node=csnode-3 (3/5 resolved)
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-104 -> node=csnode-1
+2026/05/09 16:07:02 Parsed protobuf binding: pod=cspod-102 -> node=csnode-4
+2026/05/09 16:07:02 Binding: pod=cspod-104 -> node=csnode-1 (4/5 resolved)
+2026/05/09 16:07:02 Binding: pod=cspod-102 -> node=csnode-4 (5/5 resolved)
+2026/05/09 16:07:02 Round complete: 5 scheduled, 0 failed in 1.418841ms
+2026/05/09 16:07:02 {"action":"HandleSchedule","durationMs":1,"podCount":5,"result":"ok","roundId":"2","scheduled":5,"ts":"2026-05-09T16:07:02.791892921+01:00","unschedulable":0}
+2026/05/09 16:07:02 Scheduling round reset
+2026/05/09 16:07:02 {"action":"HandleReset","result":"ok","roundId":"2","ts":"2026-05-09T16:07:02.978904512+01:00"}
