@@ -2,8 +2,6 @@
 # run_parallel.sh — Run a test N times with P parallel instances
 # Usage: bash run_parallel.sh [--parallel=P] [--scheduler=NAME] [--volcano] <N> <TestClassName>
 
-set -e
-
 PARALLEL=4
 SCHEDULER="least-allocated"
 VOLCANO=false
@@ -43,6 +41,14 @@ echo "Build complete."
 
 # --- Start infrastructure upfront ---
 echo "Starting $PARALLEL adapter+scheduler instances..."
+
+# Clean up stale processes and containers from previous runs
+pkill -9 -x adapter-linux 2>/dev/null
+docker rm -f kube-scheduler volcano-scheduler 2>/dev/null
+for SLOT in $(seq 0 $((PARALLEL - 1))); do
+  docker rm -f "sched-par-${SLOT}" 2>/dev/null
+done
+sleep 2
 
 ADAPTER_PIDS=()
 for SLOT in $(seq 0 $((PARALLEL - 1))); do

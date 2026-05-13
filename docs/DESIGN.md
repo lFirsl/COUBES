@@ -2,9 +2,13 @@
 
 ## Overview
 
-COUBES (Container Orchestration Universal Benchmark for Evaluating Schedulers) is a framework that integrates CloudSim 7G discrete-event simulation with real Kubernetes schedulers. The system delegates scheduling decisions from CloudSim to a live kube-scheduler instance, enabling reproducible benchmarking of different scheduling policies (spreading vs bin-packing) with metrics like energy consumption, consolidation ratio, and throughput.
+COUBES (Container Orchestration Universal Benchmark for Evaluating Schedulers) is a framework that integrates CloudSim 7G discrete-event simulation with real container orchestration schedulers. The system delegates scheduling decisions from CloudSim to a live scheduler instance, enabling reproducible benchmarking of different scheduling policies with metrics like energy consumption, consolidation ratio, throughput, and scheduling latency.
 
-**Key Innovation:** The adapter implements a fake Kubernetes API server that kube-scheduler connects to directly. No real Kubernetes cluster, etcd, or KWOK is required.
+**Key Innovation:** The adapter implements a fake API server that schedulers connect to directly. No real cluster, etcd, or KWOK is required. Any scheduler that speaks its native protocol can be plugged in unmodified.
+
+**Supported Schedulers:**
+- **kube-scheduler v1.33** — LeastAllocated (spreading), MostAllocated (bin-packing)
+- **Volcano vc-scheduler v1.10** — Proportion (queue fairness), Gang (all-or-nothing), NodeOrder (bin-packing)
 
 ---
 
@@ -14,34 +18,54 @@ COUBES (Container Orchestration Universal Benchmark for Evaluating Schedulers) i
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         CloudSim Simulation                          │
 │  ┌────────────────────────────────────────────────────────────────┐ │
-│  │  Live_Kubernetes_Broker_Ex                                     │ │
-│  │  - Manages VMs (nodes) and Cloudlets (tasks)                  │ │
-│  │  - Delegates scheduling to external K8s scheduler              │ │
+│  │  Test Scenario (defines infra, workloads, waves, gangs, queues)│ │
 │  └────────────────────────────────────────────────────────────────┘ │
-│                              │ HTTP                                  │
+│                              │ configures                            │
 │                              ▼                                       │
-└──────────────────────────────┼───────────────────────────────────────┘
-                               │
-                               │ POST /nodes
-                               │ POST /schedule-pods
-                               │ POST /pods/update-state
-                               │ DELETE /reset
-                               │
-┌──────────────────────────────▼───────────────────────────────────────┐
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │  Discrete-Event Engine (deterministic clock, drives all events)│ │
+│  └──────────────┬─────────────────────────────────┬───────────────┘ │
+│                 │ events                           │ events          │
+│                 ▼                                  ▼                 │
+│  ┌──────────────────────────┐      ┌──────────────────────────┐   │
+│  │  Live_Kubernetes_Broker  │◄────►│  PowerDatacenterCustom   │   │
+│  │  - Scheduling rounds     │submit│  - Hosts, VMs            │   │
+│  │  - Gang holding/deadlock │─────►│  - Power models          │   │
+│  │  - Queue mapping         │◄─────│  - Energy tracking       │   │
+│  │  - Rescheduling loop     │ done │  - Consolidation ratio   │   │
+│  └──────────────────────────┘      └──────────────────────────┘   │
+│         │  ▲                                                        │
+│         │  │ manages                                                │
+│         ▼  │                                                        │
+│  ┌──────────────────────────┐                                      │
+│  │  CoubesCloudlets         │                                      │
+│  │  - length (MI), PEs      │                                      │
+│  │  - gangId, classType     │                                      │
+│  │  - ramRequest, labels    │                                      │
+│  │  - affinity/anti-affinity│                                      │
+│  └──────────────────────────┘                                      │
+│                                                                      │
+│         │ HTTP (POST /schedule)                                      │
+└─────────┼────────────────────────────────────────────────────────────┘
+          │
+          │ SimulationSnapshot: nodes + pods + completedPodIds
+          │ Response: BatchDecision (assignments + unschedulable)
+          │
+┌─────────▼────────────────────────────────────────────────────────────┐
 │                    Go Adapter (Port 8080)                            │
 │  ┌────────────────────────────────────────────────────────────────┐ │
-│  │  Communicator (communicator/)                                  │ │
-│  │  - Handles CloudSim HTTP requests                             │ │
-│  │  - Converts CloudSim VMs/Cloudlets to K8s Nodes/Pods          │ │
-│  │  - Coordinates scheduling rounds                               │ │
+│  │  Simulation-Facing Interface (communicator/)                   │ │
+│  │  - POST /nodes — sync VMs as K8s nodes                        │ │
+│  │  - POST /schedule — submit snapshot, block for decisions      │ │
+│  │  - DELETE /reset — clear all state between runs               │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 │                              │                                       │
 │                              ▼                                       │
 │  ┌────────────────────────────────────────────────────────────────┐ │
 │  │  InMemoryStore (store/)                                        │ │
-│  │  - Thread-safe in-memory storage for nodes and pods           │ │
-│  │  - Implements watch/list semantics with broadcast channels    │ │
-│  │  - Emits ADDED/MODIFIED/DELETED events                        │ │
+│  │  - Nodes, Pods, Queues, PodGroups                             │ │
+│  │  - Watch broadcast channels per resource type                 │ │
+│  │  - Resource version tracking                                   │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 │                              │                                       │
 │         ┌────────────────────┴────────────────────┐                 │
@@ -50,30 +74,40 @@ COUBES (Container Orchestration Universal Benchmark for Evaluating Schedulers) i
 │  │ SchedulingRound │                    │ TestModeScheduler    │   │
 │  │ (scheduler/)    │                    │ (scheduler/)         │   │
 │  │ - Sync barrier  │                    │ - Round-robin        │   │
-│  │ - Collects      │                    │ - Standalone mode    │   │
-│  │   bindings      │                    │ - No external deps   │   │
+│  │ - Partial result│                    │ - Resource-aware     │   │
+│  │   on timeout    │                    │ - No external deps   │   │
+│  │ - Stall exit    │                    │                      │   │
 │  └─────────────────┘                    └──────────────────────┘   │
 │         │                                                            │
 │         │ (Full Mode Only)                                          │
 │         ▼                                                            │
 │  ┌────────────────────────────────────────────────────────────────┐ │
-│  │  FakeAPIHandler (fakeapi/)                                     │ │
-│  │  - Implements Kubernetes API endpoints                         │ │
-│  │  - GET /api/v1/nodes, /api/v1/pods (list/watch)              │ │
-│  │  - POST /api/v1/.../binding (protobuf)                        │ │
-│  │  - PATCH /api/v1/.../status                                   │ │
+│  │  Scheduler-Facing Interface (fakeapi/)                         │ │
+│  │  - K8s core: nodes, pods (list/watch), binding (protobuf)     │ │
+│  │  - Volcano CRDs: queues, podgroups, hypernodes, numatopology  │ │
+│  │  - API discovery: /api, /apis, /apis/<group>/<version>        │ │
+│  │  - Status: PUT/PATCH pod status (unschedulable detection)     │ │
 │  └────────────────────────────────────────────────────────────────┘ │
-│                              │ HTTP                                  │
+│                              │                                       │
 └──────────────────────────────┼───────────────────────────────────────┘
                                │
-                               │ GET /api/v1/pods?watch=true
-                               │ POST /api/v1/.../binding
+                               │ Native scheduler protocol
+                               │ (K8s API: watch, binding, status)
                                │
 ┌──────────────────────────────▼───────────────────────────────────────┐
-│                    kube-scheduler (Docker)                           │
-│  - Connects to adapter as if it were a real API server              │
-│  - Two profiles: default-scheduler (spread), my-scheduler (pack)    │
-│  - Watches for unscheduled pods, sends binding decisions            │
+│                    CO Scheduler (Docker, unmodified)                 │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  kube-scheduler v1.33                                        │   │
+│  │  - LeastAllocated (spreading) / MostAllocated (bin-packing) │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  Volcano vc-scheduler v1.10                                  │   │
+│  │  - proportion (queue fairness), gang (all-or-nothing)       │   │
+│  │  - nodeorder (bin-packing), predicates, backfill            │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  Any scheduler speaking the same protocol (extensible)       │   │
+│  └─────────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -87,37 +121,37 @@ COUBES (Container Orchestration Universal Benchmark for Evaluating Schedulers) i
 
 **Flow:**
 1. CloudSim sends VMs → Adapter stores them in InMemoryStore
-2. CloudSim sends Cloudlets → Adapter creates pods in InMemoryStore
+2. CloudSim sends SimulationSnapshot → Adapter creates pods in InMemoryStore
 3. Adapter calls `TestModeScheduler.Schedule()` synchronously
-4. Round-robin assignment: pod `i` → `sortedNodes[i % M]`
+4. Resource-aware round-robin: first node with enough free PEs gets the pod
 5. Returns assignments immediately to CloudSim
 
 **Characteristics:**
-- No kube-scheduler required
+- No scheduler container required
 - Deterministic scheduling (lexicographic node order)
 - Fake API routes not registered
 - Instant response (no polling)
+- Resource-aware (tracks free PEs, returns unschedulable pods)
 
 ### Full Mode (default)
 
-**Purpose:** Benchmark real kube-scheduler with different policies.
+**Purpose:** Benchmark real schedulers with different policies.
 
 **Flow:**
-1. CloudSim sends VMs → Adapter stores them in InMemoryStore
-2. Adapter exposes nodes via fake API (`GET /api/v1/nodes`)
-3. kube-scheduler watches nodes (establishes watch stream)
-4. CloudSim sends Cloudlets → Adapter creates pods in InMemoryStore
-5. Adapter exposes pods via fake API (`GET /api/v1/pods`)
-6. kube-scheduler watches pods, sees unscheduled pods
-7. kube-scheduler sends binding requests (`POST /api/v1/.../binding`)
-8. Adapter parses protobuf binding, records decision in SchedulingRound
-9. When all pods scheduled, returns assignments to CloudSim
+1. CloudSim sends VMs → Adapter stores as nodes, emits ADDED watch events
+2. Scheduler watches nodes (establishes watch stream)
+3. CloudSim sends SimulationSnapshot → Adapter creates pods (with gang/queue metadata)
+4. Scheduler watches pods, sees unscheduled pods
+5. Scheduler sends binding requests (pod → node assignment)
+6. Adapter records binding in SchedulingRound
+7. When all pods resolved (or timeout), returns BatchDecision to CloudSim
+8. On timeout, unresolved pods returned as unschedulable (partial result)
 
 **Characteristics:**
-- Real kube-scheduler integration
-- Supports multiple scheduler profiles (spreading/bin-packing)
-- Protobuf binding protocol
-- Asynchronous with timeout (60s default)
+- Real scheduler integration (kube-scheduler or Volcano)
+- Supports multiple scheduling paradigms
+- Protobuf binding protocol (kube-scheduler) or PUT status (Volcano)
+- Asynchronous with 30s timeout + 5s stall exit
 
 ---
 
@@ -128,22 +162,41 @@ COUBES (Container Orchestration Universal Benchmark for Evaluating Schedulers) i
 #### `Live_Kubernetes_Broker_Ex`
 **Location:** `src/main/java/org/example/kubernetes_broker/Live_Kubernetes_Broker_Ex.java`
 
-**Purpose:** Custom CloudSim broker that delegates cloudlet-to-VM scheduling to Kubernetes.
+**Purpose:** Custom CloudSim broker that delegates cloudlet-to-VM scheduling to the middleware.
 
 **Key Methods:**
-- `processVmCreateAck()` → calls `sendAllActiveNodesToControlPlane()` → `POST /nodes`
-- `submitCloudlets()` → serializes cloudlets → `POST /schedule-pods` → receives assignments → `cloudSimAllocation()`
-- `processCloudletReturn()` → `POST /pods/update-state` → watches for rescheduling
+- `processVmCreateAck()` → `sendAllActiveNodesToControlPlane()` → `POST /nodes`
+- `submitCloudlets()` → builds SimulationSnapshot (nodes + pods + completedPodIds) → `POST /schedule` → `processBatchDecision()` → `cloudSimAllocation()`
+- `processCloudletReturn()` → adds to `completedSinceLastRound`, schedules `RESCHEDULE_PENDING` event
+- `processOtherEvent(RESCHEDULE_PENDING)` → calls `submitCloudlets()` again (rescheduling loop)
 
-**Lifecycle:**
-1. VMs created in CloudSim datacenter
-2. Broker receives VM creation acknowledgments
-3. Sends all VMs to adapter as nodes
-4. Submits cloudlets for scheduling
-5. Receives pod-to-node assignments
-6. Binds cloudlets to VMs in CloudSim
-7. Simulation runs with those assignments
-8. When cloudlets complete, notifies adapter for rescheduling
+**Gang Scheduling:**
+- `gangWaitingRoom` — holds scheduled gang members until all members are placed
+- `gangExpectedSizes` — tracks how many members each gang has
+- When `gangWaitingRoom[gangId].size() == expected` → all members submitted to CloudSim simultaneously
+- Deadlock detection: if nothing is running and gang can't complete → mark all members FAILED
+
+**Queue Mapping:**
+- `QUEUE_NAMES` map: classType 1 → "high-priority", classType 2 → "batch"
+- Included in pod JSON sent to adapter → adapter creates PodGroup with matching queue
+
+**Rescheduling Loop:**
+- On cloudlet completion, `RESCHEDULE_PENDING` event fires after 1s (batches completions)
+- `submitCloudlets()` re-sends pending pods with `completedPodIds` so adapter frees capacity
+- Permanent failure detection: same pods unschedulable twice with nothing running → FAILED
+
+#### `CoubesCloudlet`
+**Location:** `src/main/java/org/example/kubernetes_broker/CoubesCloudlet.java`
+
+**Purpose:** Extended Cloudlet with scheduling metadata.
+
+**Fields:**
+- `gangId` (String, nullable) — groups cloudlets for all-or-nothing scheduling
+- `classType` (int, inherited) — maps to queue name (0=default, 1=high-priority, 2=batch)
+- `ramRequest` (int, MB) — memory request for capacity-based scheduling
+- `labels` (Map<String,String>) — arbitrary key-value labels
+- `affinityGroup` / `antiAffinityGroup` (String) — co-location / separation constraints
+- `hardAffinity` / `hardAntiAffinity` (boolean) — hard vs soft constraint
 
 #### `PowerDatacenterCustom`
 **Location:** `src/main/java/org/example/kubernetes_broker/PowerDatacenterCustom.java`
@@ -154,23 +207,38 @@ COUBES (Container Orchestration Universal Benchmark for Evaluating Schedulers) i
 - Time-weighted consolidation ratio (cloudlets/active VMs)
 - Deferred VM destruction (VMs persist until cloudlet queue empty)
 - `disableDeallocation` flag for fragmentation tests
-- Energy consumption via linear interpolation
+- Energy consumption via linear interpolation at each scheduling interval
+- Safety net for stale-MIPS event chain death (idle VMs receiving new cloudlets)
+- Log levels: QUIET / NORMAL / VERBOSE
 
 #### `PowerVmCustom`
 **Location:** `src/main/java/org/example/kubernetes_broker/PowerVmCustom.java`
 
-**Purpose:** Extended VM with host pinning and dynamic MIPS calculation.
+**Purpose:** Extended VM with host pinning, labels, and dynamic MIPS calculation.
 
 **Features:**
 - `preferredHostId` for VM-to-host affinity
-- Dynamic MIPS based on active cloudlets (not static allocation)
+- `labels` map for node selector matching
+- Dynamic MIPS based on active cloudlets
 
 #### Test Scenarios
 **Location:** `src/main/java/org/example/testSuite/`
 
-- `Fragmentation_Test.java` - Bin-packing under mixed workloads
-- `Performance_vs_Efficiency_Test.java` - Energy vs throughput tradeoff
-- `Undercrowding_Test.java` - Sparse workload idle energy
+Each test defines infrastructure (hosts, VMs, power models), workloads (cloudlets with PEs, length, gang/queue), and arrival patterns (waves with delays).
+
+| Test | What it measures |
+|------|-----------------|
+| `Fragmentation_Test` | Bin-packing under mixed workloads (2 waves) |
+| `Fragmentation_Test_Large` | Rescheduling stress (50 cloudlets, 2 VMs) |
+| `Queue_Priority_Test` | Multi-queue fairness (proportion plugin) |
+| `Gang_Scheduling_Test` | All-or-nothing atomic placement |
+| `Gang_Constrained_Test` | Gang too large for cluster |
+| `Overload_Comparison_Test` | 71 pods, mixed gangs + queues, full comparison |
+| `Queue_Starvation_Test` | Sustained overload with queue fairness |
+| `Scalability_Test` | 50 nodes, 5000 pods |
+| `MultiPE_Pod_Test` | Multi-PE pods on limited nodes |
+| `Heterogeneous_Node_Test` | Nodes with different PE counts |
+| ... | (20+ scenarios total) |
 
 ---
 
@@ -181,33 +249,46 @@ COUBES (Container Orchestration Universal Benchmark for Evaluating Schedulers) i
 
 **Purpose:** Entry point, HTTP server setup, route registration.
 
-**Key Logic:**
-```go
-// Parse flags
---test-mode      // Enable standalone round-robin mode
---scheduler      // Target scheduler profile name (default-scheduler, my-scheduler)
---kubeconfig     // Ignored (fake API server, no real cluster)
+**Key Flags:**
+```
+--test-mode      Enable standalone round-robin mode
+--scheduler      Scheduler name: least-allocated, most-allocated, volcano
+--port           Listen port (default 8080)
+```
 
-// Initialize components
-store := NewInMemoryStore()
-round := NewSchedulingRound(60s)
-comm := NewCommunicator(store, round, schedulerName, testMode)
-fakeAPI := NewFakeAPIHandler(store)
+**Routes (always registered):**
+```
+POST   /nodes          — sync VMs as K8s nodes
+POST   /schedule       — submit snapshot, block for decisions
+DELETE /reset          — clear all state between runs
+```
 
-// Register routes
-// Simulation-facing (always registered):
-POST   /nodes
-POST   /schedule-pods
-POST   /pods/update-state
-DELETE /reset
-GET    /pods/{id}/status
+**Routes (full mode only — K8s core):**
+```
+GET    /api/v1/nodes              — list/watch nodes
+GET    /api/v1/pods               — list/watch pods
+POST   /api/v1/.../binding        — binding (protobuf)
+PATCH  /api/v1/.../pods/status    — unschedulable status (kube-scheduler)
+PUT    /api/v1/.../pods/status    — unschedulable status (Volcano)
+```
 
-// Kubernetes API (only in full mode):
-GET    /api/v1/nodes
-GET    /api/v1/pods
-POST   /api/v1/.../binding
-PATCH  /api/v1/.../status
-... (stub endpoints for services, PVs, etc.)
+**Routes (full mode only — Volcano CRDs):**
+```
+GET/POST /apis/scheduling.volcano.sh/v1beta1/queues          — queue CRUD + watch
+GET/POST /apis/scheduling.volcano.sh/v1beta1/.../podgroups   — podgroup CRUD + watch
+PUT      /apis/scheduling.volcano.sh/v1beta1/.../podgroups   — podgroup status update
+GET      /apis/topology.volcano.sh/v1alpha1/hypernodes       — stub (empty list)
+GET      /apis/nodeinfo.volcano.sh/v1alpha1/numatopologies   — stub (empty list)
+```
+
+**Routes (full mode only — API discovery):**
+```
+GET    /api                                    — core API versions
+GET    /api/v1                                 — core v1 resources
+GET    /apis                                   — all API groups
+GET    /apis/scheduling.volcano.sh/v1beta1     — Volcano scheduling resources
+GET    /apis/topology.volcano.sh/v1alpha1      — Volcano topology resources
+GET    /apis/nodeinfo.volcano.sh/v1alpha1      — Volcano nodeinfo resources
 ```
 
 #### `communicator/communicator.go`
@@ -217,267 +298,112 @@ PATCH  /api/v1/.../status
 
 **Key Handlers:**
 
-**`HandleNodes()`** - `POST /nodes`
-- Receives CloudSim VM list
-- Performs diff: adds missing nodes, removes stale nodes
-- Stores nodes in InMemoryStore
-- InMemoryStore emits ADDED/DELETED watch events
-
-**`HandleSchedulePods()`** - `POST /schedule-pods`
-- Receives CloudSim cloudlet list
-- Converts to Kubernetes pod objects
-- Stores pods in InMemoryStore (with `nodeName=""` = unscheduled)
+**`HandleSchedule()`** - `POST /schedule`
+- Receives SimulationSnapshot (nodes, pods, completedPodIds)
+- Syncs nodes (diff-based add/remove)
+- Deletes completed pods from store
+- Creates new pods in store (with scheduler-specific metadata)
+- For Volcano: creates PodGroups (shared for gangs, individual otherwise)
+- For Volcano: ensures queues exist (`ensureVolcanoQueue`)
 - **Test Mode:** Calls `TestModeScheduler.Schedule()` synchronously
-- **Full Mode:** Calls `round.Begin(N)`, waits for kube-scheduler bindings
-- Returns `BatchDecision` with pod-to-node assignments
+- **Full Mode:** Calls `round.Begin(N)`, waits for bindings or timeout
+- On timeout: returns partial result (resolved pods + unschedulable remainder)
+- Returns `BatchDecision` with assignments and unschedulable list
 
-**`HandleUpdateState()`** - `POST /pods/update-state`
-- Receives completed cloudlet ID
-- Deletes pod from InMemoryStore
-- Collects pending pods (pods with no `nodeName`)
-- **Test Mode:** If pending pods exist, reschedules them via `TestModeScheduler`
-- **Full Mode:** Waits for kube-scheduler to reschedule pending pods
-- Returns newly scheduled pods
-
-**`HandleReset()`** - `DELETE /reset`
-- Calls `store.DeleteAll()` (emits DELETED events for all resources)
-- Calls `store.Reset()` (clears state, resets resource version)
-- Calls `round.Reset()` (cancels active scheduling round)
-
-**`HandlePodStatus()`** - `GET /pods/{id}/status`
-- Returns in-memory pod status by CloudSim ID
+**`BuildPod()` (conversion_utils.go)**
+- Converts CsPod to corev1.Pod
+- Sets `spec.schedulerName` based on `--scheduler` flag
+- For Volcano: adds `scheduling.k8s.io/group-name` annotation (links pod to PodGroup)
+- For Volcano: sets `pod.Status.Phase = Pending` (required for task classification)
+- On binding: sets `pod.Status.Phase = Running` (required for node resource accounting)
 
 #### `store/store.go`
 **Location:** `k8s-cloudsim-adapter/store/store.go`
 
 **Purpose:** Thread-safe in-memory storage with Kubernetes watch semantics.
 
-**Data Structures:**
-```go
-type InMemoryStore struct {
-    nodes           map[string]*corev1.Node
-    pods            map[string]*corev1.Pod
-    resourceVersion int64
-    
-    nodeEventCh     chan metav1.WatchEvent
-    podEventCh      chan metav1.WatchEvent
-    nodeBroadcaster *BroadcastServer
-    podBroadcaster  *BroadcastServer
-}
-```
+**Resource Types:**
+- **Nodes** — `map[string]*corev1.Node` + watch broadcaster
+- **Pods** — `map[string]*corev1.Pod` + watch broadcaster
+- **Queues** — `map[string]map[string]interface{}` + watch broadcaster (Volcano)
+- **PodGroups** — `map[string]map[string]interface{}` + watch broadcaster (Volcano)
 
-**Key Operations:**
-- `CreateNode/Pod()` - Adds resource, increments resourceVersion, emits ADDED event
-- `UpdateNode/Pod()` - Modifies resource, increments resourceVersion, emits MODIFIED event
-- `DeleteNode/Pod()` - Removes resource, increments resourceVersion, emits DELETED event
-- `SubscribeNodes/Pods()` - Returns channel for watch stream
-- `Reset()` - Clears all state, recreates broadcast channels
-
-**Watch Semantics:**
-- kube-scheduler calls `GET /api/v1/pods?watch=true`
-- FakeAPIHandler subscribes to `store.SubscribePods()`
-- Store sends ADDED/MODIFIED/DELETED events as they occur
-- kube-scheduler's internal cache stays in sync
-
-#### `store/broadcast.go`
-**Location:** `k8s-cloudsim-adapter/store/broadcast.go`
-
-**Purpose:** Fan-out watch events to multiple subscribers (kube-scheduler watch streams).
-
-**Pattern:**
-- Single source channel (e.g., `podEventCh`)
-- Multiple subscriber channels (one per watch request)
-- Goroutine reads from source, writes to all subscribers
-- Handles subscriber cancellation without blocking
+Queues and PodGroups use raw JSON maps to avoid importing Volcano API types.
 
 #### `scheduler/scheduler.go`
 **Location:** `k8s-cloudsim-adapter/scheduler/scheduler.go`
 
 **Purpose:** Synchronization barrier for full mode scheduling rounds.
 
-**Data Structures:**
-```go
-type SchedulingRound struct {
-    pending     int                // countdown
-    assignments []PodAssignment    // accumulated bindings
-    failures    []PodFailure       // unschedulable pods
-    decisions   chan BatchDecision // unblocked when pending == 0
-    timeout     time.Duration
-    active      bool
-}
-```
+**Key Behaviour:**
+- `Begin(N)` — initialize round expecting N decisions
+- `RecordBinding(podName, nodeName)` — called by FakeAPIHandler on binding
+- `RecordFailure(podName, reason)` — called on unschedulable status
+- `Wait()` — blocks until all resolved, timeout (30s), or stall exit (5s no progress)
+- On timeout: returns partial `BatchDecision` with whatever was resolved (not empty)
+- Stall exit: if no new bindings/failures for 5s after first decision → return early
 
-**Flow:**
-1. `Begin(N)` - Initialize round expecting N decisions
-2. `RecordBinding(podName, nodeName)` - Called by FakeAPIHandler when binding received
-3. Decrement `pending`, append to `assignments`
-4. When `pending == 0`, send `BatchDecision` to `decisions` channel
-5. `Wait()` - Blocks until `BatchDecision` ready or timeout
+#### `fakeapi/volcano_handlers.go`
+**Location:** `k8s-cloudsim-adapter/fakeapi/volcano_handlers.go`
 
-**Concurrency:**
-- Multiple binding requests can arrive concurrently
-- Mutex protects `pending`, `assignments`, `failures`
-- Channel `decisions` unblocks exactly once per round
+**Purpose:** Volcano-specific HTTP handlers (API discovery, queues, podgroups, stubs).
 
-#### `scheduler/test_mode_scheduler.go`
-**Location:** `k8s-cloudsim-adapter/scheduler/test_mode_scheduler.go`
-
-**Purpose:** Standalone round-robin scheduler for test mode.
-
-**Algorithm:**
-```
-Sort nodes lexicographically by name
-Track freePes[] per node
-For each pod (round-robin starting index):
-  Try nodes starting from rrIndex, wrapping around
-  First node with freePes >= pod.Pes gets the pod
-  If no node fits → unschedulable
-```
-
-**Properties:**
-- Deterministic (same input → same output)
-- Resource-aware (tracks free PEs, returns unschedulable pods)
-- Balanced (round-robin across nodes with capacity)
-- No external dependencies
-- Tested with property-based tests (rapid)
-
-#### `fakeapi/handlers.go`
-**Location:** `k8s-cloudsim-adapter/fakeapi/handlers.go`
-
-**Purpose:** Implements Kubernetes API server endpoints for kube-scheduler.
-
-**Key Handlers:**
-
-**`HandleListNodes()`** - `GET /api/v1/nodes`
-- Query param `watch=true` → establish watch stream
-- Query param `watch=false` → return node list snapshot
-- Watch: subscribes to `store.SubscribeNodes()`, streams events as JSON
-
-**`HandleListPods()`** - `GET /api/v1/pods`
-- Query param `watch=true` → establish watch stream
-- Query param `watch=false` → return pod list snapshot
-- Watch: subscribes to `store.SubscribePods()`, streams events as JSON
-
-**`HandleBinding()`** - `POST /api/v1/namespaces/default/pods/{name}/binding`
-- Receives protobuf binding request from kube-scheduler
-- Parses body to extract target node name
-- Updates pod in store: sets `pod.Spec.NodeName = nodeName`
-- Calls `round.RecordBinding(podName, nodeName)`
-- Returns HTTP 201 Created
-
-**`HandlePodStatusPatch()`** - `PATCH /api/v1/namespaces/default/pods/{name}/status`
-- Receives JSON patch for pod status updates
-- Applies patch to pod in store
-- Used by kube-scheduler to mark pods as unschedulable
-
-**Stub Handlers:**
-- `HandleListServices()`, `HandleListPersistentVolumes()`, etc.
-- Return empty lists (kube-scheduler queries these but doesn't need them)
-- Prevents 404 errors in scheduler logs
-
-**Protobuf Binding Parsing:**
-```go
-// kube-scheduler sends protobuf-encoded binding
-// Format: <varint length><protobuf message>
-// Message contains: metadata.name, target.name
-
-// Simple string parsing approach:
-body := readAll(r.Body)
-nodeNamePattern := `"name":"(csnode-\d+)"`
-matches := regexp.FindStringSubmatch(string(body), nodeNamePattern)
-nodeName := matches[1]
-```
+**Critical Behaviours:**
+- Queue `GET /queues/{name}` returns proper K8s 404 Status object (not plain HTTP 404)
+- Queue watch replays existing queues as ADDED events on connect
+- PodGroup `PUT` stores update and broadcasts MODIFIED event (required for enqueue→inqueue transition)
+- API discovery must list all Volcano groups or client panics
 
 ---
 
-## Data Flow: Scheduling a Batch of Cloudlets
-
-### Full Mode Flow
+## Data Flow: Scheduling a Batch (Full Mode)
 
 ```
-1. CloudSim: Create 10 VMs
-   └─> Broker.processVmCreateAck()
-       └─> POST /nodes with VM list
-           └─> Communicator.HandleNodes()
-               └─> store.CreateNode() for each VM
-                   └─> Emits ADDED events
-                       └─> kube-scheduler watch stream receives nodes
+1. Test Scenario configures CloudSim (hosts, VMs, cloudlets, waves)
+   └─> CloudSim.startSimulation()
+       └─> Discrete-Event Engine fires VM creation events
 
-2. CloudSim: Submit 20 cloudlets
-   └─> Broker.submitCloudlets()
-       └─> POST /schedule-pods with cloudlet list
-           └─> Communicator.HandleSchedulePods()
-               ├─> store.CreatePod() for each cloudlet (nodeName="")
-               │   └─> Emits ADDED events
-               │       └─> kube-scheduler watch stream receives unscheduled pods
-               ├─> round.Begin(20)
-               └─> round.Wait() [BLOCKS]
+2. Broker receives VM creation acknowledgments
+   └─> POST /nodes (sync all VMs as K8s nodes)
+       └─> store.CreateNode() → ADDED watch events → scheduler caches nodes
 
-3. kube-scheduler: Sees 20 unscheduled pods
-   └─> For each pod:
-       ├─> Run filters (NodeResourcesFit, etc.)
-       ├─> Run score plugins (LeastAllocated or MostAllocated)
-       ├─> Select best node
-       └─> POST /api/v1/.../binding with protobuf body
-           └─> FakeAPIHandler.HandleBinding()
-               ├─> Parse protobuf → extract nodeName
-               ├─> store.UpdatePod(pod.Spec.NodeName = nodeName)
-               │   └─> Emits MODIFIED event
-               └─> round.RecordBinding(podName, nodeName)
-                   └─> Decrement pending counter
-                       └─> When pending == 0:
-                           └─> Send BatchDecision to decisions channel
+3. Broker.submitCloudlets() builds SimulationSnapshot
+   └─> POST /schedule { nodes: [...], pods: [...], completedPodIds: [...] }
+       └─> Adapter:
+           ├─> Deletes completed pods from store (DELETED events)
+           ├─> Creates new pods in store (ADDED events)
+           ├─> [Volcano] Creates PodGroups, ensures queues exist
+           ├─> round.Begin(N)
+           └─> round.Wait() [BLOCKS]
 
-4. Adapter: round.Wait() unblocks
-   └─> Returns BatchDecision{Scheduled: [{podId:1, nodeId:3}, ...]}
-       └─> HTTP 200 response to CloudSim
+4. Scheduler sees unscheduled pods via watch stream
+   └─> Evaluates filters + scoring
+   └─> Sends binding: POST /binding (kube-scheduler) or same (Volcano)
+       └─> FakeAPIHandler:
+           ├─> Sets pod.Spec.NodeName, pod.Status.Phase = Running
+           ├─> store.UpdatePod() → MODIFIED event
+           └─> round.RecordBinding(podName, nodeName)
 
-5. CloudSim: Receives assignments
-   └─> Broker.processScheduledPodsResponse()
-       └─> Broker.cloudSimAllocation()
-           └─> For each assignment:
-               └─> sendNow(CLOUDLET_SUBMIT, cloudlet, vm)
-                   └─> CloudSim binds cloudlet to VM
-                       └─> Simulation executes with those assignments
+5. round.Wait() unblocks (all resolved, timeout, or stall)
+   └─> Returns BatchDecision to CloudSim
 
-6. CloudSim: Cloudlet completes
-   └─> Broker.processCloudletReturn()
-       └─> POST /pods/update-state with completed cloudlet ID
-           └─> Communicator.HandleUpdateState()
-               ├─> store.DeletePod(completedPodName)
-               │   └─> Emits DELETED event
-               ├─> Collect pending pods (if any)
-               ├─> If pending pods exist:
-               │   ├─> round.Begin(pendingCount)
-               │   └─> round.Wait() [BLOCKS for rescheduling]
-               └─> Returns newly scheduled pods (if any)
-```
+6. Broker.processBatchDecision():
+   ├─> Scheduled pods: assign cloudlet.guestId = vmId
+   │   ├─> [Gang] Hold in gangWaitingRoom until all members placed
+   │   └─> [Non-gang] Add to cloudletsReadyForCloudsim
+   ├─> Unschedulable pods: keep in cloudletsSubmittedToMiddle (retry later)
+   └─> cloudSimAllocation() → sendNow(CLOUDLET_SUBMIT) to datacenter
 
-### Test Mode Flow
+7. Datacenter executes cloudlets (discrete-event simulation)
+   └─> On completion: fires CLOUDLET_RETURN event to broker
 
-```
-1. CloudSim: Create 10 VMs
-   └─> POST /nodes
-       └─> store.CreateNode() for each VM
+8. Broker.processCloudletReturn():
+   ├─> Adds cloudletId to completedSinceLastRound
+   └─> Schedules RESCHEDULE_PENDING event (+1s)
+       └─> submitCloudlets() again (loop back to step 3)
 
-2. CloudSim: Submit 20 cloudlets
-   └─> POST /schedule-pods
-       └─> Communicator.HandleSchedulePods()
-           ├─> store.CreatePod() for each cloudlet
-           ├─> testSched.Schedule(pods, nodes)
-           │   └─> Round-robin: pod[i] → sortedNodes[i % 10]
-           └─> Returns BatchDecision immediately
-
-3. CloudSim: Receives assignments
-   └─> Binds cloudlets to VMs
-       └─> Simulation executes
-
-4. CloudSim: Cloudlet completes
-   └─> POST /pods/update-state
-       └─> store.DeletePod()
-       └─> If pending pods:
-           └─> testSched.Schedule(pendingPods, nodes)
-               └─> Returns new assignments
+9. When all cloudlets complete: simulation terminates naturally
+   └─> Metrics Engine collects results from datacenter
 ```
 
 ---
@@ -486,50 +412,53 @@ nodeName := matches[1]
 
 ### Why Fake API Server Instead of KWOK?
 
-**KWOK Approach (Old):**
-- Required Docker Desktop + KWOK cluster running
-- Full Kubernetes control plane (etcd, kube-apiserver, kube-controller-manager)
-- Adapter was a client, not a server
-- Polling-based: adapter repeatedly queries pod status
-- Heavyweight: ~500MB memory, slow startup
+| Aspect | KWOK (Old) | Fake API Server (Current) |
+|--------|-----------|--------------------------|
+| Dependencies | Docker + etcd + kube-apiserver + kube-controller-manager | Go binary + optional Docker for scheduler |
+| Memory | ~500MB | ~50MB |
+| Startup | Slow (cluster init) | Instant |
+| Scheduling sync | Polling (250ms–1s loops) | Event-driven (immediate) |
+| Extensibility | Limited to K8s | Any CO protocol |
 
-**Fake API Server Approach (Current):**
-- No external dependencies (just Go binary + optional Docker for scheduler)
-- Adapter implements minimal API surface kube-scheduler needs
-- Event-driven: watch streams push updates immediately
-- Lightweight: ~50MB memory, instant startup
-- Inspired by k8s-in-the-loop project
+### Why SimulationSnapshot Instead of Separate Endpoints?
 
-### Why Two Modes (Test vs Full)?
+The old design used three separate endpoints (`/nodes`, `/schedule-pods`, `/pods/update-state`). The current design uses a single `POST /schedule` that sends everything in one request:
+- Nodes (for sync)
+- Pods (new workloads to schedule)
+- CompletedPodIds (to free capacity)
 
-**Test Mode:**
-- Rapid iteration during development
-- Deterministic results for debugging
-- No Docker/scheduler setup required
-- Useful for CI/CD pipelines
+This eliminates race conditions between node sync and pod creation, and allows the adapter to atomically update state before starting a scheduling round.
 
-**Full Mode:**
-- Benchmark real scheduler behavior
-- Compare different scheduling policies
-- Validate against production scheduler logic
-- Research-grade results
+### Why Partial Results on Timeout?
 
-### Why Protobuf Bindings?
+Volcano's `backfill` action silently skips pods it cannot schedule — it never sends a binding or unschedulable status. The adapter would wait forever. The fix: on timeout (30s) or stall (5s no progress), return whatever was resolved. Unresolved pods are marked unschedulable and retried by the broker's rescheduling loop.
 
-kube-scheduler sends binding requests in protobuf format (not JSON). The adapter parses protobuf bodies using simple string pattern matching to extract node names. This avoids the complexity of full protobuf deserialization while remaining robust for the limited message types we handle.
+### Why Gang Holding in the Broker?
 
-### Why SchedulingRound Synchronization?
+Gang scheduling requires all members to be placed before any start executing. The broker holds scheduled gang members in a "waiting room" until all members are bound, then submits them all to CloudSim simultaneously. This ensures gang members start at the same simulated time regardless of when individual bindings arrive.
 
-CloudSim is single-threaded and blocks on HTTP requests. The adapter must wait until all pods are scheduled before returning. `SchedulingRound` acts as a countdown latch: it blocks `HandleSchedulePods()` until kube-scheduler has sent bindings for all N pods (or timeout expires).
+### Why Queue Mapping via classType?
 
-### Why InMemoryStore Watch Semantics?
+CloudSim's `Cloudlet.classType` is a built-in integer field. Mapping it to queue names (1→"high-priority", 2→"batch") avoids modifying the Cloudlet class hierarchy while enabling multi-queue scheduling. Tests that don't set classType route everything to the default queue — behaviour is identical to before.
 
-kube-scheduler expects Kubernetes list/watch semantics:
-1. Initial LIST returns current state
-2. WATCH returns a stream of ADDED/MODIFIED/DELETED events
-3. Scheduler builds an internal cache from these events
+---
 
-InMemoryStore implements this pattern with broadcast channels, allowing multiple concurrent watch streams (e.g., one for nodes, one for pods).
+## Metrics Collected
+
+| Metric | Source | Category | Description |
+|--------|--------|----------|-------------|
+| Energy (Wh) | `PowerDatacenterCustom.getPower()` | Decision (SDS) | Total energy consumed by hosts |
+| Consolidation Ratio | `PowerDatacenterCustom.getConsolidationAverage()` | Decision (SDS) | Time-weighted cloudlets/active VMs |
+| Simulated TTC (s) | `CloudSim.startSimulation()` return | Decision (SDS) | Simulated time to complete all cloudlets |
+| HP/Batch Turnaround (s) | `SimulationMetrics.printPerQueueMetrics()` | Decision (SDS) | Per-queue average turnaround |
+| Wall-Clock Time (ms) | `SimulationMetrics` | Performance (SPS) | Real execution time |
+| Throughput (pods/sec) | `Live_Kubernetes_Broker_Ex` | Performance (SPS) | Effective + peak throughput |
+| Scheduling Latency (ms) | `PerformanceMetrics` | Performance (SPS) | Per-pod submission → binding |
+
+**Scoring Framework (SDS/SPS/Pareto):**
+- Decision-based metrics normalised to [0,1] via theoretical bounds (from `BoundsCalculator`)
+- Performance metrics expressed as ratio against baseline scheduler
+- Pareto dominance analysis identifies genuine tradeoffs vs strict improvements
 
 ---
 
@@ -539,83 +468,38 @@ InMemoryStore implements this pattern with broadcast channels, allowing multiple
 
 | File | Purpose |
 |------|---------|
-| `main.go` | Entry point, HTTP server, route registration, flag parsing |
-| `communicator/communicator.go` | CloudSim-facing HTTP handlers, VM/cloudlet conversion |
-| `communicator/conversion_utils.go` | CloudSim ↔ Kubernetes type conversions |
-| `communicator/k8s-simplified-structs.go` | Simplified CloudSim data structures (CsNode, CsPod) |
-| `store/store.go` | Thread-safe in-memory node/pod storage with watch semantics |
+| `main.go` | Entry point, HTTP server, route registration |
+| `communicator/communicator.go` | CloudSim-facing handlers, scheduling orchestration |
+| `communicator/conversion_utils.go` | CloudSim ↔ K8s type conversions, BuildPod |
+| `communicator/k8s-simplified-structs.go` | CsNode, CsPod structs (with Queue, GangId fields) |
+| `store/store.go` | In-memory storage: nodes, pods, queues, podgroups + watch |
 | `store/broadcast.go` | Fan-out watch events to multiple subscribers |
-| `scheduler/scheduler.go` | SchedulingRound synchronization barrier for full mode |
-| `scheduler/test_mode_scheduler.go` | Round-robin scheduler for test mode |
-| `fakeapi/handlers.go` | Kubernetes API endpoints for kube-scheduler |
-| `utils/general_utils.go` | Utility functions (logging, error handling) |
+| `scheduler/scheduler.go` | SchedulingRound barrier (timeout, stall exit, partial result) |
+| `scheduler/test_mode_scheduler.go` | Resource-aware round-robin for test mode |
+| `fakeapi/handlers.go` | K8s core API endpoints (nodes, pods, binding, status) |
+| `fakeapi/volcano_handlers.go` | Volcano CRD endpoints (queues, podgroups, discovery) |
 
 ### Java CloudSim (`src/main/java/org/example/`)
 
 | File | Purpose |
 |------|---------|
-| `kubernetes_broker/Live_Kubernetes_Broker_Ex.java` | Main broker, delegates scheduling to adapter |
-| `kubernetes_broker/PowerDatacenterCustom.java` | Datacenter with energy tracking, consolidation metrics |
-| `kubernetes_broker/PowerVmCustom.java` | VM with host pinning, dynamic MIPS |
-| `kubernetes_broker/PerformanceMetrics.java` | Throughput tracking (EWMA, sliding window) |
-| `metrics/SimulationMetrics.java` | Metrics aggregation and printing |
-| `metrics/TimeWeightedMetric.java` | Time-weighted average calculator |
-| `helper/Helper.java` | VM/host factory, result printing, SLA metrics |
-| `helper/Constants.java` | Simulation constants (host specs, power models) |
-| `testSuite/Fragmentation_Test.java` | Bin-packing benchmark |
-| `testSuite/Performance_vs_Efficiency_Test.java` | Energy vs throughput benchmark |
-| `testSuite/Undercrowding_Test.java` | Sparse workload benchmark |
+| `kubernetes_broker/Live_Kubernetes_Broker_Ex.java` | Broker: scheduling rounds, gang holding, queue mapping, rescheduling |
+| `kubernetes_broker/CoubesCloudlet.java` | Extended cloudlet: gangId, ramRequest, labels, affinity |
+| `kubernetes_broker/PowerDatacenterCustom.java` | Datacenter: energy, consolidation, event chain safety |
+| `kubernetes_broker/PowerVmCustom.java` | VM: host pinning, labels, dynamic MIPS |
+| `kubernetes_broker/CloudActionTagsEx.java` | Custom event tags (RESCHEDULE_PENDING) |
+| `metrics/SimulationMetrics.java` | Metrics aggregation, per-queue metrics, JSON output |
+| `metrics/PerformanceMetrics.java` | Per-pod scheduling latency tracking |
+| `metrics/BoundsCalculator.java` | CP-SAT solver for theoretical min/max bounds |
+| `metrics/SDS.java` | Min-max normalisation against bounds |
+| `testSuite/*.java` | 20+ benchmark scenarios |
 
-### Scheduler Configuration (`second-scheduler/`)
+### Scheduler Configuration
 
-| File | Purpose |
-|------|---------|
-| `Dockerfile` | Builds kube-scheduler image with custom config |
-| `docker-compose.yml` | Runs scheduler with `network_mode: host` |
-| `my-scheduler.yaml` | KubeSchedulerConfiguration with two profiles |
-| `kubeconfig.yaml` | Points scheduler to adapter on localhost:8080 |
-| `README.md` | Setup instructions, profile selection, troubleshooting |
-
----
-
-## Metrics Collected
-
-| Metric | Source | Description |
-|--------|--------|-------------|
-| Energy (Wh) | `PowerDatacenterCustom.getPower()` | Total energy consumed by hosts |
-| Consolidation Ratio | `PowerDatacenterCustom.getConsolidationAverage()` | Time-weighted cloudlets/active VMs |
-| Simulated Time | `CloudSim.startSimulation()` | Simulation clock time |
-| Wall-Clock Time | `SimulationMetrics` | Real execution time |
-| Throughput (pods/sec) | `Live_Kubernetes_Broker_Ex` | EWMA, sliding window, overall average |
-| SLA Violations | `Helper.getSlaMetrics()` | Time with allocated < requested MIPS |
-
----
-
-## Testing Strategy
-
-### Unit Tests (Go)
-- `scheduler/test_mode_scheduler_test.go` - Round-robin correctness
-- `store/store_test.go` - Thread safety, watch semantics
-- `fakeapi/handlers_test.go` - API endpoint behavior
-- `communicator_test/communicator_test.go` - Integration tests
-
-### Property-Based Tests (Go)
-Uses `pgregory.net/rapid` for generative testing:
-- Property 1: Assignment completeness (all pods accounted for)
-- Property 2: Round-robin formula correctness
-- Property 3: Balance invariant (even distribution)
-- Property 4: BindingTimestamp presence
-- Property 5: Update-state rescheduling
-- Property 6: Reset empties store
-
-### Integration Tests (Java)
-- `Fragmentation_Test` - 20 cloudlets, 5 VMs, 2 waves, bin-packing benchmark
-- `Fragmentation_Test_Large` - 50 cloudlets, 2 VMs, rescheduling stress test
-- `Fragmentation_Test_5Wave` - 5 waves of mixed cloudlets, multi-round rescheduling
-- `Performance_vs_Efficiency_Test` - Energy vs throughput tradeoff (2 hosts, different power models)
-- `Undercrowding_Test` - Sparse workload, idle energy waste
-- `Scheduler_Scalability_Test` - Scheduling latency at 4:1 and 20:1 pod-to-node ratios
-- `Scheduler_Latency_Test` - Per-pod scheduling latency under increasing load
+| Directory | Purpose |
+|-----------|---------|
+| `second-scheduler/` | kube-scheduler Docker config (2 profiles: spread/pack) |
+| `volcano-scheduler/` | Volcano Docker config (proportion + gang + nodeorder) |
 
 ---
 
@@ -623,88 +507,31 @@ Uses `pgregory.net/rapid` for generative testing:
 
 ### Using run_test.sh (Preferred)
 
-`run_test.sh` handles everything: killing stale processes, compiling, starting
-infrastructure, hang detection, and output filtering.
-
 ```bash
 # Test mode (no Docker required)
-bash run_test.sh --test-mode org.example.testSuite.Fragmentation_Test_Large
+bash run_test.sh --test-mode org.example.testSuite.Fragmentation_Test
 
-# Full mode (real kube-scheduler)
-bash run_test.sh org.example.testSuite.Scheduler_Scalability_Test
+# kube-scheduler (default: least-allocated)
+bash run_test.sh org.example.testSuite.Fragmentation_Test
 
-# Skip compilation
-bash run_test.sh --test-mode --no-compile org.example.testSuite.Fragmentation_Test
+# kube-scheduler (bin-packing)
+bash run_test.sh --scheduler=most-allocated org.example.testSuite.Fragmentation_Test
+
+# Volcano
+bash run_test.sh --volcano org.example.testSuite.Queue_Priority_Test
 
 # Run all tests
-bash run_all_tests.sh --test-mode
-bash run_all_tests.sh              # full mode
+bash run_all_tests.sh [--volcano] [--no-compile] [--stop-on-fail]
+
+# Compare schedulers (produces CSV in results/)
+bash compare_schedulers.sh Fragmentation_Test
 ```
-
-See `run_test.sh --help` and `run_all_tests.sh --help` for all options.
-
-### Manual Startup (Debugging Only)
-
-See `docs/scheduling-workflow.md` for the detailed scheduling flow and
-`.kiro/steering/operational-runbook.md` for manual startup procedures.
-
----
-
-## Future Extensions
-
-### Cluster Autoscaler Integration
-The fake API server architecture enables cluster-autoscaler integration:
-- Autoscaler watches for unschedulable pods
-- Requests new nodes via scale-up API
-- Adapter notifies CloudSim to create new VMs
-- CloudSim allocates VMs on hosts
-- Adapter exposes new nodes to autoscaler
-
-### Multi-Tenant Scenarios
-Currently all resources in `default` namespace. Could extend to:
-- Multiple namespaces with resource quotas
-- Pod priority and preemption
-- Node selectors and taints/tolerations
-
-### Custom Scheduler Plugins
-The fake API server supports any kube-scheduler configuration:
-- Custom score plugins (e.g., carbon-aware scheduling)
-- Custom filter plugins (e.g., GPU affinity)
-- Scheduler extenders (webhook-based)
-
----
-
-## Troubleshooting
-
-### Adapter fails to start
-- Check port 8080 is not in use: `netstat -an | grep 8080`
-- Verify Go version: `go version` (requires 1.21+)
-
-### Scheduler can't connect to adapter
-- Verify adapter is running: `curl http://localhost:8080/api/v1/nodes`
-- Check `kubeconfig.yaml` server URL is `http://localhost:8080`
-- Ensure `docker-compose.yml` has `network_mode: "host"`
-
-### Pods not scheduling
-- Increase scheduler log verbosity: `--v=4` in `docker-compose.yml`
-- Check adapter logs for binding requests
-- Verify nodes have sufficient CPU/memory for pod requests
-
-### Simulation hangs
-- Check adapter logs for timeout errors
-- Verify all cloudlets have valid resource requests
-- Ensure `POST /schedule-pods` returns within 60s
-
-### Test failures
-- Run with verbose output: `go test -v ./...`
-- Check property test corpus: `testdata/rapid/`
-- Verify CloudSim 7.0.1 is installed: `mvn dependency:tree`
 
 ---
 
 ## References
 
 - CloudSim 7G: https://github.com/Cloudslab/cloudsim
+- Volcano: https://volcano.sh/
 - k8s-in-the-loop: Straesser et al., EAI VALUETOOLS 2023
-- KWOK: https://kwok.sigs.k8s.io/
 - kube-scheduler: https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/
